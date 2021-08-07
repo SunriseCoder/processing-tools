@@ -31,8 +31,10 @@ public class Backuper {
 
     public void doBackupTasks(List<BackupTask> tasks) throws IOException {
         List<Operation> operations = new ArrayList<>();
+        long startTime, scanEndTime, copyStartTime, endTime;
 
         // Scanning all Backup Tasks
+        startTime = System.currentTimeMillis();
         for (int i = 0; i < tasks.size(); i++) {
             BackupTask task = tasks.get(i);
 
@@ -43,6 +45,8 @@ public class Backuper {
 
         // Sorting Folder deletion order
         operations.sort(new OperationsComparator());
+        scanEndTime = System.currentTimeMillis();
+        System.out.println("Scan took " + FormattingHelper.humanReadableTime((scanEndTime - startTime) / 1000));
 
         // Operations number
         System.out.println("Operations to perform: " + operations.size() + " operation(s)");
@@ -88,7 +92,7 @@ public class Backuper {
         fileCopyStatus.setAllFilesTotalSize(copyFileSizeTotal);
 
         long copiedFileSize = 0;
-        long copyStartTime = System.currentTimeMillis();
+        copyStartTime = System.currentTimeMillis();
         for (int i = 0; i < operations.size(); i++) {
             Operation operation = operations.get(i);
             System.out.println((i + 1) + "/" + operations.size()
@@ -97,9 +101,12 @@ public class Backuper {
             operation.perform(fileCopyStatus);
             copiedFileSize += operation.getCopyFileSize();
         }
-        long copyEndTime = System.currentTimeMillis();
+        endTime = System.currentTimeMillis();
 
-        System.out.println("All tasks are done, took " + FormattingHelper.humanReadableTime((copyEndTime - copyStartTime) / 1000));
+        System.out.println("All tasks are done");
+        System.out.println("Scan took " + FormattingHelper.humanReadableTime((scanEndTime - startTime) / 1000));
+        System.out.println("Copying took " + FormattingHelper.humanReadableTime((endTime - copyStartTime) / 1000));
+        System.out.println("Total: " + FormattingHelper.humanReadableTime((endTime - startTime) / 1000));
     }
 
     private List<Operation> scanTask(BackupTask task) throws IOException {

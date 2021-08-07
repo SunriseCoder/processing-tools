@@ -11,9 +11,12 @@ public class DeleteFileOperation implements Operation {
     private Path absolutePath;
     private Path relativePath;
 
+    private long fileSize;
+
     public DeleteFileOperation(FileMetadata fileMetadata) {
         absolutePath = fileMetadata.getAbsolutePath();
         relativePath = fileMetadata.getRelativePath();
+        fileSize = fileMetadata.getSize();
     }
 
     @Override
@@ -23,7 +26,7 @@ public class DeleteFileOperation implements Operation {
 
     @Override
     public long getCopyFileSize() {
-        return 0;
+        return fileSize;
     }
 
     @Override
