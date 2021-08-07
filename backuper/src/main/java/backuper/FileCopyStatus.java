@@ -31,6 +31,12 @@ public class FileCopyStatus {
         startCopyingTime = System.currentTimeMillis();
     }
 
+    public void startNewFile(long fileSize) {
+        currentFileCopiedSize = 0;
+        currentFileTotalSize = fileSize;
+        lastPrintTime = System.currentTimeMillis();
+    }
+
     public void addAllFilesTotalSize(long delta) {
         this.allFilesTotalSize += delta;
     }
@@ -43,7 +49,8 @@ public class FileCopyStatus {
     public void printCopyProgress() {
         long now = System.currentTimeMillis();
         long timeDelta = now - lastPrintTime;
-        if (timeDelta >= COPYING_STATUS_INTERVAL) {
+        long copiedDelta = allFilesCopiedSize - lastPrintAllFilesCopiedSize;
+        if (timeDelta >= COPYING_STATUS_INTERVAL && copiedDelta > 0) {
             // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / 75Mb/s / Eta: 101:01:52
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;
@@ -64,7 +71,6 @@ public class FileCopyStatus {
             message += " (" + allFilesPercentStr + ") / ";
 
             // Speed
-            long copiedDelta = allFilesCopiedSize - lastPrintAllFilesCopiedSize;
             long speed = copiedDelta * 1000 / timeDelta;
             String speedStr = FormattingHelper.humanReadableSize(speed);
             speedStr = String.format("%6s", speedStr);

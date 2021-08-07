@@ -58,9 +58,7 @@ public class CopyFileOperation implements Operation {
            FileChannel in = inputFile.getChannel();
            FileChannel out = outputFile.getChannel();
 
-           fileCopyStatus.setCurrentFileCopiedSize(0);
-           fileCopyStatus.setCurrentFileTotalSize(fileSize);
-           fileCopyStatus.printCopyProgress();
+           fileCopyStatus.startNewFile(fileSize);
 
            long read;
            ByteBuffer buffer = ByteBuffer.allocate(COPY_BUFFER_SIZE);
