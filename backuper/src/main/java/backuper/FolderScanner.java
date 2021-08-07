@@ -41,13 +41,13 @@ public class FolderScanner {
         FileMetadata fileMetadata = new FileMetadata(folder, startPath);
         foundFiles.put(fileMetadata.getRelativePath().toString(), fileMetadata);
 
-        if (Files.isSymbolicLink(folder) && !options.isSet(Options.Names.FOLLOW_SYMLINKS)) {
+        if (Files.isSymbolicLink(folder)) {
             return;
         }
 
         try (DirectoryStream<Path> ds = Files.newDirectoryStream(folder)) {
             for (Path path : ds) {
-                if (Files.isSymbolicLink(path) && !options.isSet(Options.Names.FOLLOW_SYMLINKS)) {
+                if (Files.isSymbolicLink(path)) {
                     continue; // Following symlinks only if the option is on
                 }
 
