@@ -2,131 +2,160 @@ package backuper;
 
 import java.io.Console;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
+import backuper.dto.BackupTask;
+import backuper.dto.FileMetadata;
 import backuper.helpers.FormattingHelper;
 import backuper.helpers.PrintHelper;
+import backuper.operations.CopyFileOperation;
+import backuper.operations.CreateFolderOperation;
+import backuper.operations.DeleteFileOperation;
+import backuper.operations.DeleteFolderOperation;
+import backuper.operations.Operation;
+import backuper.operations.OperationsComparator;
+import utils.NumberUtils;
 
 public class Backuper {
-    private Path srcPath;
-    private Path dstPath;
-
     private FolderScanner folderScanner;
-
-    private Map<String, FileMetadata> newFiles;
-    private Map<String, FileMetadata> changeSizedFiles;
-    private Map<String, FileMetadata> deletedFiles;
 
     public Backuper() {
         folderScanner = new FolderScanner();
-        newFiles = new LinkedHashMap<>();
-        changeSizedFiles = new LinkedHashMap<>();
     }
 
-    public void doBackup(Options options) throws IOException {
-        PrintHelper.println("Scanning source folder...");
-        Map<String, FileMetadata> srcFiles = folderScanner.scan(srcPath, options);
+    public void doBackupTasks(List<BackupTask> tasks) throws IOException {
+        List<Operation> operations = new ArrayList<>();
 
-        PrintHelper.println("Scanning destination folder...");
-        if (Files.notExists(dstPath)) {
-            Files.createDirectories(dstPath);
+        // Scanning all Backup Tasks
+        for (int i = 0; i < tasks.size(); i++) {
+            BackupTask task = tasks.get(i);
+
+            System.out.println("Scanning task #" + (i + 1) + ": " + task + "... ");
+            List<Operation> taskOperations = scanTask(task);
+            operations.addAll(taskOperations);
         }
-        Map<String, FileMetadata> dstFiles = folderScanner.scan(dstPath, options);
 
-        PrintHelper.println("Comparing the trees...");
-        compareFileTrees(srcFiles, dstFiles);
-        printTreeDiffs();
+        // Sorting Folder deletion order
+        operations.sort(new OperationsComparator());
 
-        if (isBackupConfirmed()) {
-            processFiles();
-            PrintHelper.println("Copying is done");
-        } else {
-            PrintHelper.println("Copying has been cancelled");
+        // Operations number
+        System.out.println("Operations to perform: " + operations.size() + " operation(s)");
+
+        // New Folders
+        System.out.println("New folders: " + operations.stream().filter(o -> (o instanceof CreateFolderOperation)).count());
+
+        // New Files
+        Supplier<Stream<Operation>> newFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof CopyFileOperation) && ((CopyFileOperation)o).isNewFile());
+        System.out.println("Copy new files: " + newFilesStream.get().count() +
+                " (" + NumberUtils.humanReadableSize(newFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum()) + "b)");
+
+        // Changed Files
+        Supplier<Stream<Operation>> changedFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof CopyFileOperation) && !((CopyFileOperation)o).isNewFile());
+        System.out.println("Copy changed files: " + changedFilesStream.get().count()
+                + " (" + NumberUtils.humanReadableSize(changedFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum())
+                + "b) <== Attention here if the size is too big!!!");
+
+        // Folders to delete
+        System.out.println("Folders to delete: " + operations.stream().filter(o -> (o instanceof DeleteFolderOperation)).count());
+
+        // Files to delete
+        Supplier<Stream<Operation>> deletedFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof DeleteFileOperation));
+        System.out.println("Files to delete: " + deletedFilesStream.get().count()
+                + " (" + NumberUtils.humanReadableSize(deletedFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum())
+                + "b) <== Attention here if the size is too big!!!");
+
+        long copyFileSizeTotal = operations.stream()
+                .mapToLong(o -> o.getCopyFileSize()).sum();
+        System.out.println("Total size to copy: " + NumberUtils.humanReadableSize(copyFileSizeTotal) + "b");
+
+        if (!confirmOperations()) {
+            System.out.println("Backup cancelled by user");
+            System.exit(-1);
         }
+
+        // Starting actual File Copying
+        FileCopyStatus fileCopyStatus = new FileCopyStatus();
+        fileCopyStatus.reset();
+        fileCopyStatus.setAllFilesTotalSize(copyFileSizeTotal);
+
+        long copiedFileSize = 0;
+        long copyStartTime = System.currentTimeMillis();
+        for (int i = 0; i < operations.size(); i++) {
+            Operation operation = operations.get(i);
+            System.out.println((i + 1) + "/" + operations.size()
+                    + " (" + NumberUtils.humanReadableSize(copiedFileSize) + "b/" + NumberUtils.humanReadableSize(copyFileSizeTotal) + "b): "
+                    + operation.getDescription());
+            operation.perform(fileCopyStatus);
+            copiedFileSize += operation.getCopyFileSize();
+        }
+        long copyEndTime = System.currentTimeMillis();
+
+        System.out.println("All tasks are done, took " + FormattingHelper.humanReadableTime((copyEndTime - copyStartTime) / 1000));
     }
 
-    private void compareFileTrees(Map<String, FileMetadata> srcFiles, Map<String, FileMetadata> dstFiles) {
-        for (Entry<String, FileMetadata> srcFile : srcFiles.entrySet()) {
-            String srcKey = srcFile.getKey();
-            if (!dstFiles.containsKey(srcKey)) {
-                newFiles.put(srcKey, srcFile.getValue());
+    private List<Operation> scanTask(BackupTask task) throws IOException {
+        List<Operation> operations = new ArrayList<>();
+
+        System.out.println("Scanning source folder...");
+        Map<String, FileMetadata> sourceFiles = folderScanner.scan(Paths.get(task.getSource()));
+        System.out.println("Scanning destination folder...");
+        Map<String, FileMetadata> destinationFiles = folderScanner.scan(Paths.get(task.getDestination()));
+
+        // Scanning Source Folder against Destination Folder
+        for (Entry<String, FileMetadata> sourceFileEntry : sourceFiles.entrySet()) {
+            String srcFileRelPath = sourceFileEntry.getKey();
+            FileMetadata srcFileMetadata = sourceFileEntry.getValue();
+            FileMetadata dstFileMetadata = destinationFiles.get(srcFileRelPath);
+
+            if (srcFileMetadata.isDirectory()) {
+                // Processing Folder operation
+                if (dstFileMetadata == null) {
+                    operations.add(new CreateFolderOperation(srcFileMetadata, task.getDestination()));
+                }
             } else {
-                FileMetadata srcMetadata = srcFile.getValue();
-                FileMetadata dstMetadata = dstFiles.get(srcKey);
-                if (srcMetadata.getSize() != dstMetadata.getSize()) {
-                    changeSizedFiles.put(srcKey, srcMetadata);
+                // Processing File operation
+                if (dstFileMetadata == null || !srcFileMetadata.equalsRelatively(dstFileMetadata)) {
+                    operations.add(new CopyFileOperation(srcFileMetadata, task.getDestination(), dstFileMetadata == null));
                 }
             }
         }
 
-        deletedFiles = dstFiles.entrySet().stream().filter(e -> !srcFiles.containsKey(e.getKey()))
-                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-    }
+        // Scanning Destination Folder against Source Folder
+        for (Entry<String, FileMetadata> destinationFileEntry : destinationFiles.entrySet()) {
+            String dstFileRelPath = destinationFileEntry.getKey();
+            FileMetadata dstFileMetadata = destinationFileEntry.getValue();
+            FileMetadata srcFileMetadata = sourceFiles.get(dstFileRelPath);
 
-    private void printTreeDiffs() {
-        PrintHelper.println("New files:");
-        printMetadataCollection(newFiles.values(), "+");
-
-        PrintHelper.println("Files with changed size:");
-        printMetadataCollection(changeSizedFiles.values(), "*");
-
-        PrintHelper.println("Deleted files:");
-        printMetadataCollection(deletedFiles.values(), "-");
-    }
-
-    private void printMetadataCollection(Collection<FileMetadata> collection, String prefix) {
-        for (FileMetadata element : collection) {
-            String fileType = element.isSymlink() ? ">" : element.isDirectory() ? "/" : "#";
-            long size = element.getSize();
-            String sizeStr = String.format("%8s", FormattingHelper.humanReadableSize(size));
-
-            String message = "    ";
-            message += sizeStr + " ";
-            message += prefix + " ";
-            message += fileType + " ";
-            message += element.getRelativePath();
-
-            PrintHelper.println(message);
+            if (srcFileMetadata == null) {
+                if (dstFileMetadata.isDirectory()) {
+                    operations.add(new DeleteFolderOperation(dstFileMetadata));
+                } else {
+                    operations.add(new DeleteFileOperation(dstFileMetadata));
+                }
+            }
         }
+
+        return operations;
     }
 
-    private boolean isBackupConfirmed() {
+    private boolean confirmOperations() {
         Console console = System.console();
         if (console == null) {
-            return true; // If console does not support by environment, do not asking for confirmation
+            return false; // If console does not support by environment, do not asking for confirmation
         }
 
-        PrintHelper.println("Please type \"yes\" to start syncronization");
+        PrintHelper.println("Please type \"yes\" to start backup");
         String input = console.readLine();
         boolean result = "yes".equals(input);
         return result;
-    }
-
-    private void processFiles() throws IOException {
-        PrintHelper.println("Synchronization started...");
-
-        FileProcessor processor = new FileProcessor();
-        processor.setSrcPath(srcPath);
-        processor.setDstPath(dstPath);
-
-        processor.addFilesToCopy(newFiles.values());
-        processor.addFilesToCopy(changeSizedFiles.values());
-        processor.addFilesToDelete(deletedFiles.values());
-
-        processor.start();
-    }
-
-    public void setSrcPath(Path srcPath) {
-        this.srcPath = srcPath;
-    }
-
-    public void setDstPath(Path dstPath) {
-        this.dstPath = dstPath;
     }
 }

@@ -1,34 +1,37 @@
 package backuper;
 
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.util.List;
 
-import backuper.helpers.PrintHelper;
+import com.fasterxml.jackson.core.type.TypeReference;
+
+import backuper.dto.BackupTask;
+import utils.JSONUtils;
 
 public class BackuperApp {
 
     public static void main(String[] args) throws IOException {
-        if (args.length < 2) {
-            printUsage();
+        System.out.println("Loading backup tasks...");
+
+        List<BackupTask> tasks = null;
+        File tasksFile = new File("tasks.json");
+        if (tasksFile.exists()) {
+            try {
+                TypeReference<List<BackupTask>> typeReference = new TypeReference<List<BackupTask>>() {};
+                tasks = JSONUtils.loadFromDisk(tasksFile, typeReference);
+                System.out.println("Found: " + tasks.size() + " task(s)");
+            } catch (Exception e) {
+                System.out.println("Error due to read tasks from file " + tasksFile.getAbsolutePath() + ", exiting");
+                e.printStackTrace();
+                System.exit(-1);
+            }
+        } else {
+            System.out.println("Task file " + tasksFile.getAbsolutePath() + " not found, exiting");
             System.exit(-1);
         }
 
-        String srcPath = args[0];
-        String dstPath = args[1];
-
         Backuper backuper = new Backuper();
-        backuper.setSrcPath(Paths.get(srcPath));
-        backuper.setDstPath(Paths.get(dstPath));
-
-        Options options = parseOptions(args);
-        backuper.doBackup(options);
-    }
-
-	private static Options parseOptions(String[] args) {
-		return new Options();
-	}
-
-    private static void printUsage() {
-        PrintHelper.println("Please use: " + BackuperApp.class.getName() + " <source path> <destination path> [options]");
+        backuper.doBackupTasks(tasks);
     }
 }

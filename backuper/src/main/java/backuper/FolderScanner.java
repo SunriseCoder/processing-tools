@@ -5,11 +5,12 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedList;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
+import backuper.dto.FileMetadata;
 import backuper.helpers.PrintHelper;
 
 public class FolderScanner {
@@ -18,10 +19,11 @@ public class FolderScanner {
     private Deque<Path> foldersToScan;
     private Map<String, FileMetadata> foundFiles;
 
-    public synchronized Map<String, FileMetadata> scan(Path path, Options options) throws IOException {
-        reset(options);
+    public synchronized Map<String, FileMetadata> scan(Path startPath) throws IOException {
+        foldersToScan = new ArrayDeque<>();
+        foundFiles = new LinkedHashMap<>();
 
-        this.startPath = path;
+        this.startPath = startPath;
         foldersToScan.add(startPath);
 
         while (!foldersToScan.isEmpty()) {
@@ -34,14 +36,10 @@ public class FolderScanner {
         return foundFiles;
     }
 
-    private void reset(Options options) {
-        this.options = options;
-        foldersToScan = new LinkedList<>();
-        foundFiles = new TreeMap<>();
-    }
-
     private void scanNextSourceFolder() throws IOException {
         Path folder = foldersToScan.poll();
+        FileMetadata fileMetadata = new FileMetadata(folder, startPath);
+        foundFiles.put(fileMetadata.getRelativePath().toString(), fileMetadata);
 
         if (Files.isSymbolicLink(folder) && !options.isSet(Options.Names.FOLLOW_SYMLINKS)) {
             return;
@@ -57,16 +55,18 @@ public class FolderScanner {
                     foldersToScan.add(path);
                 }
 
-                String relativePath = startPath.relativize(path).toString();
-                foundFiles.put(relativePath, new FileMetadata(path, relativePath));
+                fileMetadata = new FileMetadata(path, startPath);
+                foundFiles.put(fileMetadata.getRelativePath().toString(), fileMetadata);
             }
         } catch (AccessDeniedException e) {
+            System.out.println("Access denided: " + e.getFile() + ", " + e.getMessage());
+            // TODO Add logging to the file here
             return; // No scan of the folder, where we don't have permissions
         }
     }
 
     private void printStatus() {
-        String message = "Scanning: " + foldersToScan.size() + ", found: " + foundFiles.size();
+        String message = "To scan: " + foldersToScan.size() + ", found: " + foundFiles.size();
         PrintHelper.printAndReturn(message);
     }
 }
