@@ -56,4 +56,11 @@ public class JSONUtils {
         JsonNode node = mapper.readTree(jsonText);
         return node;
     }
+
+    public static <T> T parseJSON(String text, TypeReference<T> typeReference) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setVisibility(PropertyAccessor.ALL, Visibility.ANY);
+        T result = mapper.readValue(text, typeReference);
+        return result;
+    }
 }

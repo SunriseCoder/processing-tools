@@ -1,0 +1,31 @@
+{
+    "serverPort": 8081,
+    "resources": [
+        {
+            "name": "photo",
+            "path": "C:\\Photo"
+        },
+        {
+            "name": "video",
+            "path": "C:\\Video"
+        }
+    ],
+    "users": [
+        {
+            "login": "john",
+            "name": "John Smith",
+            "token": "123",
+            "permissions": [
+                "photo"
+            ]
+        },
+        {
+            "login": "peter",
+            "name": "Peter Smith",
+            "token": "321",
+            "permissions": [
+                "photo", "video"
+            ]
+        }
+    ]
+}
