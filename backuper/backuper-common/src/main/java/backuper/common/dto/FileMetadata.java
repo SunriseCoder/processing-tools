@@ -1,4 +1,4 @@
-package backuper.client.dto;
+package backuper.common.dto;
 
 import java.io.IOException;
 import java.nio.file.Files;

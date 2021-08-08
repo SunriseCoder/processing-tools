@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import backuper.client.FileCopyStatus;
-import backuper.client.dto.FileMetadata;
+import backuper.common.dto.FileMetadata;
 
 public class CopyFileOperation implements Operation {
     private static final int COPY_BUFFER_SIZE = 1024 * 1024;

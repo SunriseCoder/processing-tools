@@ -2,8 +2,8 @@ package backuper.client;
 
 import java.text.DecimalFormat;
 
-import backuper.client.helpers.FormattingHelper;
-import backuper.client.helpers.PrintHelper;
+import backuper.common.helpers.FormattingHelper;
+import backuper.common.helpers.PrintHelper;
 
 public class FileCopyStatus {
     private static final int COPYING_STATUS_INTERVAL = 1000;

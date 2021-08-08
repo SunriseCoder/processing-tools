@@ -11,15 +11,16 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import backuper.client.dto.BackupTask;
-import backuper.client.dto.FileMetadata;
-import backuper.client.helpers.FormattingHelper;
-import backuper.client.helpers.PrintHelper;
 import backuper.client.operations.CopyFileOperation;
 import backuper.client.operations.CreateFolderOperation;
 import backuper.client.operations.DeleteFileOperation;
 import backuper.client.operations.DeleteFolderOperation;
 import backuper.client.operations.Operation;
 import backuper.client.operations.OperationsComparator;
+import backuper.common.FolderScanner;
+import backuper.common.dto.FileMetadata;
+import backuper.common.helpers.FormattingHelper;
+import backuper.common.helpers.PrintHelper;
 import utils.NumberUtils;
 
 public class Backuper {

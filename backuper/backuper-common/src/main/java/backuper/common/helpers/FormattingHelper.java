@@ -1,4 +1,4 @@
-package backuper.client.helpers;
+package backuper.common.helpers;
 
 public class FormattingHelper {
 

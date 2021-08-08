@@ -1,4 +1,4 @@
-package backuper.client.helpers;
+package backuper.common.helpers;
 
 public class PrintHelper {
     private static final int CONSOLE_WIDTH = 119;

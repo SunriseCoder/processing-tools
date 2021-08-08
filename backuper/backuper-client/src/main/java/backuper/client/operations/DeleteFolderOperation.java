@@ -5,7 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import backuper.client.FileCopyStatus;
-import backuper.client.dto.FileMetadata;
+import backuper.common.dto.FileMetadata;
 
 public class DeleteFolderOperation implements Operation {
     private Path absolutePath;

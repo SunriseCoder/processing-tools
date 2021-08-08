@@ -1,4 +1,4 @@
-package backuper.client;
+package backuper.common;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
@@ -10,8 +10,8 @@ import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import backuper.client.dto.FileMetadata;
-import backuper.client.helpers.PrintHelper;
+import backuper.common.dto.FileMetadata;
+import backuper.common.helpers.PrintHelper;
 
 public class FolderScanner {
     private Path startPath;
