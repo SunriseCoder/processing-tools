@@ -9,57 +9,26 @@
     </parent>
 
     <artifactId>backuper</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <dependencies>
+    <modules>
+        <module>backuper-common</module>
+        <module>backuper-client</module>
+        <module>backuper-server</module>
+    </modules>
 
-        <!-- Local -->
-        <dependency>
-            <groupId>sunrisecoder</groupId>
-            <artifactId>common-utils</artifactId>
-        </dependency>
+    <dependencyManagement>
+        <dependencies>
 
-        <!-- JSON -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-        </dependency>
+            <!-- Local -->
+            <dependency>
+                <groupId>sunrisecoder</groupId>
+                <artifactId>backuper-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
 
-        <!-- Testing -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-        </dependency>
-
-    </dependencies>
-
-    <build>
-        <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                    <archive>
-                        <manifest>
-                            <mainClass>backuper.BackuperApp</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>make-assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-        </plugins>
-    </build>
+        </dependencies>
+    </dependencyManagement>
 
 </project>

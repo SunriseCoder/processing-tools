@@ -12,7 +12,6 @@
         <module>common-utils</module>
         <module>audio-tools</module>
         <module>backuper</module>
-        <module>backuper-server</module>
         <module>book-tools</module>
         <module>debug-proxy</module>
         <module>graph-tools</module>

@@ -1,0 +1,12 @@
+[
+    {
+        "name": "task1",
+        "source": "C:\\tmp\\data\\src1",
+        "destination": "C:\\tmp\\data\\dst1"
+    },
+    {
+        "name": "task2",
+        "source": "C:\\tmp\\data\\src2",
+        "destination": "C:\\tmp\\data\\dst2"
+    }
+]
