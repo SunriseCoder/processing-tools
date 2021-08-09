@@ -43,9 +43,18 @@ public class Configuration {
         resources.forEach(resource -> resourceMap.put(resource.getName(), resource));
 
         usersByLoginMap = new HashMap<>();
+        usersByTokenMap = new HashMap<>();
         users.forEach(user -> {
             usersByLoginMap.put(user.getLogin(), user);
             usersByTokenMap.put(user.getToken(), user);
         });
+    }
+
+    public Resource getResourceByName(String resource) {
+        return resourceMap.get(resource);
+    }
+
+    public User getUserByToken(String token) {
+        return usersByTokenMap.get(token);
     }
 }

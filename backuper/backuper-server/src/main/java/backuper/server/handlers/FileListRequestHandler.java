@@ -1,50 +1,60 @@
 package backuper.server.handlers;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
+import backuper.common.dto.FileMetadataRemote;
+import backuper.common.helpers.HttpHelper;
 import backuper.server.FileServer;
-import backuper.server.helpers.StreamHelper;
 import utils.JSONUtils;
+import utils.NumberUtils;
 
 @SuppressWarnings("restriction")
 public class FileListRequestHandler implements HttpHandler {
+    private FileServer fileServer;
 
     public FileListRequestHandler(FileServer fileServer) {
-        // TODO Auto-generated constructor stub
+        this.fileServer = fileServer;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        // TODO Auto-generated method stub
-        String requestBody = StreamHelper.readFromInputStream(exchange.getRequestBody());
-        FileListRequest request = JSONUtils.parseJSON(requestBody, new TypeReference<FileListRequest>() {});
-        System.out.println("Hello!");
-    }
-
-    private static class FileListRequest {
-        String resource;
-        String token;
-
-        public FileListRequest() {}
-
-        public String getResource() {
-            return resource;
+        if (!HttpHelper.validateMethod(exchange, "POST")) {
+            return;
         }
 
-        public void setResource(String resource) {
-            this.resource = resource;
+        Map<String, String> params = HttpHelper.parsePostParams(exchange);
+        if (!HttpHelper.validateNonEmptyParams(params, new String[] { "resource", "token" }, exchange)) {
+            return;
         }
 
-        public String getToken() {
-            return token;
+        String resource = params.get("resource");
+        if (!fileServer.hasResource(resource)) {
+            HttpHelper.sendResponse(exchange, 404, "Resorce not found");
+            return;
         }
 
-        public void setToken(String token) {
-            this.token = token;
+        String token = params.get("token");
+        if (!fileServer.hasToken(token)) {
+            HttpHelper.sendResponse(exchange, 403, "Invalid token");
+            return;
         }
+
+        System.out.println("Request: " + params.get("resource") + ", " + fileServer.getUserByToken(params.get("token")).getLogin());
+
+        List<FileMetadataRemote> fileList = fileServer.getFileList(resource, token);
+        if (fileList == null) {
+            HttpHelper.sendResponse(exchange, 403, "Access denied");
+            return;
+        }
+
+        String json = JSONUtils.toJSON(fileList);
+        HttpHelper.sendResponse(exchange, 200, json);
+
+        System.out.println("FileList - " + resource + " - " + fileList.size() + " file(s) - " + NumberUtils.humanReadableSize(json.length()) + "b");
     }
 }
