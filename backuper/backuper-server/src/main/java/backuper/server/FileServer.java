@@ -1,6 +1,11 @@
 package backuper.server;
 
 import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
@@ -45,5 +50,29 @@ public class FileServer {
         List<FileMetadataRemote> foldersList = foldersMap.values().stream()
                 .map(fileMetadata -> new FileMetadataRemote(fileMetadata)).collect(Collectors.toList());
         return foldersList;
+    }
+
+    public boolean hasAccess(String resource, String token) {
+        User user = config.getUserByToken(token);
+        return user.getPermissions().contains(resource);
+    }
+
+    public byte[] getFileData(String resourceName, String relativePath, long start, int length) throws IOException {
+        Resource resource = config.getResourceByName(resourceName);
+        Path path = Paths.get(resource.getPath(), relativePath);
+
+        long fileSize = Files.size(path);
+        if (length > fileSize - start) {
+            length = (int) (fileSize - start);
+        }
+
+        ByteBuffer byteBuffer = ByteBuffer.allocate(length);
+        try (RandomAccessFile inputFile = new RandomAccessFile(path.toString(), "r")) {
+            FileChannel in = inputFile.getChannel();
+            in.position(start);
+            in.read(byteBuffer);
+        }
+
+        return byteBuffer.array();
     }
 }

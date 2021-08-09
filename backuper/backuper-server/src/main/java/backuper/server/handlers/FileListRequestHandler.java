@@ -46,12 +46,12 @@ public class FileListRequestHandler implements HttpHandler {
 
         System.out.println("Request: " + params.get("resource") + ", " + fileServer.getUserByToken(params.get("token")).getLogin());
 
-        List<FileMetadataRemote> fileList = fileServer.getFileList(resource, token);
-        if (fileList == null) {
+        if (!fileServer.hasAccess(resource, token)) {
             HttpHelper.sendResponse(exchange, 403, "Access denied");
             return;
         }
 
+        List<FileMetadataRemote> fileList = fileServer.getFileList(resource, token);
         String json = JSONUtils.toJSON(fileList);
         HttpHelper.sendResponse(exchange, 200, json);
 
