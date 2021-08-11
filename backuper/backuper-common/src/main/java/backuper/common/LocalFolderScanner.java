@@ -13,7 +13,7 @@ import java.util.Map;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.PrintHelper;
 
-public class FolderScanner {
+public class LocalFolderScanner {
     private Path startPath;
     private Deque<Path> foldersToScan;
     private Map<String, FileMetadata> foundFiles;

@@ -1,13 +1,10 @@
 package backuper.server.handlers;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Map;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import backuper.common.helpers.HttpHelper;
 import backuper.server.FileServer;
 
 @SuppressWarnings("restriction")
@@ -20,6 +17,7 @@ public class FileDataRequestHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        /* TODO Rewrite using Apache Components as the FileListRequestHandler
         if (!HttpHelper.validateMethod(exchange, "POST")) {
             return;
         }
@@ -54,6 +52,6 @@ public class FileDataRequestHandler implements HttpHandler {
         exchange.sendResponseHeaders(200, fileData.length);
         OutputStream response = exchange.getResponseBody();
         response.write(fileData);
-        response.close();
+        response.close();*/
     }
 }

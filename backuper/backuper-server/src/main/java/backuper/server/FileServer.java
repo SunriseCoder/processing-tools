@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import backuper.common.FolderScanner;
+import backuper.common.LocalFolderScanner;
 import backuper.common.dto.FileMetadata;
 import backuper.common.dto.FileMetadataRemote;
 import backuper.server.config.Configuration;
@@ -20,11 +20,11 @@ import backuper.server.config.User;
 
 public class FileServer {
     private Configuration config;
-    private FolderScanner folderScanner;
+    private LocalFolderScanner folderScanner;
 
     public FileServer(Configuration config) {
         this.config = config;
-        folderScanner = new FolderScanner();
+        folderScanner = new LocalFolderScanner();
     }
 
     public boolean hasResource(String resource) {

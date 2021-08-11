@@ -1,39 +1,59 @@
 package backuper.server;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.hc.core5.http.URIScheme;
+import org.apache.hc.core5.http.impl.bootstrap.AsyncServerBootstrap;
+import org.apache.hc.core5.http.impl.bootstrap.HttpAsyncServer;
+import org.apache.hc.core5.http.protocol.HttpDateGenerator;
+import org.apache.hc.core5.io.CloseMode;
+import org.apache.hc.core5.reactor.IOReactorConfig;
+import org.apache.hc.core5.reactor.ListenerEndpoint;
+import org.apache.hc.core5.util.TimeValue;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.sun.net.httpserver.HttpServer;
 
 import backuper.server.config.Configuration;
-import backuper.server.handlers.FileDataRequestHandler;
 import backuper.server.handlers.FileListRequestHandler;
-import backuper.server.handlers.FileSumRequestHandler;
 import utils.JSONUtils;
 
-@SuppressWarnings("restriction")
 public class BackuperServerApp {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         Configuration config = JSONUtils.loadFromDisk(new File("config.json"), new TypeReference<Configuration>() {});
         config.linkObjects();
         FileServer fileServer = new FileServer(config);
 
         int serverPort = config.getServerPort();
-        HttpServer httpServer = HttpServer.create(new InetSocketAddress(serverPort), 0);
+        IOReactorConfig reactorConfig = IOReactorConfig.custom()
+                .setSoTimeout(15, TimeUnit.SECONDS).setTcpNoDelay(true).build();
+        HttpAsyncServer server = AsyncServerBootstrap.bootstrap()
+                .setIOReactorConfig(reactorConfig)
+                .register("/file-list", new FileListRequestHandler(fileServer))
+                .create();
 
-        ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor)Executors.newFixedThreadPool(10);
-        httpServer.setExecutor(threadPoolExecutor);
+        // TODO httpServer.createContext("/file-sum", new FileSumRequestHandler(fileServer));
+        // TODO httpServer.createContext("/file-data", new FileDataRequestHandler(fileServer));
 
-        httpServer.createContext("/file-list", new FileListRequestHandler(fileServer));
-        httpServer.createContext("/file-sum", new FileSumRequestHandler(fileServer));
-        httpServer.createContext("/file-data", new FileDataRequestHandler(fileServer));
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                println("HTTP server shutting down");
+                server.close(CloseMode.GRACEFUL);
+            }
+        });
 
-        httpServer.start();
-        System.out.println("Server started on port " + serverPort);
+        server.start();
+        final Future<ListenerEndpoint> future = server.listen(new InetSocketAddress(serverPort), URIScheme.HTTP);
+        final ListenerEndpoint listenerEndpoint = future.get();
+        println("Listening on " + listenerEndpoint.getAddress());
+        server.awaitShutdown(TimeValue.MAX_VALUE);
+    }
+
+    static final void println(final String msg) {
+        System.out.println(HttpDateGenerator.INSTANCE.getCurrentDate() + " | " + msg);
     }
 }

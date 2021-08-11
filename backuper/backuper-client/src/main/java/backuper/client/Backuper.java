@@ -10,6 +10,8 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import org.apache.hc.core5.http.HttpException;
+
 import backuper.client.dto.BackupTask;
 import backuper.client.operations.CopyFileOperation;
 import backuper.client.operations.CreateFolderOperation;
@@ -17,20 +19,22 @@ import backuper.client.operations.DeleteFileOperation;
 import backuper.client.operations.DeleteFolderOperation;
 import backuper.client.operations.Operation;
 import backuper.client.operations.OperationsComparator;
-import backuper.common.FolderScanner;
+import backuper.common.LocalFolderScanner;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.FormattingHelper;
 import backuper.common.helpers.PrintHelper;
 import utils.NumberUtils;
 
 public class Backuper {
-    private FolderScanner folderScanner;
+    private LocalFolderScanner localFolderScanner;
+    private RemoteResourceScanner remoteResourceScanner;
 
     public Backuper() {
-        folderScanner = new FolderScanner();
+        localFolderScanner = new LocalFolderScanner();
+        remoteResourceScanner = new RemoteResourceScanner();
     }
 
-    public void doBackupTasks(List<BackupTask> tasks) throws IOException {
+    public void doBackupTasks(List<BackupTask> tasks) throws IOException, HttpException {
         List<Operation> operations = new ArrayList<>();
         long startTime, scanEndTime, copyStartTime, endTime;
 
@@ -110,13 +114,13 @@ public class Backuper {
         System.out.println("Total: " + FormattingHelper.humanReadableTime((endTime - startTime) / 1000));
     }
 
-    private List<Operation> scanTask(BackupTask task) throws IOException {
+    private List<Operation> scanTask(BackupTask task) throws IOException, HttpException {
         List<Operation> operations = new ArrayList<>();
 
         System.out.println("Scanning source folder...");
-        Map<String, FileMetadata> sourceFiles = folderScanner.scan(Paths.get(task.getSource()));
+        Map<String, FileMetadata> sourceFiles = scanResource(task.getSource());
         System.out.println("Scanning destination folder...");
-        Map<String, FileMetadata> destinationFiles = folderScanner.scan(Paths.get(task.getDestination()));
+        Map<String, FileMetadata> destinationFiles = scanResource(task.getDestination());
 
         // Scanning Source Folder against Destination Folder
         for (Entry<String, FileMetadata> sourceFileEntry : sourceFiles.entrySet()) {
@@ -153,6 +157,12 @@ public class Backuper {
         }
 
         return operations;
+    }
+
+    private Map<String, FileMetadata> scanResource(String resource) throws IOException, HttpException {
+        Map<String, FileMetadata> files = resource.startsWith("http://") || resource.startsWith("https://") ?
+                remoteResourceScanner.scan(resource) : localFolderScanner.scan(Paths.get(resource));
+        return files;
     }
 
     private boolean confirmOperations() {

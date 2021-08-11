@@ -3,10 +3,14 @@ package backuper.common.dto;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
 public class FileMetadata {
+    private String remoteResource;
+    private String token;
+
     private String name;
     private Path absolutePath;
     private Path relativePath;
@@ -19,6 +23,7 @@ public class FileMetadata {
 
     private boolean directory;
     private boolean symlink;
+    private boolean remote;
 
     public FileMetadata(Path path, Path startPath) throws IOException {
         name = path.getFileName().toString();
@@ -34,6 +39,32 @@ public class FileMetadata {
 
         directory = attributes.isDirectory();
         symlink = attributes.isSymbolicLink();
+    }
+
+    public FileMetadata(FileMetadataRemote remoteFileMetadata, String remoteResource, String token) {
+        this.remoteResource = remoteResource;
+        this.token = token;
+
+        name = remoteFileMetadata.getName();
+        relativePath = Paths.get(remoteFileMetadata.getPath());
+
+        size = remoteFileMetadata.getSize();
+
+        creationTime = FileTime.fromMillis(remoteFileMetadata.getCreationTime());
+        lastModifiedTime = FileTime.fromMillis(remoteFileMetadata.getLastModifiedTime());
+        lastAccessTime = FileTime.fromMillis(remoteFileMetadata.getLastAccessTime());
+
+        directory = remoteFileMetadata.isDirectory();
+        symlink = remoteFileMetadata.isSymlink();
+        remote = true;
+    }
+
+    public String getRemoteResource() {
+        return remoteResource;
+    }
+
+    public String getToken() {
+        return token;
     }
 
     public String getName() {
@@ -70,6 +101,10 @@ public class FileMetadata {
 
     public boolean isSymlink() {
         return symlink;
+    }
+
+    public boolean isRemote() {
+        return remote;
     }
 
     public boolean equalsRelatively(FileMetadata other) {
