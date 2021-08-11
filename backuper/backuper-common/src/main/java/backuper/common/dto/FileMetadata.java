@@ -8,7 +8,8 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 
 public class FileMetadata {
-    private String remoteResource;
+    private String resourceHostPort;
+    private String resourceName;
     private String token;
 
     private String name;
@@ -41,8 +42,9 @@ public class FileMetadata {
         symlink = attributes.isSymbolicLink();
     }
 
-    public FileMetadata(FileMetadataRemote remoteFileMetadata, String remoteResource, String token) {
-        this.remoteResource = remoteResource;
+    public FileMetadata(FileMetadataRemote remoteFileMetadata, String resourceHostPort, String resourceName, String token) {
+        this.resourceHostPort = resourceHostPort;
+        this.resourceName = resourceName;
         this.token = token;
 
         name = remoteFileMetadata.getName();
@@ -59,8 +61,12 @@ public class FileMetadata {
         remote = true;
     }
 
-    public String getRemoteResource() {
-        return remoteResource;
+    public String getResourceHostPort() {
+        return resourceHostPort;
+    }
+
+    public String getResourceName() {
+        return resourceName;
     }
 
     public String getToken() {

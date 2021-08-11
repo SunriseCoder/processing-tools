@@ -1,5 +1,6 @@
 package backuper.server;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -60,6 +61,10 @@ public class FileServer {
     public byte[] getFileData(String resourceName, String relativePath, long start, int length) throws IOException {
         Resource resource = config.getResourceByName(resourceName);
         Path path = Paths.get(resource.getPath(), relativePath);
+
+        if (!Files.exists(path)) {
+            throw new FileNotFoundException(path.toString());
+        }
 
         long fileSize = Files.size(path);
         if (length > fileSize - start) {

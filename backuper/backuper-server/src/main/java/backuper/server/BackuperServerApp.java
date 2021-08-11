@@ -17,6 +17,7 @@ import org.apache.hc.core5.util.TimeValue;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import backuper.server.config.Configuration;
+import backuper.server.handlers.FileDataRequestHandler;
 import backuper.server.handlers.FileListRequestHandler;
 import utils.JSONUtils;
 
@@ -33,10 +34,8 @@ public class BackuperServerApp {
         HttpAsyncServer server = AsyncServerBootstrap.bootstrap()
                 .setIOReactorConfig(reactorConfig)
                 .register("/file-list", new FileListRequestHandler(fileServer))
+                .register("/file-data", new FileDataRequestHandler(fileServer))
                 .create();
-
-        // TODO httpServer.createContext("/file-sum", new FileSumRequestHandler(fileServer));
-        // TODO httpServer.createContext("/file-data", new FileDataRequestHandler(fileServer));
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override

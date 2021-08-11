@@ -11,7 +11,6 @@ import java.util.regex.Pattern;
 import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
-import org.apache.hc.core5.util.Timeout;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -35,13 +34,12 @@ public class RemoteResourceScanner {
         String token = matcher.group(2);
         String host = matcher.group(3);
         String port = matcher.group(4);
-        String resource = matcher.group(5);
+        String resourceName = matcher.group(5);
 
-        String remoteResource = protocol + "://" + host + ":" + port + "/";
-        String requestUrl = remoteResource + "file-list";
-        Timeout timeout = Timeout.ofMinutes(5);
+        String resourceHostPort = protocol + "://" + host + ":" + port + "/";
+        String requestUrl = resourceHostPort + "file-list";
         List<NameValuePair> postData = new ArrayList<>();
-        postData.add(new BasicNameValuePair("resource", resource));
+        postData.add(new BasicNameValuePair("resource", resourceName));
         postData.add(new BasicNameValuePair("token", token));
         Response response = HttpHelper.sendPostRequest(requestUrl, postData);
         int responseCode = response.getCode();
@@ -55,7 +53,7 @@ public class RemoteResourceScanner {
         List<FileMetadataRemote> remoteFileList = JSONUtils.parseJSON(responseText, new TypeReference<List<FileMetadataRemote>>() {});
         Map<String, FileMetadata> fileMetadataMap = new LinkedHashMap<>();
         remoteFileList.stream()
-                .map(m -> new FileMetadata(m, remoteResource, token))
+                .map(m -> new FileMetadata(m, resourceHostPort, resourceName, token))
                 .forEachOrdered(m -> fileMetadataMap.put(m.getRelativePath().toString(), m));
 
         return fileMetadataMap;

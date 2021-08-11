@@ -77,6 +77,13 @@ public class HttpHelper {
         responseTrigger.submitResponse(AsyncResponseBuilder.create(responseCode).setEntity(message, contentType).build(), context);
     }
 
+    public static void sendHttpResponse(int responseCode, byte[] data, ContentType contentType,
+            ResponseTrigger responseTrigger, HttpContext context) throws HttpException, IOException {
+
+        System.out.println("Sending response: " + responseCode + " " + data.length + " bytes");
+        responseTrigger.submitResponse(AsyncResponseBuilder.create(responseCode).setEntity(data, contentType).build(), context);
+    }
+
     public static Response sendPostRequest(String requestUrl, List<NameValuePair> postData) throws IOException, HttpException {
         CloseableHttpResponse apacheResponse = (CloseableHttpResponse) Request.post(requestUrl).bodyForm(postData).execute().returnResponse();
         Response response = new Response(apacheResponse.getCode(), EntityUtils.toByteArray(apacheResponse.getEntity()));

@@ -7,9 +7,18 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.hc.core5.http.HttpException;
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
 
 import backuper.client.FileCopyStatus;
 import backuper.common.dto.FileMetadata;
+import backuper.common.helpers.HttpHelper;
+import backuper.common.helpers.HttpHelper.Response;
+import utils.ThreadUtils;
 
 public class CopyFileOperation implements Operation {
     private static final int COPY_BUFFER_SIZE = 1024 * 1024;
@@ -33,7 +42,9 @@ public class CopyFileOperation implements Operation {
 
     @Override
     public String getDescription() {
-        return "Copy file \"" + srcAbsolutePath.toString() + "\" to \"" + dstAbsolutePath.toString() + "\"";
+        return "Copy file \"" + (srcFileMetadata.isRemote()
+                ? srcFileMetadata.getResourceHostPort() + srcFileMetadata.getResourceName() + "/" + srcFileMetadata.getRelativePath().toString()
+                : srcAbsolutePath.toString()) + "\" to \"" + dstAbsolutePath.toString() + "\"";
     }
 
     @Override
@@ -51,24 +62,52 @@ public class CopyFileOperation implements Operation {
     }
 
     @Override
-    public void perform(FileCopyStatus fileCopyStatus) throws IOException {
-        try (RandomAccessFile inputFile = new RandomAccessFile(srcAbsolutePath.toString(), "r");
-                RandomAccessFile outputFile = new RandomAccessFile(dstAbsolutePath.toString(), "rw");) {
+    public void perform(FileCopyStatus fileCopyStatus) throws IOException, HttpException {
+        try (RandomAccessFile outputFile = new RandomAccessFile(dstAbsolutePath.toString(), "rw");) {
 
-           FileChannel in = inputFile.getChannel();
            FileChannel out = outputFile.getChannel();
 
            fileCopyStatus.startNewFile(fileSize);
 
-           long read;
-           ByteBuffer buffer = ByteBuffer.allocate(COPY_BUFFER_SIZE);
-           while ((read = in.read(buffer)) > 0) {
-               buffer.flip();
-               // TODO Debug here, problems due to copy, maybe use transfers
-               out.write(buffer);
-               fileCopyStatus.addCopiedSize(read);
-               fileCopyStatus.printCopyProgress();
-               buffer = ByteBuffer.allocate(COPY_BUFFER_SIZE);
+           if (srcFileMetadata.isRemote()) {
+               for (long i = 0; i < fileSize; i += COPY_BUFFER_SIZE) {
+                   String requestUrl = srcFileMetadata.getResourceHostPort() + "file-data";
+                   List<NameValuePair> postData = new ArrayList<>();
+                   postData.add(new BasicNameValuePair("resource", srcFileMetadata.getResourceName()));
+                   postData.add(new BasicNameValuePair("token", srcFileMetadata.getToken()));
+                   postData.add(new BasicNameValuePair("path", srcFileMetadata.getRelativePath().toString()));
+                   postData.add(new BasicNameValuePair("start", String.valueOf(i)));
+                   postData.add(new BasicNameValuePair("length", String.valueOf(COPY_BUFFER_SIZE)));
+
+                   Response response = null;
+                do {
+                       response = HttpHelper.sendPostRequest(requestUrl, postData);
+                       if (response.getCode() != 200) {
+                           System.out.println("Got response: " + response.getCode() + " " + new String(response.getData()));
+                           ThreadUtils.sleep(5000);
+                       }
+                   } while (response == null || response.getCode() != 200);
+
+                   byte[] responseData = response.getData();
+                   ByteBuffer buffer = ByteBuffer.wrap(responseData);
+                   out.write(buffer);
+                   fileCopyStatus.addCopiedSize(responseData.length);
+                   fileCopyStatus.printCopyProgress();
+               }
+           } else {
+               try (RandomAccessFile inputFile = new RandomAccessFile(srcAbsolutePath.toString(), "r")) {
+                   FileChannel in = inputFile.getChannel();
+                   long read;
+                   ByteBuffer buffer = ByteBuffer.allocate(COPY_BUFFER_SIZE);
+                   while ((read = in.read(buffer)) > 0) {
+                       buffer.flip();
+                       // TODO Debug here, problems due to copy, maybe use transfers
+                       out.write(buffer);
+                       fileCopyStatus.addCopiedSize(read);
+                       fileCopyStatus.printCopyProgress();
+                       buffer = ByteBuffer.allocate(COPY_BUFFER_SIZE);
+                   }
+               }
            }
 
            Files.setAttribute(dstAbsolutePath, "creationTime", srcFileMetadata.getCreationTime());
