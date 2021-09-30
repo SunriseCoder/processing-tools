@@ -2,6 +2,8 @@ package backuper.client;
 
 import java.io.Console;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,7 +117,10 @@ public class Backuper {
     }
 
     private List<Operation> scanTask(BackupTask task) throws IOException, HttpException {
-        List<Operation> operations = new ArrayList<>();
+        Path destinationPath = Paths.get(task.getDestination());
+        if (Files.notExists(destinationPath)) {
+            Files.createDirectories(destinationPath);
+        }
 
         System.out.println("Scanning source folder...");
         Map<String, FileMetadata> sourceFiles = scanResource(task.getSource());
@@ -123,6 +128,7 @@ public class Backuper {
         Map<String, FileMetadata> destinationFiles = scanResource(task.getDestination());
 
         // Scanning Source Folder against Destination Folder
+        List<Operation> operations = new ArrayList<>();
         for (Entry<String, FileMetadata> sourceFileEntry : sourceFiles.entrySet()) {
             String srcFileRelPath = sourceFileEntry.getKey();
             FileMetadata srcFileMetadata = sourceFileEntry.getValue();
