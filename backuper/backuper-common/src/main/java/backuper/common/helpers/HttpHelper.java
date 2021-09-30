@@ -73,7 +73,12 @@ public class HttpHelper {
     public static void sendHttpResponse(int responseCode, String message, ContentType contentType,
             ResponseTrigger responseTrigger, HttpContext context) throws HttpException, IOException {
 
-        System.out.println("Sending response: " + responseCode + " " + message.substring(0, Math.min(100, message.length())));
+        String consoleMessage = message.substring(0, Math.min(100, message.length())).replaceAll("\r|\n", "");
+        if (message.length() > 100) {
+            consoleMessage += "...";
+        }
+        consoleMessage += " - " + message.length() + " symbol(s)";
+        System.out.println("Sending response: " + responseCode + " " + consoleMessage);
         responseTrigger.submitResponse(AsyncResponseBuilder.create(responseCode).setEntity(message, contentType).build(), context);
     }
 
