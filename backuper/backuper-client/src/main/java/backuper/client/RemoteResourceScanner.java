@@ -22,12 +22,12 @@ import utils.JSONUtils;
 
 public class RemoteResourceScanner {
     private static final Pattern RESOURCE_PATTERN = Pattern.compile(
-            "(http[s]?)://([A-Za-z0-9]+)@([A-Za-z0-9\\-\\.]+):([0-9]+)/([A-Za-z0-9\\\\-\\\\.]+)");
+            "(http[s]?)://([A-Za-z0-9\\-]+)@([A-Za-z0-9\\-\\.]+):([0-9]+)/([A-Za-z0-9\\\\-\\\\.]+)");
 
     public synchronized Map<String, FileMetadata> scan(String url) throws IOException, HttpException {
         Matcher matcher = RESOURCE_PATTERN.matcher(url);
         if (!matcher.matches()) {
-            throw new RuntimeException("Remote resource url has invalid format: " + url + ", must be like: http://user:pass@host:port/resource");
+            throw new RuntimeException("Remote resource url has invalid format: " + url + ", must be like: http://token@host:port/resource");
         }
 
         String protocol = matcher.group(1);
