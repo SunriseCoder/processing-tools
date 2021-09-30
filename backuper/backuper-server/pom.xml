@@ -48,7 +48,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>backuper.BackuperServerApp</mainClass>
+                            <mainClass>backuper.server.BackuperServerApp</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
