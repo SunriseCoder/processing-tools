@@ -1,18 +1,9 @@
-package backuper.client.dto;
+package backuper.client.config;
 
 public class BackupTask {
     private String name;
     private String source;
     private String destination;
-
-    public BackupTask() {
-        // Default constructor for deserializating
-    }
-
-    public BackupTask(String source, String destination) {
-        this.source = source;
-        this.destination = destination;
-    }
 
     public String getName() {
         return name;

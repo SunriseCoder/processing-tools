@@ -11,15 +11,17 @@ public class FileCopyStatus {
     private DecimalFormat percentFormat = new DecimalFormat("0.00%");
 
     private long startCopyingTime;
+    private long currentFileStartTime;
     private long currentFileCopiedSize;
     private long currentFileTotalSize;
     private long allFilesCopiedSize;
     private long allFilesTotalSize;
     private long lastPrintTime;
     private long lastPrintAllFilesCopiedSize;
+    private int lastMessageLength;
 
-
-    public void reset() {
+    public synchronized void reset() {
+        startCopyingTime = System.currentTimeMillis();
         currentFileCopiedSize = 0;
         currentFileTotalSize = 0;
         allFilesCopiedSize = 0;
@@ -27,31 +29,30 @@ public class FileCopyStatus {
         lastPrintAllFilesCopiedSize = 0;
     }
 
-    public void start() {
-        startCopyingTime = System.currentTimeMillis();
-    }
+    public synchronized void startNewFile(long fileSize) {
+        long now = System.currentTimeMillis();
+        currentFileStartTime = now;
+        lastPrintTime = now;
 
-    public void startNewFile(long fileSize) {
         currentFileCopiedSize = 0;
         currentFileTotalSize = fileSize;
-        lastPrintTime = System.currentTimeMillis();
     }
 
-    public void addAllFilesTotalSize(long delta) {
+    public synchronized void addAllFilesTotalSize(long delta) {
         this.allFilesTotalSize += delta;
     }
 
-    public void addCopiedSize(long delta) {
+    public synchronized void addCopiedSize(long delta) {
         this.currentFileCopiedSize += delta;
         this.allFilesCopiedSize += delta;
     }
 
-    public void printCopyProgress() {
+    public synchronized void printCopyProgress() {
         long now = System.currentTimeMillis();
         long timeDelta = now - lastPrintTime;
         long copiedDelta = allFilesCopiedSize - lastPrintAllFilesCopiedSize;
         if (timeDelta >= COPYING_STATUS_INTERVAL && copiedDelta > 0) {
-            // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / 75Mb/s / Eta: 101:01:52
+            // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / avg: 75Mb/s / Eta: 101:01:52
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;
             String currentFileCopiedSizeStr = FormattingHelper.humanReadableSize(currentFileCopiedSize);
@@ -71,10 +72,11 @@ public class FileCopyStatus {
             message += " (" + allFilesPercentStr + ") / ";
 
             // Speed
-            long speed = copiedDelta * 1000 / timeDelta;
+            long currentFileTimeDelta = now - currentFileStartTime;
+            long speed = currentFileTimeDelta > 0 ? currentFileCopiedSize * 1000 / currentFileTimeDelta : 0;
             String speedStr = FormattingHelper.humanReadableSize(speed);
             speedStr = String.format("%6s", speedStr);
-            message += speedStr + "/s / ";
+            message += "avg: " + speedStr + "/s / ";
 
             // Remaining estimation
             long duration = now - startCopyingTime;
@@ -89,6 +91,7 @@ public class FileCopyStatus {
                 long remaining = remainingSize / speed;
                 message += "Eta: " + FormattingHelper.humanReadableTime(remaining);
             }
+            lastMessageLength = message.length();
             PrintHelper.printAndReturn(message);
 
             lastPrintTime = now;
@@ -96,35 +99,57 @@ public class FileCopyStatus {
         }
     }
 
-    public long getCurrentFileCopiedSize() {
+    public synchronized void printCopyResults() {
+        long now = System.currentTimeMillis();
+        long timeDelta = now - startCopyingTime;
+        if (timeDelta > 0) {
+            long speed = allFilesCopiedSize * 1000 / timeDelta;
+
+            String message = "Copied: " + FormattingHelper.humanReadableSize(allFilesCopiedSize)
+                    + ", took: " + FormattingHelper.humanReadableTime(timeDelta / 1000)
+                    + ", avg: " + FormattingHelper.humanReadableSize(speed) + "/s";
+
+            PrintHelper.println(message);
+        }
+    }
+
+    public synchronized void printLastLineCleanup() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < lastMessageLength; i++) {
+            sb.append(" ");
+        }
+        PrintHelper.printAndReturn(sb.toString());
+    }
+
+    public synchronized long getCurrentFileCopiedSize() {
         return currentFileCopiedSize;
     }
 
-    public void setCurrentFileCopiedSize(long currentFileCopiedSize) {
+    public synchronized void setCurrentFileCopiedSize(long currentFileCopiedSize) {
         this.currentFileCopiedSize = currentFileCopiedSize;
     }
 
-    public long getCurrentFileTotalSize() {
+    public synchronized long getCurrentFileTotalSize() {
         return currentFileTotalSize;
     }
 
-    public void setCurrentFileTotalSize(long currentFileTotalSize) {
+    public synchronized void setCurrentFileTotalSize(long currentFileTotalSize) {
         this.currentFileTotalSize = currentFileTotalSize;
     }
 
-    public long getAllFilesCopiedSize() {
+    public synchronized long getAllFilesCopiedSize() {
         return allFilesCopiedSize;
     }
 
-    public void setAllFilesCopiedSize(long allFilesCopiedSize) {
+    public synchronized void setAllFilesCopiedSize(long allFilesCopiedSize) {
         this.allFilesCopiedSize = allFilesCopiedSize;
     }
 
-    public long getAllFilesTotalSize() {
+    public synchronized long getAllFilesTotalSize() {
         return allFilesTotalSize;
     }
 
-    public void setAllFilesTotalSize(long allFilesTotalSize) {
+    public synchronized void setAllFilesTotalSize(long allFilesTotalSize) {
         this.allFilesTotalSize = allFilesTotalSize;
     }
 }

@@ -14,8 +14,8 @@ import java.util.stream.Stream;
 
 import org.apache.hc.core5.http.HttpException;
 
-import backuper.client.dto.BackupTask;
-import backuper.client.dto.Configuration;
+import backuper.client.config.BackupTask;
+import backuper.client.config.Configuration;
 import backuper.client.operations.CopyLocalFileOperation;
 import backuper.client.operations.CopyRemoteFileOperation;
 import backuper.client.operations.CreateFolderOperation;
@@ -128,6 +128,7 @@ public class Backuper {
         }
         endTime = System.currentTimeMillis();
 
+        fileCopyStatus.printCopyResults();
         System.out.println("All tasks are done");
         System.out.println("Scan took " + FormattingHelper.humanReadableTime((scanEndTime - startTime) / 1000));
         System.out.println("Copying took " + FormattingHelper.humanReadableTime((endTime - copyStartTime) / 1000));

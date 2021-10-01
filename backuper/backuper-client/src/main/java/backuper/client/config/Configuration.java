@@ -1,4 +1,4 @@
-package backuper.client.dto;
+package backuper.client.config;
 
 import java.util.List;
 
