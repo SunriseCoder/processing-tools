@@ -15,7 +15,9 @@ import java.util.stream.Stream;
 import org.apache.hc.core5.http.HttpException;
 
 import backuper.client.dto.BackupTask;
-import backuper.client.operations.CopyFileOperation;
+import backuper.client.dto.Configuration;
+import backuper.client.operations.CopyLocalFileOperation;
+import backuper.client.operations.CopyRemoteFileOperation;
 import backuper.client.operations.CreateFolderOperation;
 import backuper.client.operations.DeleteFileOperation;
 import backuper.client.operations.DeleteFolderOperation;
@@ -28,22 +30,27 @@ import backuper.common.helpers.PrintHelper;
 import utils.NumberUtils;
 
 public class Backuper {
+    private Configuration configuration;
+
     private LocalFolderScanner localFolderScanner;
     private RemoteResourceScanner remoteResourceScanner;
 
-    public Backuper() {
+    public Backuper(Configuration configuration) {
+        this.configuration = configuration;
+
         localFolderScanner = new LocalFolderScanner();
         remoteResourceScanner = new RemoteResourceScanner();
     }
 
-    public void doBackupTasks(List<BackupTask> tasks) throws IOException, HttpException {
+    public void doBackup() throws IOException, HttpException {
+        List<BackupTask> backupTasks = configuration.getBackupTasks();
         List<Operation> operations = new ArrayList<>();
         long startTime, scanEndTime, copyStartTime, endTime;
 
         // Scanning all Backup Tasks
         startTime = System.currentTimeMillis();
-        for (int i = 0; i < tasks.size(); i++) {
-            BackupTask task = tasks.get(i);
+        for (int i = 0; i < backupTasks.size(); i++) {
+            BackupTask task = backupTasks.get(i);
 
             System.out.println("Scanning task #" + (i + 1) + ": " + task + "... ");
             List<Operation> taskOperations = scanTask(task);
@@ -61,17 +68,28 @@ public class Backuper {
         // New Folders
         System.out.println("New folders: " + operations.stream().filter(o -> (o instanceof CreateFolderOperation)).count());
 
-        // New Files
-        Supplier<Stream<Operation>> newFilesStream = () -> operations.stream()
-                .filter(o -> (o instanceof CopyFileOperation) && ((CopyFileOperation)o).isNewFile());
-        System.out.println("Copy new files: " + newFilesStream.get().count() +
-                " (" + NumberUtils.humanReadableSize(newFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum()) + "b)");
+        // New Local Files
+        Supplier<Stream<Operation>> newLocalFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof CopyLocalFileOperation) && ((CopyLocalFileOperation)o).isNewFile());
+        System.out.println("Copy new local files: " + newLocalFilesStream.get().count() +
+                " (" + NumberUtils.humanReadableSize(newLocalFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum()) + "b)");
+        // Changed Local Files
+        Supplier<Stream<Operation>> changedLocalFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof CopyLocalFileOperation) && !((CopyLocalFileOperation)o).isNewFile());
+        System.out.println("Copy changed local files: " + changedLocalFilesStream.get().count()
+                + " (" + NumberUtils.humanReadableSize(changedLocalFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum())
+                + "b) <== Attention here if the size is too big!!!");
 
-        // Changed Files
-        Supplier<Stream<Operation>> changedFilesStream = () -> operations.stream()
-                .filter(o -> (o instanceof CopyFileOperation) && !((CopyFileOperation)o).isNewFile());
-        System.out.println("Copy changed files: " + changedFilesStream.get().count()
-                + " (" + NumberUtils.humanReadableSize(changedFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum())
+        // New Remote Files
+        Supplier<Stream<Operation>> newRemoteFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof CopyRemoteFileOperation) && ((CopyRemoteFileOperation)o).isNewFile());
+        System.out.println("Copy new remote files: " + newRemoteFilesStream.get().count() +
+                " (" + NumberUtils.humanReadableSize(newRemoteFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum()) + "b)");
+        // Changed Remote Files
+        Supplier<Stream<Operation>> changedRemoteFilesStream = () -> operations.stream()
+                .filter(o -> (o instanceof CopyRemoteFileOperation) && !((CopyRemoteFileOperation)o).isNewFile());
+        System.out.println("Copy changed remote files: " + changedRemoteFilesStream.get().count()
+                + " (" + NumberUtils.humanReadableSize(changedRemoteFilesStream.get().mapToLong(o -> o.getCopyFileSize()).sum())
                 + "b) <== Attention here if the size is too big!!!");
 
         // Folders to delete
@@ -142,7 +160,11 @@ public class Backuper {
             } else {
                 // Processing File operation
                 if (dstFileMetadata == null || !srcFileMetadata.equalsRelatively(dstFileMetadata)) {
-                    operations.add(new CopyFileOperation(srcFileMetadata, task.getDestination(), dstFileMetadata == null));
+                    if (srcFileMetadata.isRemote()) {
+                        operations.add(new CopyRemoteFileOperation(configuration, srcFileMetadata, task.getDestination(), dstFileMetadata == null));
+                    } else {
+                        operations.add(new CopyLocalFileOperation(configuration, srcFileMetadata, task.getDestination(), dstFileMetadata == null));
+                    }
                 }
             }
         }

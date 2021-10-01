@@ -1,0 +1,17 @@
+{
+    "localFileChunkSize": "1048576",
+    "remoteFileChunkSize": "1048576",
+    "maxConnectionsNumber": "10",
+    "backupTasks": [
+        {
+            "name": "task1",
+            "source": "C:\\tmp\\data\\src1",
+            "destination": "C:\\tmp\\data\\dst1"
+        },
+        {
+            "name": "task2",
+            "source": "http://123@localhost:8081/photo",
+            "destination": "C:\\tmp\\data\\dst2"
+        }
+    ]
+}

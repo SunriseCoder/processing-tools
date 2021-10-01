@@ -15,7 +15,8 @@ public class OperationsComparator implements Comparator<Operation> {
         classPriority.put(DeleteFileOperation.class, new Strategy(proirity++, true));
         classPriority.put(DeleteFolderOperation.class, new Strategy(proirity++, false));
         classPriority.put(CreateFolderOperation.class, new Strategy(proirity++, true));
-        classPriority.put(CopyFileOperation.class, new Strategy(proirity++, true));
+        classPriority.put(CopyLocalFileOperation.class, new Strategy(proirity++, true));
+        classPriority.put(CopyRemoteFileOperation.class, new Strategy(proirity++, true));
     }
 
     @Override

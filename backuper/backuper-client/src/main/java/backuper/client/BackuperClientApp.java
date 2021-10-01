@@ -2,38 +2,45 @@ package backuper.client;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 import org.apache.hc.core5.http.HttpException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import backuper.client.dto.BackupTask;
+import backuper.client.dto.Configuration;
 import utils.JSONUtils;
 
 public class BackuperClientApp {
 
     public static void main(String[] args) throws IOException, HttpException {
-        System.out.println("Loading backup tasks...");
+        Configuration configuration = loadConfiguration();
+        Backuper backuper = new Backuper(configuration);
+        backuper.doBackup();
+    }
 
-        List<BackupTask> tasks = null;
-        File tasksFile = new File("tasks.json");
-        if (tasksFile.exists()) {
+    private static Configuration loadConfiguration() {
+        System.out.print("Loading configuration... ");
+
+        Configuration configuration = null;
+
+        File configurationFile = new File("configuration.json");
+        if (configurationFile.exists()) {
             try {
-                TypeReference<List<BackupTask>> typeReference = new TypeReference<List<BackupTask>>() {};
-                tasks = JSONUtils.loadFromDisk(tasksFile, typeReference);
-                System.out.println("Found: " + tasks.size() + " task(s)");
+                TypeReference<Configuration> typeReference = new TypeReference<Configuration>() {};
+                configuration = JSONUtils.loadFromDisk(configurationFile, typeReference);
+                System.out.println("Found: " + configuration.getBackupTasks().size() + " task(s)");
             } catch (Exception e) {
-                System.out.println("Error due to read tasks from file " + tasksFile.getAbsolutePath() + ", exiting");
+                System.out.println("Error due to read tasks from file " + configurationFile.getAbsolutePath() + ", exiting");
                 e.printStackTrace();
                 System.exit(-1);
             }
         } else {
-            System.out.println("Task file " + tasksFile.getAbsolutePath() + " not found, exiting");
+            System.out.println("Configuration file " + configurationFile.getAbsolutePath() + " not found, exiting");
             System.exit(-1);
         }
 
-        Backuper backuper = new Backuper();
-        backuper.doBackupTasks(tasks);
+        System.out.println("done");
+
+        return configuration;
     }
 }
