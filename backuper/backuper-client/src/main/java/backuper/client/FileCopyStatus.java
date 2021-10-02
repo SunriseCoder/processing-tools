@@ -56,27 +56,28 @@ public class FileCopyStatus {
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;
             String currentFileCopiedSizeStr = FormattingHelper.humanReadableSize(currentFileCopiedSize);
-            String message = String.format("%6s", currentFileCopiedSizeStr);
-            message += " of " + FormattingHelper.humanReadableSize(currentFileTotalSize);
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("%6s", currentFileCopiedSizeStr));
+            sb.append(" of ").append(FormattingHelper.humanReadableSize(currentFileTotalSize));
             String currentPercentStr = percentFormat.format(currentPercent);
             currentPercentStr = String.format("%7s", currentPercentStr);
-            message += " (" + currentPercentStr + ") / ";
+            sb.append(" (").append(currentPercentStr).append(") / ");
 
             // All files
             double allFilesPercent = (double) allFilesCopiedSize / allFilesTotalSize;
             String allFilesCopiedSizeStr = FormattingHelper.humanReadableSize(allFilesCopiedSize);
-            message += String.format("%6s", allFilesCopiedSizeStr);
-            message += " of " + FormattingHelper.humanReadableSize(allFilesTotalSize);
+            sb.append(String.format("%6s", allFilesCopiedSizeStr));
+            sb.append(" of ").append(FormattingHelper.humanReadableSize(allFilesTotalSize));
             String allFilesPercentStr = percentFormat.format(allFilesPercent);
             allFilesPercentStr = String.format("%7s", allFilesPercentStr);
-            message += " (" + allFilesPercentStr + ") / ";
+            sb.append(" (").append(allFilesPercentStr).append(") / ");
 
             // Speed
             long currentFileTimeDelta = now - currentFileStartTime;
             long speed = currentFileTimeDelta > 0 ? currentFileCopiedSize * 1000 / currentFileTimeDelta : 0;
             String speedStr = FormattingHelper.humanReadableSize(speed);
             speedStr = String.format("%6s", speedStr);
-            message += "avg: " + speedStr + "/s / ";
+            sb.append("avg: ").append(speedStr).append("/s / ");
 
             // Remaining estimation
             long duration = now - startCopyingTime;
@@ -87,12 +88,25 @@ public class FileCopyStatus {
                 //remaining /= 1000;
 
                 // Algorithm based on last status update period speed
+                sb.append("Eta: ");
                 long remainingSize = allFilesTotalSize - allFilesCopiedSize;
-                long remaining = remainingSize / speed;
-                message += "Eta: " + FormattingHelper.humanReadableTime(remaining);
+                if (speed > 0) {
+                    long remaining = remainingSize / speed;
+                    sb.append(FormattingHelper.humanReadableTime(remaining));
+                } else {
+                    sb.append("Unknown");
+                }
             }
-            lastMessageLength = message.length();
-            PrintHelper.printAndReturn(message);
+
+            // Saving actual length of current message
+            int currentMesssageLength = sb.length();
+
+            // Adding spaces at the end to overwrite the end of the last message
+            while (sb.length() < lastMessageLength) {
+                sb.append(" ");
+            }
+            PrintHelper.printAndReturn(sb.toString());
+            lastMessageLength = currentMesssageLength;
 
             lastPrintTime = now;
             lastPrintAllFilesCopiedSize = allFilesCopiedSize;
