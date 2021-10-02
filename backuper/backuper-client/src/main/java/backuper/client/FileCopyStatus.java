@@ -4,6 +4,7 @@ import java.text.DecimalFormat;
 
 import backuper.common.helpers.FormattingHelper;
 import backuper.common.helpers.PrintHelper;
+import utils.MathUtils;
 
 public class FileCopyStatus {
     private static final int COPYING_STATUS_INTERVAL = 1000;
@@ -52,7 +53,7 @@ public class FileCopyStatus {
         long timeDelta = now - lastPrintTime;
         long copiedDelta = allFilesCopiedSize - lastPrintAllFilesCopiedSize;
         if (timeDelta >= COPYING_STATUS_INTERVAL && copiedDelta > 0) {
-            // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / avg: 75Mb/s / Eta: 101:01:52
+            // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / avg: 75Mb/s / Eta: 101:01:52/102:07:25
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;
             String currentFileCopiedSizeStr = FormattingHelper.humanReadableSize(currentFileCopiedSize);
@@ -80,22 +81,26 @@ public class FileCopyStatus {
             sb.append("avg: ").append(speedStr).append("/s / ");
 
             // Remaining estimation
-            long duration = now - startCopyingTime;
-            if (duration != 0 && allFilesPercent != 0) {
-                // Algorithm based on overall average speed
-                //long totalTime = (long) (duration / allFilesPercent);
-                //long remaining = (long) (totalTime * (1 - allFilesPercent));
-                //remaining /= 1000;
+            sb.append("Eta: ");
 
-                // Algorithm based on last status update period speed
-                sb.append("Eta: ");
-                long remainingSize = allFilesTotalSize - allFilesCopiedSize;
-                if (speed > 0) {
-                    long remaining = remainingSize / speed;
-                    sb.append(FormattingHelper.humanReadableTime(remaining));
-                } else {
-                    sb.append("Unknown");
-                }
+            // Algorithm based on last status update period speed
+            long remainingSize = allFilesTotalSize - allFilesCopiedSize;
+            if (speed > 0) {
+                long remaining = remainingSize / speed;
+                sb.append(FormattingHelper.humanReadableTime(remaining));
+            } else {
+                sb.append("Unknown");
+            }
+
+            // Algorithm based on overall average speed
+            sb.append("/");
+            long copiedAllFilesTime = now - startCopyingTime;
+            if (copiedAllFilesTime > 0 && allFilesPercent > 0) {
+                double totalTime = copiedAllFilesTime / allFilesPercent;
+                long remainingTime = MathUtils.roundToLong(totalTime * (1 - allFilesPercent) / 1000);
+                sb.append(FormattingHelper.humanReadableTime(remainingTime));
+            } else {
+                sb.append("Unknown");
             }
 
             // Saving actual length of current message
