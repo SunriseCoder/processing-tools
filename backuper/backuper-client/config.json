@@ -1,6 +1,7 @@
 {
     "localFileChunkSize": "1048576",
-    "remoteFileChunkSize": "1048576",
+    "remoteFileMinChunkSize": "65536",
+    "remoteFileMaxChunkSize": "1048576",
     "maxConnectionsNumber": "10",
     "backupTasks": [
         {

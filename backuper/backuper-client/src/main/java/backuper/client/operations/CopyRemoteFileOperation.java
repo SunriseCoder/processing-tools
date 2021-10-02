@@ -23,10 +23,11 @@ import backuper.client.config.Configuration;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
+import utils.MathUtils;
 import utils.ThreadUtils;
 
 public class CopyRemoteFileOperation implements Operation {
-    private Configuration configuration;
+    private Configuration config;
     private Path relativePath;
     private Path dstAbsolutePath;
     private long fileSize;
@@ -34,8 +35,8 @@ public class CopyRemoteFileOperation implements Operation {
 
     private FileMetadata srcFileMetadata;
 
-    public CopyRemoteFileOperation(Configuration configuration, FileMetadata srcFileMetadata, String destination, boolean newFile) {
-        this.configuration = configuration;
+    public CopyRemoteFileOperation(Configuration config, FileMetadata srcFileMetadata, String destination, boolean newFile) {
+        this.config = config;
         relativePath = srcFileMetadata.getRelativePath();
         dstAbsolutePath = Paths.get(destination, relativePath.toString());
         fileSize = srcFileMetadata.getSize();
@@ -71,7 +72,7 @@ public class CopyRemoteFileOperation implements Operation {
             FileChannel out = outputFile.getChannel();
             fileCopyStatus.startNewFile(fileSize);
 
-            int maxConnectionsNumber = configuration.getMaxConnectionsNumber();
+            int maxConnectionsNumber = config.getMaxConnectionsNumber();
             int maxFuturesNumber = maxConnectionsNumber * 2;
             ExecutorService executor = Executors.newFixedThreadPool(maxConnectionsNumber);
             List<Future<?>> futures = new ArrayList<>();
@@ -80,7 +81,7 @@ public class CopyRemoteFileOperation implements Operation {
             String resourceName = srcFileMetadata.getResourceName();
             String token = srcFileMetadata.getToken();
             String path = srcFileMetadata.getRelativePath().toString();
-            int chunkSize = configuration.getRemoteFileChunkSize();
+            int chunkSize = calculateChunkSize();
             long chunkStart = 0;
 
             while (chunkStart < fileSize || futures.size() > 0) {
@@ -115,6 +116,18 @@ public class CopyRemoteFileOperation implements Operation {
 
             fileCopyStatus.printLastLineCleanup();
        }
+    }
+
+    private int calculateChunkSize() {
+        int chunkSize;
+        if (fileSize < config.getRemoteFileMinChunkSize() * config.getMaxConnectionsNumber()) {
+            chunkSize = config.getRemoteFileMinChunkSize();
+        } else if (fileSize > config.getRemoteFileMaxChunkSize() * config.getMaxConnectionsNumber()) {
+            chunkSize = config.getRemoteFileMaxChunkSize();
+        } else {
+            chunkSize = MathUtils.ceilToInt((double) fileSize / config.getMaxConnectionsNumber());
+        }
+        return chunkSize;
     }
 
     @Override
