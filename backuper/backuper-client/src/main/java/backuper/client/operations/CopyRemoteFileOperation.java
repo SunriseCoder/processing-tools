@@ -23,10 +23,11 @@ import backuper.client.config.Configuration;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
+import backuper.common.helpers.PrintHelper;
 import utils.MathUtils;
 import utils.ThreadUtils;
 
-public class CopyRemoteFileOperation implements Operation {
+public class CopyRemoteFileOperation {
     private Configuration config;
     private Path relativePath;
     private Path dstAbsolutePath;
@@ -44,28 +45,20 @@ public class CopyRemoteFileOperation implements Operation {
         this.srcFileMetadata = srcFileMetadata;
     }
 
-    @Override
     public String getDescription() {
         return "Copy Remote File \""
                 + srcFileMetadata.getResourceHostPort() + srcFileMetadata.getResourceName() + "/" + srcFileMetadata.getRelativePath().toString()
                 + "\" to \"" + dstAbsolutePath.toString() + "\"";
     }
 
-    @Override
-    public long getCopyFileSize() {
+    public long getFileSize() {
         return fileSize;
-    }
-
-    @Override
-    public String getRelativePath() {
-        return relativePath.toString();
     }
 
     public boolean isNewFile() {
         return newFile;
     }
 
-    @Override
     public void perform(FileCopyStatus fileCopyStatus) throws IOException, HttpException {
         try (RandomAccessFile outputFile = new RandomAccessFile(dstAbsolutePath.toString(), "rw");) {
             outputFile.setLength(fileSize);
@@ -105,7 +98,7 @@ public class CopyRemoteFileOperation implements Operation {
                 if (futures.size() > 0) {
                     ThreadUtils.sleep(10);
                 }
-                fileCopyStatus.printCopyProgress();
+                fileCopyStatus.printCopyProgress(false);
             }
 
             executor.shutdown();
@@ -114,7 +107,10 @@ public class CopyRemoteFileOperation implements Operation {
             Files.setAttribute(dstAbsolutePath, "lastModifiedTime", srcFileMetadata.getLastModified());
             Files.setAttribute(dstAbsolutePath, "lastAccessTime", srcFileMetadata.getLastAccessTime());
 
-            fileCopyStatus.printLastLineCleanup();
+            // TODO Add copy to the temporary file (in the temporary folder as well) first and then at this place just move it on the place
+
+            fileCopyStatus.printCopyProgress(true);
+            PrintHelper.println();
        }
     }
 
@@ -187,7 +183,7 @@ public class CopyRemoteFileOperation implements Operation {
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             saveToDisk(buffer, start, out);
             fileCopyStatus.addCopiedSize(responseData.length);
-            fileCopyStatus.printCopyProgress();
+            fileCopyStatus.printCopyProgress(false);
         }
 
         private static synchronized void saveToDisk(ByteBuffer buffer, long start, FileChannel out) {

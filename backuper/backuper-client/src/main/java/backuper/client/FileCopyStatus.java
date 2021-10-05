@@ -48,11 +48,11 @@ public class FileCopyStatus {
         this.allFilesCopiedSize += delta;
     }
 
-    public synchronized void printCopyProgress() {
+    public synchronized void printCopyProgress(boolean force) {
         long now = System.currentTimeMillis();
         long timeDelta = now - lastPrintTime;
         long copiedDelta = allFilesCopiedSize - lastPrintAllFilesCopiedSize;
-        if (timeDelta >= COPYING_STATUS_INTERVAL && copiedDelta > 0) {
+        if (force || (timeDelta >= COPYING_STATUS_INTERVAL && copiedDelta > 0)) {
             // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / avg: 75Mb/s / Eta: 101:01:52/102:07:25
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;

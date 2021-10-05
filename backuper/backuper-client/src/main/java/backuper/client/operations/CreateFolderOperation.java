@@ -5,16 +5,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import backuper.client.FileCopyStatus;
 import backuper.common.dto.FileMetadata;
 
 public class CreateFolderOperation implements Operation {
     private Path absolutePath;
-    private Path relativePath;
 
     public CreateFolderOperation(FileMetadata srcFileMetadata, String destinationBase) {
         absolutePath = Paths.get(destinationBase, srcFileMetadata.getRelativePath().toString());
-        relativePath = srcFileMetadata.getRelativePath();
     }
 
     @Override
@@ -23,17 +20,12 @@ public class CreateFolderOperation implements Operation {
     }
 
     @Override
-    public long getCopyFileSize() {
+    public long getFileSize() {
         return 0;
     }
 
     @Override
-    public String getRelativePath() {
-        return relativePath.toString();
-    }
-
-    @Override
-    public void perform(FileCopyStatus fileCopyStatus) throws IOException {
+    public void perform() throws IOException {
         Files.createDirectory(absolutePath);
         System.out.println("Folder \"" + absolutePath.toString() + "\" has been successfully created");
     }
