@@ -4,6 +4,7 @@ public class BackupTask {
     private String name;
     private String source;
     private String destination;
+    private String tmp;
 
     public String getName() {
         return name;
@@ -27,6 +28,14 @@ public class BackupTask {
 
     public void setDestination(String destination) {
         this.destination = destination;
+    }
+
+    public String getTmp() {
+        return tmp;
+    }
+
+    public void setTmp(String tmp) {
+        this.tmp = tmp;
     }
 
     @Override

@@ -6,12 +6,14 @@
         {
             "name": "task1",
             "source": "C:\\tmp\\data\\src1",
-            "destination": "C:\\tmp\\data\\dst1"
+            "destination": "C:\\tmp\\data\\dst1",
+            "tmp": "tmp"
         },
         {
             "name": "task2",
             "source": "http://123@localhost:8081/photo",
-            "destination": "C:\\tmp\\data\\dst2"
+            "destination": "C:\\tmp\\data\\dst2",
+            "tmp": "tmp"
         }
     ]
 }

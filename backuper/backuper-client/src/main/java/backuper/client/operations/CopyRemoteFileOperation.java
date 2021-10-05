@@ -1,5 +1,6 @@
 package backuper.client.operations;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
@@ -7,6 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +16,7 @@ import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
 import backuper.client.FileCopyStatus;
+import backuper.client.config.BackupTask;
 import backuper.client.config.Configuration;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
@@ -23,6 +26,8 @@ import utils.ThreadUtils;
 
 public class CopyRemoteFileOperation {
     private Configuration config;
+    private BackupTask backupTask;
+
     private Path relativePath;
     private Path dstAbsolutePath;
     private long fileSize;
@@ -32,6 +37,7 @@ public class CopyRemoteFileOperation {
 
     private FileCopyStatus fileCopyStatus;
 
+    private File tmpFile;
     private RandomAccessFile outputFile;
     private FileChannel outputChannel;
 
@@ -42,11 +48,13 @@ public class CopyRemoteFileOperation {
     private int chunkSize;
     private long nextChunkStart;
 
-    public CopyRemoteFileOperation(Configuration config, FileMetadata srcFileMetadata, String destination, boolean newFile) {
+    public CopyRemoteFileOperation(Configuration config, BackupTask backupTask, FileMetadata srcFileMetadata, String destination, boolean newFile) {
         this.config = config;
-        relativePath = srcFileMetadata.getRelativePath();
-        dstAbsolutePath = Paths.get(destination, relativePath.toString());
-        fileSize = srcFileMetadata.getSize();
+        this.backupTask = backupTask;
+
+        this.relativePath = srcFileMetadata.getRelativePath();
+        this.dstAbsolutePath = Paths.get(destination, relativePath.toString());
+        this.fileSize = srcFileMetadata.getSize();
         this.newFile = newFile;
         this.srcFileMetadata = srcFileMetadata;
     }
@@ -71,21 +79,22 @@ public class CopyRemoteFileOperation {
         fileCopyStatus.printLastLineCleanup();
 
         try {
-            outputFile = new RandomAccessFile(dstAbsolutePath.toString(), "rw");
-            outputFile.setLength(fileSize);
-            outputChannel = outputFile.getChannel();
+            this.tmpFile = Files.createTempFile(Paths.get(backupTask.getTmp()), "tmp-remote-", ".tmp").toFile();
+            this.outputFile = new RandomAccessFile(tmpFile, "rw");
+            this.outputFile.setLength(fileSize);
+            this.outputChannel = outputFile.getChannel();
         } catch (IOException e) {
             e.printStackTrace();
             CloseUtils.close(outputChannel);
             CloseUtils.close(outputFile);
         }
 
-        requestUrl = srcFileMetadata.getResourceHostPort() + "file-data";
-        resourceName = srcFileMetadata.getResourceName();
-        token = srcFileMetadata.getToken();
-        path = srcFileMetadata.getRelativePath().toString();
-        chunkSize = config.getRemoteFileChunkSize();
-        nextChunkStart = 0;
+        this.requestUrl = srcFileMetadata.getResourceHostPort() + "file-data";
+        this.resourceName = srcFileMetadata.getResourceName();
+        this.token = srcFileMetadata.getToken();
+        this.path = srcFileMetadata.getRelativePath().toString();
+        this.chunkSize = config.getRemoteFileChunkSize();
+        this.nextChunkStart = 0;
     }
 
     public boolean hasNextChunk() {
@@ -102,11 +111,11 @@ public class CopyRemoteFileOperation {
         CloseUtils.close(outputChannel);
         CloseUtils.close(outputFile);
 
-        Files.setAttribute(dstAbsolutePath, "creationTime", srcFileMetadata.getCreationTime());
-        Files.setAttribute(dstAbsolutePath, "lastModifiedTime", srcFileMetadata.getLastModified());
-        Files.setAttribute(dstAbsolutePath, "lastAccessTime", srcFileMetadata.getLastAccessTime());
+        Files.setAttribute(tmpFile.toPath(), "creationTime", srcFileMetadata.getCreationTime());
+        Files.setAttribute(tmpFile.toPath(), "lastModifiedTime", srcFileMetadata.getLastModified());
+        Files.setAttribute(tmpFile.toPath(), "lastAccessTime", srcFileMetadata.getLastAccessTime());
 
-        // TODO Add copy to the temporary file (in the temporary folder as well) first and then at this place just move it on the place
+        Files.move(tmpFile.toPath(), dstAbsolutePath, StandardCopyOption.ATOMIC_MOVE);
 
         fileCopyStatus.printLastLineCleanup();
         System.out.println("Finished " + getDescription());

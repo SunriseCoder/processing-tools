@@ -160,7 +160,6 @@ public class FileUtils {
         return safeFilename;
     }
 
-
     public static boolean renameOrCreateFileOrFolder(File oldFile, File newFile) {
         boolean result;
         if (oldFile.exists()) {
@@ -169,5 +168,19 @@ public class FileUtils {
             result = newFile.mkdir();
         }
         return result;
+    }
+
+    public static void cleanupFolder(String path) {
+        File folder = new File(path);
+        cleanupFolder(folder);
+    }
+
+    public static void cleanupFolder(File folder) {
+        for (File file : folder.listFiles()) {
+            if (file.isDirectory()) {
+                cleanupFolder(file);
+            }
+            file.delete();
+        }
     }
 }

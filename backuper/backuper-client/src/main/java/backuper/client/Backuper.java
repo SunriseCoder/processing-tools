@@ -2,8 +2,6 @@ package backuper.client;
 
 import java.io.Console;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,6 +29,7 @@ import backuper.common.LocalFolderScanner;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.FormattingHelper;
 import backuper.common.helpers.PrintHelper;
+import utils.FileUtils;
 import utils.NumberUtils;
 import utils.ThreadUtils;
 
@@ -113,6 +112,10 @@ public class Backuper {
         long copyFileSizeTotal = copyLocalFilesTotalSize + copyRemoteFilesTotalSize;
         System.out.println("Total size to copy: " + NumberUtils.humanReadableSize(copyFileSizeTotal) + "b");
 
+        if (totalOperationsNumber == 0) {
+            System.out.println("It seems that all of the files are up to date");
+            System.exit(0);
+        }
         if (!confirmOperations()) {
             System.out.println("Backup cancelled by user");
             System.exit(-1);
@@ -149,10 +152,9 @@ public class Backuper {
     }
 
     private void scanTask(BackupTask task) throws IOException, HttpException {
-        Path destinationPath = Paths.get(task.getDestination());
-        if (Files.notExists(destinationPath)) {
-            Files.createDirectories(destinationPath);
-        }
+        FileUtils.createFolderIfNotExists(task.getDestination());
+        FileUtils.createFolderIfNotExists(task.getTmp());
+        FileUtils.cleanupFolder(task.getTmp());
 
         System.out.println("Scanning source folder...");
         Map<String, FileMetadata> sourceFiles = scanResource(task.getSource());
@@ -174,9 +176,9 @@ public class Backuper {
                 // Processing File operation
                 if (dstFileMetadata == null || !srcFileMetadata.equalsRelatively(dstFileMetadata)) {
                     if (srcFileMetadata.isRemote()) {
-                        copyRemoteFileOperations.add(new CopyRemoteFileOperation(config, srcFileMetadata, task.getDestination(), dstFileMetadata == null));
+                        copyRemoteFileOperations.add(new CopyRemoteFileOperation(config, task, srcFileMetadata, task.getDestination(), dstFileMetadata == null));
                     } else {
-                        copyLocalFileOperations.add(new CopyLocalFileOperation(config, srcFileMetadata, task.getDestination(), dstFileMetadata == null));
+                        copyLocalFileOperations.add(new CopyLocalFileOperation(config, task, srcFileMetadata, task.getDestination(), dstFileMetadata == null));
                     }
                 }
             }
