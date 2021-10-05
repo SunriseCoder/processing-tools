@@ -4,6 +4,7 @@ import java.util.List;
 
 public class Configuration {
     private int localFileChunkSize;
+    // TODO Change back to only one remoteFileChunkSize
     private int remoteFileMinChunkSize;
     private int remoteFileMaxChunkSize;
     private int maxConnectionsNumber;

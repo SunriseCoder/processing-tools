@@ -8,13 +8,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
@@ -23,8 +18,7 @@ import backuper.client.config.Configuration;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
-import backuper.common.helpers.PrintHelper;
-import utils.MathUtils;
+import utils.CloseUtils;
 import utils.ThreadUtils;
 
 public class CopyRemoteFileOperation {
@@ -35,6 +29,18 @@ public class CopyRemoteFileOperation {
     private boolean newFile;
 
     private FileMetadata srcFileMetadata;
+
+    private FileCopyStatus fileCopyStatus;
+
+    private RandomAccessFile outputFile;
+    private FileChannel outputChannel;
+
+    private String requestUrl;
+    private String resourceName;
+    private String token;
+    private String path;
+    private int chunkSize;
+    private long nextChunkStart;
 
     public CopyRemoteFileOperation(Configuration config, FileMetadata srcFileMetadata, String destination, boolean newFile) {
         this.config = config;
@@ -59,71 +65,51 @@ public class CopyRemoteFileOperation {
         return newFile;
     }
 
-    public void perform(FileCopyStatus fileCopyStatus) throws IOException, HttpException {
-        try (RandomAccessFile outputFile = new RandomAccessFile(dstAbsolutePath.toString(), "rw");) {
+    public void prepare(FileCopyStatus fileCopyStatus) {
+        System.out.println("Starting " + getDescription());
+        this.fileCopyStatus = fileCopyStatus;
+        fileCopyStatus.printLastLineCleanup();
+
+        try {
+            outputFile = new RandomAccessFile(dstAbsolutePath.toString(), "rw");
             outputFile.setLength(fileSize);
-            FileChannel out = outputFile.getChannel();
-            fileCopyStatus.startNewFile(fileSize);
+            outputChannel = outputFile.getChannel();
+        } catch (IOException e) {
+            e.printStackTrace();
+            CloseUtils.close(outputChannel);
+            CloseUtils.close(outputFile);
+        }
 
-            int maxConnectionsNumber = config.getMaxConnectionsNumber();
-            int maxFuturesNumber = maxConnectionsNumber * 2;
-            ExecutorService executor = Executors.newFixedThreadPool(maxConnectionsNumber);
-            List<Future<?>> futures = new ArrayList<>();
-
-            String requestUrl = srcFileMetadata.getResourceHostPort() + "file-data";
-            String resourceName = srcFileMetadata.getResourceName();
-            String token = srcFileMetadata.getToken();
-            String path = srcFileMetadata.getRelativePath().toString();
-            int chunkSize = calculateChunkSize();
-            long chunkStart = 0;
-
-            while (chunkStart < fileSize || futures.size() > 0) {
-                // Checking and cleaning up finished tasks
-                Iterator<Future<?>> iterator = futures.iterator();
-                while (iterator.hasNext()) {
-                    Future<?> future = iterator.next();
-                    if (future.isDone()) {
-                        iterator.remove();
-                    }
-                }
-
-                // Adding more tasks
-                while (chunkStart < fileSize && futures.size() < maxFuturesNumber) {
-                    GetChunkTask task = new GetChunkTask(requestUrl, resourceName, token, path, chunkStart, chunkSize, out, fileCopyStatus);
-                    Future<?> future = executor.submit(task);
-                    futures.add(future);
-                    chunkStart += chunkSize;
-                }
-
-                if (futures.size() > 0) {
-                    ThreadUtils.sleep(10);
-                }
-                fileCopyStatus.printCopyProgress(false);
-            }
-
-            executor.shutdown();
-
-            Files.setAttribute(dstAbsolutePath, "creationTime", srcFileMetadata.getCreationTime());
-            Files.setAttribute(dstAbsolutePath, "lastModifiedTime", srcFileMetadata.getLastModified());
-            Files.setAttribute(dstAbsolutePath, "lastAccessTime", srcFileMetadata.getLastAccessTime());
-
-            // TODO Add copy to the temporary file (in the temporary folder as well) first and then at this place just move it on the place
-
-            fileCopyStatus.printCopyProgress(true);
-            PrintHelper.println();
-       }
+        requestUrl = srcFileMetadata.getResourceHostPort() + "file-data";
+        resourceName = srcFileMetadata.getResourceName();
+        token = srcFileMetadata.getToken();
+        path = srcFileMetadata.getRelativePath().toString();
+        chunkSize = config.getRemoteFileMaxChunkSize();
+        nextChunkStart = 0;
     }
 
-    private int calculateChunkSize() {
-        int chunkSize;
-        if (fileSize < config.getRemoteFileMinChunkSize() * config.getMaxConnectionsNumber()) {
-            chunkSize = config.getRemoteFileMinChunkSize();
-        } else if (fileSize > config.getRemoteFileMaxChunkSize() * config.getMaxConnectionsNumber()) {
-            chunkSize = config.getRemoteFileMaxChunkSize();
-        } else {
-            chunkSize = MathUtils.ceilToInt((double) fileSize / config.getMaxConnectionsNumber());
-        }
-        return chunkSize;
+    public boolean hasNextChunk() {
+        return nextChunkStart < (fileSize - 1);
+    }
+
+    public CopyChunkTask getNextChunk() {
+        CopyChunkTask task = new CopyChunkTask(requestUrl, resourceName, token, path, nextChunkStart, chunkSize, outputChannel, fileCopyStatus);
+        nextChunkStart += chunkSize;
+        return task;
+    }
+
+    public void finish() throws IOException {
+        CloseUtils.close(outputChannel);
+        CloseUtils.close(outputFile);
+
+        Files.setAttribute(dstAbsolutePath, "creationTime", srcFileMetadata.getCreationTime());
+        Files.setAttribute(dstAbsolutePath, "lastModifiedTime", srcFileMetadata.getLastModified());
+        Files.setAttribute(dstAbsolutePath, "lastAccessTime", srcFileMetadata.getLastAccessTime());
+
+        // TODO Add copy to the temporary file (in the temporary folder as well) first and then at this place just move it on the place
+
+        fileCopyStatus.printLastLineCleanup();
+        System.out.println("Finished " + getDescription());
     }
 
     @Override
@@ -131,7 +117,7 @@ public class CopyRemoteFileOperation {
         return getDescription();
     }
 
-    private static class GetChunkTask implements Runnable {
+    public static class CopyChunkTask implements Runnable {
         private String requestUrl;
         private String resourceName;
         private String token;
@@ -142,7 +128,7 @@ public class CopyRemoteFileOperation {
         private FileChannel out;
         private FileCopyStatus fileCopyStatus;
 
-        public GetChunkTask(String requestUrl, String resourceName, String token, String path, long start, long length,
+        public CopyChunkTask(String requestUrl, String resourceName, String token, String path, long start, long length,
                 FileChannel out, FileCopyStatus fileCopyStatus) {
             this.requestUrl = requestUrl;
             this.resourceName = resourceName;
@@ -183,7 +169,6 @@ public class CopyRemoteFileOperation {
             ByteBuffer buffer = ByteBuffer.wrap(responseData);
             saveToDisk(buffer, start, out);
             fileCopyStatus.addCopiedSize(responseData.length);
-            fileCopyStatus.printCopyProgress(false);
         }
 
         private static synchronized void saveToDisk(ByteBuffer buffer, long start, FileChannel out) {

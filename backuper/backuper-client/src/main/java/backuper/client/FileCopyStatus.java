@@ -22,7 +22,9 @@ public class FileCopyStatus {
     private int lastMessageLength;
 
     public synchronized void reset() {
-        startCopyingTime = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        startCopyingTime = now;
+        currentFileStartTime = now;
         currentFileCopiedSize = 0;
         currentFileTotalSize = 0;
         allFilesCopiedSize = 0;
