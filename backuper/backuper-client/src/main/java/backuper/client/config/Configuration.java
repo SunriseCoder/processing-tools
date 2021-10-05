@@ -4,9 +4,7 @@ import java.util.List;
 
 public class Configuration {
     private int localFileChunkSize;
-    // TODO Change back to only one remoteFileChunkSize
-    private int remoteFileMinChunkSize;
-    private int remoteFileMaxChunkSize;
+    private int remoteFileChunkSize;
     private int maxConnectionsNumber;
     private List<BackupTask> backupTasks;
 
@@ -18,20 +16,12 @@ public class Configuration {
         this.localFileChunkSize = localFileChunkSize;
     }
 
-    public int getRemoteFileMinChunkSize() {
-        return remoteFileMinChunkSize;
+    public int getRemoteFileChunkSize() {
+        return remoteFileChunkSize;
     }
 
-    public void setRemoteFileMinChunkSize(int remoteFileMinChunkSize) {
-        this.remoteFileMinChunkSize = remoteFileMinChunkSize;
-    }
-
-    public int getRemoteFileMaxChunkSize() {
-        return remoteFileMaxChunkSize;
-    }
-
-    public void setRemoteFileMaxChunkSize(int remoteFileMaxChunkSize) {
-        this.remoteFileMaxChunkSize = remoteFileMaxChunkSize;
+    public void setRemoteFileChunkSize(int remoteFileChunkSize) {
+        this.remoteFileChunkSize = remoteFileChunkSize;
     }
 
     public int getMaxConnectionsNumber() {

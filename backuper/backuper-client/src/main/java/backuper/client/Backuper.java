@@ -295,6 +295,8 @@ public class Backuper {
                             currentOperationFutures = new OperationFutures(currentOperation);
                             operationFuturesList.add(currentOperationFutures);
                             break;
+                        } else {
+                            currentOperation.finish();
                         }
                     }
                 }

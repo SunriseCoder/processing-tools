@@ -84,7 +84,7 @@ public class CopyRemoteFileOperation {
         resourceName = srcFileMetadata.getResourceName();
         token = srcFileMetadata.getToken();
         path = srcFileMetadata.getRelativePath().toString();
-        chunkSize = config.getRemoteFileMaxChunkSize();
+        chunkSize = config.getRemoteFileChunkSize();
         nextChunkStart = 0;
     }
 
