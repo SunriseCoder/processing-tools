@@ -22,8 +22,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import core.dto.YoutubeVideo;
 import util.DownloadUtils;
 import utils.FileUtils;
+import utils.FormattingUtils;
 import utils.JSONUtils;
-import utils.NumberUtils;
 
 public class YoutubeVideoHandler {
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?://www.youtube.com/watch?v=([0-9A-Za-z_-]+)&?.*$");
@@ -313,9 +313,11 @@ public class YoutubeVideoHandler {
 
                         // Formatting progress message
                         StringBuilder message = new StringBuilder();
-                        message.append(NumberUtils.humanReadableSize(readTotal)).append("b of ").append(NumberUtils.humanReadableSize(fileSize) + "b (");
+                        message.append(FormattingUtils.humanReadableSize(readTotal))
+                                .append("b of ")
+                                .append(FormattingUtils.humanReadableSize(fileSize) + "b (");
                         message.append(readTotal * 100 / fileSize).append("%), ");
-                        message.append(NumberUtils.humanReadableSize(speed) + "b/s");
+                        message.append(FormattingUtils.humanReadableSize(speed) + "b/s");
                         while (message.length() < lastMessageLength) {
                             message.append(" ");
                         }
@@ -345,8 +347,11 @@ public class YoutubeVideoHandler {
                 long fileDownloadTime = now - fileDownloadStartTime;
                 long speed = fileSize * 1000 / fileDownloadTime;
                 StringBuilder message = new StringBuilder();
-                message.append(NumberUtils.humanReadableSize(fileSize)).append("b in ").append(fileDownloadTime / 1000).append(" s, ");
-                message.append("average speed: ").append(NumberUtils.humanReadableSize(speed)).append("b/s");
+                message.append(FormattingUtils.humanReadableSize(fileSize))
+                        .append("b in ")
+                        .append(fileDownloadTime / 1000).append(" s, ");
+                message.append("average speed: ")
+                        .append(FormattingUtils.humanReadableSize(speed)).append("b/s");
                 while (message.length() < lastMessageLength) {
                     message.append(" ");
                 }

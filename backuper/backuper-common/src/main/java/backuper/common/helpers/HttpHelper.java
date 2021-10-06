@@ -18,6 +18,8 @@ import org.apache.hc.core5.http.nio.AsyncServerRequestHandler.ResponseTrigger;
 import org.apache.hc.core5.http.nio.support.AsyncResponseBuilder;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
+import utils.FormattingUtils;
+
 public class HttpHelper {
 
     public static Map<String, String> parsePostParams(String requestBody) throws IOException {
@@ -85,7 +87,11 @@ public class HttpHelper {
     public static void sendHttpResponse(int responseCode, byte[] data, ContentType contentType,
             ResponseTrigger responseTrigger, HttpContext context) throws HttpException, IOException {
 
-        System.out.println("Sending response: " + responseCode + " " + data.length + " bytes");
+        StringBuilder sb = new StringBuilder();
+        sb.append("Sending response: ").append(responseCode).append(" ");
+        sb.append(FormattingUtils.humanReadableSize(data.length)).append("b (").append(data.length).append(" bytes)");
+        System.out.println(sb.toString());
+
         responseTrigger.submitResponse(AsyncResponseBuilder.create(responseCode).setEntity(data, contentType).build(), context);
     }
 

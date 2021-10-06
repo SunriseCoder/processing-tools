@@ -17,6 +17,7 @@ import org.apache.hc.core5.util.TimeValue;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import backuper.server.config.Configuration;
+import backuper.server.handlers.BenchmarkRequestHandler;
 import backuper.server.handlers.FileDataRequestHandler;
 import backuper.server.handlers.FileListRequestHandler;
 import utils.JSONUtils;
@@ -33,6 +34,7 @@ public class BackuperServerApp {
                 .setSoTimeout(15, TimeUnit.SECONDS).setTcpNoDelay(true).build();
         HttpAsyncServer server = AsyncServerBootstrap.bootstrap()
                 .setIOReactorConfig(reactorConfig)
+                .register("/benchmark", new BenchmarkRequestHandler(fileServer))
                 .register("/file-list", new FileListRequestHandler(fileServer))
                 .register("/file-data", new FileDataRequestHandler(fileServer))
                 .create();

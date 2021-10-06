@@ -1,10 +1,15 @@
 package backuper.client.config;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class BackupTask {
     private String name;
     private String source;
     private String destination;
     private String tmp;
+
+    @JsonIgnore
+    private CopySettings copySettings;
 
     public String getName() {
         return name;
@@ -36,6 +41,14 @@ public class BackupTask {
 
     public void setTmp(String tmp) {
         this.tmp = tmp;
+    }
+
+    public CopySettings getCopySettings() {
+        return copySettings;
+    }
+
+    public void setCopySettings(CopySettings copySettings) {
+        this.copySettings = copySettings;
     }
 
     @Override

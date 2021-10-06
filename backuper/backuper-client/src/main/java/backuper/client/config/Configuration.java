@@ -1,35 +1,27 @@
 package backuper.client.config;
 
 import java.util.List;
+import java.util.Map;
 
 public class Configuration {
-    private int localFileChunkSize;
-    private int remoteFileChunkSize;
-    private int maxConnectionsNumber;
+    private CopySettings localCopySettings;
+    Map<String, CopySettings> remoteCopySettings;
     private List<BackupTask> backupTasks;
 
-    public int getLocalFileChunkSize() {
-        return localFileChunkSize;
+    public CopySettings getLocalCopySettings() {
+        return localCopySettings;
     }
 
-    public void setLocalFileChunkSize(int localFileChunkSize) {
-        this.localFileChunkSize = localFileChunkSize;
+    public void setLocalCopySettings(CopySettings localCopySettings) {
+        this.localCopySettings = localCopySettings;
     }
 
-    public int getRemoteFileChunkSize() {
-        return remoteFileChunkSize;
+    public Map<String, CopySettings> getRemoteCopySettings() {
+        return remoteCopySettings;
     }
 
-    public void setRemoteFileChunkSize(int remoteFileChunkSize) {
-        this.remoteFileChunkSize = remoteFileChunkSize;
-    }
-
-    public int getMaxConnectionsNumber() {
-        return maxConnectionsNumber;
-    }
-
-    public void setMaxConnectionsNumber(int maxConnectionsNumber) {
-        this.maxConnectionsNumber = maxConnectionsNumber;
+    public void setRemoteCopySettings(Map<String, CopySettings> remoteCopySettings) {
+        this.remoteCopySettings = remoteCopySettings;
     }
 
     public List<BackupTask> getBackupTasks() {

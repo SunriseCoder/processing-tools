@@ -17,7 +17,6 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 
 import backuper.client.FileCopyStatus;
 import backuper.client.config.BackupTask;
-import backuper.client.config.Configuration;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
@@ -25,7 +24,6 @@ import utils.CloseUtils;
 import utils.ThreadUtils;
 
 public class CopyRemoteFileOperation {
-    private Configuration config;
     private BackupTask backupTask;
 
     private Path relativePath;
@@ -48,8 +46,7 @@ public class CopyRemoteFileOperation {
     private int chunkSize;
     private long nextChunkStart;
 
-    public CopyRemoteFileOperation(Configuration config, BackupTask backupTask, FileMetadata srcFileMetadata, String destination, boolean newFile) {
-        this.config = config;
+    public CopyRemoteFileOperation(BackupTask backupTask, FileMetadata srcFileMetadata, String destination, boolean newFile) {
         this.backupTask = backupTask;
 
         this.relativePath = srcFileMetadata.getRelativePath();
@@ -93,7 +90,7 @@ public class CopyRemoteFileOperation {
         this.resourceName = srcFileMetadata.getResourceName();
         this.token = srcFileMetadata.getToken();
         this.path = srcFileMetadata.getRelativePath().toString();
-        this.chunkSize = config.getRemoteFileChunkSize();
+        this.chunkSize = backupTask.getCopySettings().getCopyChunkSize();
         this.nextChunkStart = 0;
     }
 
@@ -128,7 +125,7 @@ public class CopyRemoteFileOperation {
 
     public static class CopyChunkTask implements Runnable {
         private String requestUrl;
-        private String resourceName;
+        private String resourceUrl;
         private String token;
         private String path;
         private long start;
@@ -137,10 +134,10 @@ public class CopyRemoteFileOperation {
         private FileChannel out;
         private FileCopyStatus fileCopyStatus;
 
-        public CopyChunkTask(String requestUrl, String resourceName, String token, String path, long start, long length,
+        public CopyChunkTask(String requestUrl, String resourceUrl, String token, String path, long start, long length,
                 FileChannel out, FileCopyStatus fileCopyStatus) {
             this.requestUrl = requestUrl;
-            this.resourceName = resourceName;
+            this.resourceUrl = resourceUrl;
             this.token = token;
             this.path = path;
             this.start = start;
@@ -153,7 +150,7 @@ public class CopyRemoteFileOperation {
         @Override
         public void run() {
             List<NameValuePair> postData = new ArrayList<>();
-            postData.add(new BasicNameValuePair("resource", resourceName));
+            postData.add(new BasicNameValuePair("resource", resourceUrl));
             postData.add(new BasicNameValuePair("token", token));
             postData.add(new BasicNameValuePair("path", path));
             postData.add(new BasicNameValuePair("start", String.valueOf(start)));

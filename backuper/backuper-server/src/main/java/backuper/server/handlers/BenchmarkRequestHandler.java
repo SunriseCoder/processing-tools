@@ -1,8 +1,8 @@
 package backuper.server.handlers;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.EntityDetails;
@@ -15,17 +15,17 @@ import org.apache.hc.core5.http.nio.entity.BasicAsyncEntityConsumer;
 import org.apache.hc.core5.http.nio.support.BasicRequestConsumer;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
-import backuper.common.dto.FileMetadataRemote;
 import backuper.common.helpers.HttpHelper;
 import backuper.server.FileServer;
 import utils.FormattingUtils;
-import utils.JSONUtils;
 
-public class FileListRequestHandler implements AsyncServerRequestHandler<Message<HttpRequest, byte[]>> {
+public class BenchmarkRequestHandler implements AsyncServerRequestHandler<Message<HttpRequest, byte[]>> {
     private FileServer fileServer;
+    private Random random;
 
-    public FileListRequestHandler(FileServer fileServer) {
+    public BenchmarkRequestHandler(FileServer fileServer) {
         this.fileServer = fileServer;
+        this.random = new Random();
     }
 
     @Override
@@ -43,13 +43,7 @@ public class FileListRequestHandler implements AsyncServerRequestHandler<Message
         }
 
         Map<String, String> params = HttpHelper.parsePostParams(new String(message.getBody()));
-        if (!HttpHelper.validateNonEmptyParams(params, new String[] { "resource", "token" }, responseTrigger, context)) {
-            return;
-        }
-
-        String resourceName = params.get("resource");
-        if (!fileServer.hasResource(resourceName)) {
-            HttpHelper.sendHttpResponse(404, "Resorce not found", ContentType.TEXT_HTML, responseTrigger, context);
+        if (!HttpHelper.validateNonEmptyParams(params, new String[] { "token", "length" }, responseTrigger, context)) {
             return;
         }
 
@@ -59,18 +53,22 @@ public class FileListRequestHandler implements AsyncServerRequestHandler<Message
             return;
         }
 
-        System.out.println("Request: " + fileServer.getUserByToken(params.get("token")).getLogin() + ": " + resourceName);
-
-        if (!fileServer.hasAccess(resourceName, token)) {
-            HttpHelper.sendHttpResponse(403, "Access denied", ContentType.TEXT_HTML, responseTrigger, context);
+        int length = 0;
+        try {
+            length = Integer.parseInt(params.get("length"));
+        } catch (Exception e) {
             return;
         }
 
-        List<FileMetadataRemote> fileList = fileServer.getFileList(resourceName, token);
-        String json = JSONUtils.toJSON(fileList);
-        json += "\n";
-        HttpHelper.sendHttpResponse(200, json, ContentType.APPLICATION_JSON, responseTrigger, context);
+        StringBuilder sb = new StringBuilder();
+        sb.append("Request: ").append(fileServer.getUserByToken(params.get("token")).getLogin())
+                .append(": Benchmark: ").append(FormattingUtils.humanReadableSize(length)).append(" (")
+                .append(length).append(" bytes) ...");
+        System.out.println(sb);
 
-        System.out.println("FileList - " + resourceName + " - " + fileList.size() + " file(s) - " + FormattingUtils.humanReadableSize(json.length()) + "b");
+        byte[] fileData = new byte[length];
+        random.nextBytes(fileData);
+
+        HttpHelper.sendHttpResponse(200, fileData, ContentType.DEFAULT_BINARY, responseTrigger, context);
     }
 }

@@ -14,12 +14,10 @@ import org.apache.hc.core5.http.HttpException;
 
 import backuper.client.FileCopyStatus;
 import backuper.client.config.BackupTask;
-import backuper.client.config.Configuration;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.PrintHelper;
 
 public class CopyLocalFileOperation {
-    private Configuration config;
     private BackupTask backupTask;
 
     private Path relativePath;
@@ -30,8 +28,7 @@ public class CopyLocalFileOperation {
 
     private FileMetadata srcFileMetadata;
 
-    public CopyLocalFileOperation(Configuration config, BackupTask backupTask, FileMetadata srcFileMetadata, String destination, boolean newFile) {
-        this.config = config;
+    public CopyLocalFileOperation(BackupTask backupTask, FileMetadata srcFileMetadata, String destination, boolean newFile) {
         this.backupTask = backupTask;
 
         this.relativePath = srcFileMetadata.getRelativePath();
@@ -65,14 +62,15 @@ public class CopyLocalFileOperation {
             try (RandomAccessFile inputFile = new RandomAccessFile(srcAbsolutePath.toString(), "r")) {
                 FileChannel in = inputFile.getChannel();
                 long read;
-                ByteBuffer buffer = ByteBuffer.allocate(config.getLocalFileChunkSize());
+                int copyChunkSize = backupTask.getCopySettings().getCopyChunkSize();
+                ByteBuffer buffer = ByteBuffer.allocate(copyChunkSize);
                 while ((read = in.read(buffer)) > 0) {
                     buffer.flip();
                     // TODO Debug here, problems due to copy, maybe use transfers
                     out.write(buffer);
                     fileCopyStatus.addCopiedSize(read);
                     fileCopyStatus.printCopyProgress(false);
-                    buffer = ByteBuffer.allocate(config.getLocalFileChunkSize());
+                    buffer = ByteBuffer.allocate(copyChunkSize);
                 }
             }
 

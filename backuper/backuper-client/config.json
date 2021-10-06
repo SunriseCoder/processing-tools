@@ -1,7 +1,9 @@
 {
-    "localFileChunkSize": "1048576",
-    "remoteFileChunkSize": "1048576",
-    "maxConnectionsNumber": "10",
+    "localCopySettings": {
+        "copyChunkSize": "1048576",
+        "maxConnections": "1"
+    },
+    "remoteCopySettings": {},
     "backupTasks": [
         {
             "name": "task1",

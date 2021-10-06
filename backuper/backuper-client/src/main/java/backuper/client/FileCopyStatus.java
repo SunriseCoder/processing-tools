@@ -2,8 +2,8 @@ package backuper.client;
 
 import java.text.DecimalFormat;
 
-import backuper.common.helpers.FormattingHelper;
 import backuper.common.helpers.PrintHelper;
+import utils.FormattingUtils;
 import utils.MathUtils;
 
 public class FileCopyStatus {
@@ -58,19 +58,19 @@ public class FileCopyStatus {
             // 25Mb of 4.3G (1.05%) / 35Gb of 2Tb (1.25%) / avg: 75Mb/s / Eta: 101:01:52/102:07:25
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;
-            String currentFileCopiedSizeStr = FormattingHelper.humanReadableSize(currentFileCopiedSize);
+            String currentFileCopiedSizeStr = FormattingUtils.humanReadableSize(currentFileCopiedSize);
             StringBuilder sb = new StringBuilder();
             sb.append(String.format("%6s", currentFileCopiedSizeStr));
-            sb.append(" of ").append(FormattingHelper.humanReadableSize(currentFileTotalSize));
+            sb.append(" of ").append(FormattingUtils.humanReadableSize(currentFileTotalSize));
             String currentPercentStr = percentFormat.format(currentPercent);
             currentPercentStr = String.format("%7s", currentPercentStr);
             sb.append(" (").append(currentPercentStr).append(") / ");
 
             // All files
             double allFilesPercent = (double) allFilesCopiedSize / allFilesTotalSize;
-            String allFilesCopiedSizeStr = FormattingHelper.humanReadableSize(allFilesCopiedSize);
+            String allFilesCopiedSizeStr = FormattingUtils.humanReadableSize(allFilesCopiedSize);
             sb.append(String.format("%6s", allFilesCopiedSizeStr));
-            sb.append(" of ").append(FormattingHelper.humanReadableSize(allFilesTotalSize));
+            sb.append(" of ").append(FormattingUtils.humanReadableSize(allFilesTotalSize));
             String allFilesPercentStr = percentFormat.format(allFilesPercent);
             allFilesPercentStr = String.format("%7s", allFilesPercentStr);
             sb.append(" (").append(allFilesPercentStr).append(") / ");
@@ -78,7 +78,7 @@ public class FileCopyStatus {
             // Speed
             long currentFileTimeDelta = now - currentFileStartTime;
             long speed = currentFileTimeDelta > 0 ? currentFileCopiedSize * 1000 / currentFileTimeDelta : 0;
-            String speedStr = FormattingHelper.humanReadableSize(speed);
+            String speedStr = FormattingUtils.humanReadableSize(speed);
             speedStr = String.format("%6s", speedStr);
             sb.append("avg: ").append(speedStr).append("/s / ");
 
@@ -89,7 +89,7 @@ public class FileCopyStatus {
             long remainingSize = allFilesTotalSize - allFilesCopiedSize;
             if (speed > 0) {
                 long remaining = remainingSize / speed;
-                sb.append(FormattingHelper.humanReadableTime(remaining));
+                sb.append(FormattingUtils.humanReadableTimeS(remaining));
             } else {
                 sb.append("Unknown");
             }
@@ -100,7 +100,7 @@ public class FileCopyStatus {
             if (copiedAllFilesTime > 0 && allFilesPercent > 0) {
                 double totalTime = copiedAllFilesTime / allFilesPercent;
                 long remainingTime = MathUtils.roundToLong(totalTime * (1 - allFilesPercent) / 1000);
-                sb.append(FormattingHelper.humanReadableTime(remainingTime));
+                sb.append(FormattingUtils.humanReadableTimeS(remainingTime));
             } else {
                 sb.append("Unknown");
             }
@@ -126,9 +126,9 @@ public class FileCopyStatus {
         if (timeDelta > 0) {
             long speed = allFilesCopiedSize * 1000 / timeDelta;
 
-            String message = "Copied: " + FormattingHelper.humanReadableSize(allFilesCopiedSize)
-                    + ", took: " + FormattingHelper.humanReadableTime(timeDelta / 1000)
-                    + ", avg: " + FormattingHelper.humanReadableSize(speed) + "/s";
+            String message = "Copied: " + FormattingUtils.humanReadableSize(allFilesCopiedSize)
+                    + ", took: " + FormattingUtils.humanReadableTimeS(timeDelta / 1000)
+                    + ", avg: " + FormattingUtils.humanReadableSize(speed) + "/s";
 
             PrintHelper.println(message);
         }
@@ -156,6 +156,10 @@ public class FileCopyStatus {
 
     public synchronized void setCurrentFileTotalSize(long currentFileTotalSize) {
         this.currentFileTotalSize = currentFileTotalSize;
+    }
+
+    public long getCurrentFileStartTime() {
+        return currentFileStartTime;
     }
 
     public synchronized long getAllFilesCopiedSize() {

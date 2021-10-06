@@ -1,7 +1,5 @@
 package utils;
 
-import java.text.DecimalFormat;
-
 public class NumberUtils {
 
     public static String generateNumberByMaxNumber(int number, int maxNumber) {
@@ -19,17 +17,5 @@ public class NumberUtils {
         }
 
         return sb.toString();
-    }
-
-    public static String humanReadableSize(long value) {
-        double result = value;
-        String arr[] = {"", "k", "M", "G", "T", "P", "E"};
-        int index = 0;
-        while ((result / 1024) >= 1) {
-            result = result / 1024;
-            index++;
-        }
-        DecimalFormat decimalFormat = new DecimalFormat("#.##");
-        return String.format("%s %s", decimalFormat.format(result), arr[index]);
     }
 }
