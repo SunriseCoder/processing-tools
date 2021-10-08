@@ -98,9 +98,10 @@ public class CopyRemoteFileOperation {
         return nextChunkStart < (fileSize - 1);
     }
 
-    public CopyChunkTask getNextChunk() {
-        CopyChunkTask task = new CopyChunkTask(requestUrl, resourceName, token, path, nextChunkStart, chunkSize, outputChannel, fileCopyStatus);
-        nextChunkStart += chunkSize;
+    public CopyChunkTask createNextCopyChunkTask() {
+        long length = Math.min(chunkSize, fileSize - nextChunkStart);
+        CopyChunkTask task = new CopyChunkTask(requestUrl, resourceName, token, path, nextChunkStart, length, outputChannel, fileCopyStatus);
+        nextChunkStart += length;
         return task;
     }
 
@@ -156,25 +157,30 @@ public class CopyRemoteFileOperation {
             postData.add(new BasicNameValuePair("start", String.valueOf(start)));
             postData.add(new BasicNameValuePair("length", String.valueOf(length)));
 
-            Response response = null;
+            boolean success = false;
             do {
                 try {
-                    response = HttpHelper.sendPostRequest(requestUrl, postData);
+                    Response response = HttpHelper.sendPostRequest(requestUrl, postData);
+
+                    if (response != null && response.getCode() != 200) {
+                        System.out.println("Got response: " + response.getCode() + " " + new String(response.getData()));
+                        ThreadUtils.sleep(5000);
+                        continue;
+                    }
+
+                    byte[] responseData = response.getData();
+                    if (responseData.length != length) {
+                        continue;
+                    }
+                    ByteBuffer buffer = ByteBuffer.wrap(responseData);
+                    saveToDisk(buffer, start, out);
+                    fileCopyStatus.addCopiedSize(responseData.length);
+                    success = true;
                 } catch (Exception e) {
                     e.printStackTrace();
                     ThreadUtils.sleep(5000);
                 }
-
-                if (response != null && response.getCode() != 200) {
-                    System.out.println("Got response: " + response.getCode() + " " + new String(response.getData()));
-                    ThreadUtils.sleep(5000);
-                }
-            } while (response == null || response.getCode() != 200);
-
-            byte[] responseData = response.getData();
-            ByteBuffer buffer = ByteBuffer.wrap(responseData);
-            saveToDisk(buffer, start, out);
-            fileCopyStatus.addCopiedSize(responseData.length);
+            } while (!success);
         }
 
         private static synchronized void saveToDisk(ByteBuffer buffer, long start, FileChannel out) {

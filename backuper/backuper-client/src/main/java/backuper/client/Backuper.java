@@ -4,14 +4,10 @@ import java.io.Console;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -21,7 +17,6 @@ import backuper.client.config.BackupTask;
 import backuper.client.config.Configuration;
 import backuper.client.operations.CopyLocalFileOperation;
 import backuper.client.operations.CopyRemoteFileOperation;
-import backuper.client.operations.CopyRemoteFileOperation.CopyChunkTask;
 import backuper.client.operations.CreateFolderOperation;
 import backuper.client.operations.DeleteFileOperation;
 import backuper.client.operations.DeleteFolderOperation;
@@ -32,7 +27,6 @@ import backuper.common.helpers.PrintHelper;
 import utils.FileUtils;
 import utils.FormattingUtils;
 import utils.MapUtils;
-import utils.ThreadUtils;
 
 public class Backuper {
     private Configuration config;
@@ -68,9 +62,10 @@ public class Backuper {
             scanTask(task);
         }
 
+        RemoteFilesCopier remoteFilesCopier = new RemoteFilesCopier();
+        remoteFilesCopier.setCopyOperations(copyRemoteFileOperations);
         long copyLocalFilesTotalSize = copyLocalFileOperations.stream().mapToLong(o -> o.getFileSize()).sum();
-        long copyRemoteFilesTotalSize = copyRemoteFileOperations.values().stream()
-                .flatMap(v -> v.stream()).mapToLong(o -> o.getFileSize()).sum();
+        long copyRemoteFilesTotalSize = remoteFilesCopier.getTotalSize();
 
         scanEndTime = System.currentTimeMillis();
         System.out.println("Scan took " + FormattingUtils.humanReadableTimeS((scanEndTime - startTime) / 1000));
@@ -141,7 +136,8 @@ public class Backuper {
         // Copy Files
         FileCopyStatus fileCopyStatus = new FileCopyStatus();
         copyLocalFiles(copyLocalFilesTotalSize, fileCopyStatus);
-        copyRemoteFiles(copyRemoteFilesTotalSize, fileCopyStatus);
+        remoteFilesCopier.setFileCopyStatus(fileCopyStatus);
+        remoteFilesCopier.copy();
 
         endTime = System.currentTimeMillis();
 
@@ -246,114 +242,6 @@ public class Backuper {
             CopyLocalFileOperation operation = copyLocalFileOperations.get(i);
             System.out.println((i + 1) + "/" + copyLocalFileOperations.size() + ": " + operation.getDescription());
             operation.perform(fileCopyStatus);
-        }
-    }
-
-    private void copyRemoteFiles(long copyRemoteFilesTotalSize, FileCopyStatus fileCopyStatus) throws IOException, HttpException {
-        // FileCopyStatus Reset
-        fileCopyStatus.reset();
-        fileCopyStatus.setCurrentFileTotalSize(copyRemoteFilesTotalSize);
-        fileCopyStatus.setAllFilesTotalSize(copyRemoteFilesTotalSize);
-
-        for (Entry<BackupTask, List<CopyRemoteFileOperation>> copyRemoteFileOperationEntry : copyRemoteFileOperations.entrySet()) {
-            BackupTask backupTask = copyRemoteFileOperationEntry.getKey();
-            List<CopyRemoteFileOperation> operationsForCurrentTask = copyRemoteFileOperationEntry.getValue();
-            System.out.println("Starting remote files copy for task: " + backupTask.getName());
-
-            // Preparing Executor
-            int maxConnections = backupTask.getCopySettings().getMaxConnections();
-            int maxFuturesNumber = maxConnections * 2;
-            ExecutorService executor = Executors.newFixedThreadPool(maxConnections);
-
-            CopyRemoteFileOperation currentOperation = null;
-            OperationFutures currentOperationFutures = null;
-            Iterator<CopyRemoteFileOperation> operationIterator = operationsForCurrentTask.iterator();
-            List<OperationFutures> operationFuturesList = new ArrayList<>();
-            // Main Loop of Copy Remote Files
-            while (operationIterator.hasNext() || operationFuturesList.size() > 0) {
-                // Checking and cleaning up finished tasks
-                int futuresCounter = 0;
-                Iterator<OperationFutures> operationFuturesIterator = operationFuturesList.iterator();
-                while (operationFuturesIterator.hasNext()) {
-                    OperationFutures operationFutures = operationFuturesIterator.next();
-                    Iterator<Future<?>> futuresIterator = operationFutures.getFutures().iterator();
-                    while(futuresIterator.hasNext()) {
-                        Future<?> future = futuresIterator.next();
-                        if (future.isDone()) {
-                            futuresIterator.remove();
-                        } else {
-                            futuresCounter++;
-                        }
-                    }
-                    // It's possible that all the task could be executed faster than this main loop. So therefore finish file in following cases only:
-                    // No active tasks for current file left && (next file is already started || this is the last file)
-                    if (operationFutures.getFutures().size() == 0 && (operationFutures.getOperation() != currentOperation || !operationIterator.hasNext())) {
-                        operationFutures.getOperation().finish();
-                        operationFuturesIterator.remove();
-                    }
-                }
-
-                // Creating new futures
-                for (int i = futuresCounter; i < maxFuturesNumber; i++) {
-                    // First operation
-                    if (currentOperation == null) {
-                        currentOperation = operationIterator.next();
-                        currentOperation.prepare(fileCopyStatus);
-                        currentOperationFutures = new OperationFutures(currentOperation);
-                        operationFuturesList.add(currentOperationFutures);
-                    }
-
-                    // Next operation
-                    if (!currentOperation.hasNextChunk()) {
-                        while (operationIterator.hasNext()) {
-                            currentOperation = operationIterator.next();
-                            currentOperation.prepare(fileCopyStatus);
-                            if (currentOperation.hasNextChunk()) {
-                                currentOperationFutures = new OperationFutures(currentOperation);
-                                operationFuturesList.add(currentOperationFutures);
-                                break;
-                            } else {
-                                currentOperation.finish();
-                            }
-                        }
-                    }
-
-                    // Getting creating future
-                    if (currentOperation.hasNextChunk()) {
-                        CopyChunkTask copyChunkTask = currentOperation.getNextChunk();
-                        Future<?> future = executor.submit(copyChunkTask);
-                        currentOperationFutures.getFutures().add(future);
-                    }
-                }
-
-                if (operationFuturesList.size() > 0) {
-                    ThreadUtils.sleep(10);
-                }
-                fileCopyStatus.printCopyProgress(false);
-            }
-
-            fileCopyStatus.printCopyProgress(true);
-            PrintHelper.println();
-            executor.shutdown();
-            System.out.println("Copy remote files for task: " + backupTask.getName() + " is done");
-        }
-    }
-
-    private static class OperationFutures {
-        private CopyRemoteFileOperation operation;
-        private List<Future<?>> futures;
-
-        public OperationFutures(CopyRemoteFileOperation operation) {
-            this.operation = operation;
-            futures = new ArrayList<>();
-        }
-
-        public CopyRemoteFileOperation getOperation() {
-            return operation;
-        }
-
-        public List<Future<?>> getFutures() {
-            return futures;
         }
     }
 }
