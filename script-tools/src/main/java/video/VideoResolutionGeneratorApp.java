@@ -24,7 +24,7 @@ public class VideoResolutionGeneratorApp {
 
         Map<String, List<String>> convertCommands = generator.generateCommands();
 
-        ProcessRunner processRunner = new ProcessRunner();
+        ProcessRunnerFileOutput processRunner = new ProcessRunnerFileOutput();
         processRunner.setOutputFile(new File("generate-output.log"));
         processRunner.setErrorFile(new File("generate-errors.log"));
 

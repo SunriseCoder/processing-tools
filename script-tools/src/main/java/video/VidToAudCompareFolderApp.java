@@ -25,7 +25,7 @@ public class VidToAudCompareFolderApp {
         String[] sourceFileNames = sourceFolder.list(filter);
         Set<String> targetFiles = new HashSet<>(Arrays.asList(targetFolder.list()));
 
-        ProcessRunner processRunner = new ProcessRunner();
+        ProcessRunnerFileOutput processRunner = new ProcessRunnerFileOutput();
         processRunner.setOutputFile(new File("generate-output.log"));
         processRunner.setErrorFile(new File("generate-errors.log"));
 

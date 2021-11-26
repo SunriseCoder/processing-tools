@@ -3,7 +3,7 @@ package video;
 import java.io.File;
 import java.util.List;
 
-public class ProcessRunner {
+public class ProcessRunnerFileOutput {
     private File outputFile;
     private File errorFile;
 
