@@ -108,7 +108,7 @@ public class YoutubeVideoHandler {
         Map<String, String> metadataMap = new HashMap<>();
 
         String urlString = "https://www.youtube.com/get_video_info?video_id=" + videoId + "&el=detailpage";
-        DownloadUtils.Response response = DownloadUtils.downloadPage(urlString, null);
+        DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null);
         String metadata = response.body;
         String[] metadataParts = metadata.split("&");
         for (int i = 0; i < metadataParts.length; i++) {

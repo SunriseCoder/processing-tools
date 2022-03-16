@@ -11,5 +11,6 @@ error-page-dump.dat
 keystore
 
 # Staff folders
+test-data/
 dumps/
 tmp/

@@ -2,11 +2,8 @@ package core.youtube;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -118,13 +115,13 @@ public class YoutubeChannelHandler {
 
     private static Result downloadChannelIdByCustomURL(String url) throws IOException {
         Result result = new Result();
-        Connection connection = Jsoup.connect(url);
-        if (connection.response().statusCode() == 404) {
+        Response response = DownloadUtils.downloadPageByGet(url, null);
+        if (response.responseCode == 404) {
             result.channelNotFound = true;
             return result;
         }
 
-        Document channelPage = connection.get();
+        Document channelPage = Jsoup.parse(response.body);
         String channelId = channelPage.select("meta[itemprop=channelId]").attr("content");
         if (channelId == null || channelId.isEmpty()) {
             throw new RuntimeException("Could not parse Youtube Channel ID, page format probably was changed,"
@@ -182,10 +179,11 @@ public class YoutubeChannelHandler {
     private static Result downloadVideosListFirstPage(String channelId) throws IOException {
         List<YoutubeVideo> videos = new ArrayList<>();
         Result result = new Result();
+        result.channelId = channelId;
         result.newVideos = videos;
 
         String urlString = "https://www.youtube.com/channel/" + channelId + "/videos";
-        Response response = DownloadUtils.downloadPage(urlString, null);
+        Response response = DownloadUtils.downloadPageByGet(urlString, null);
 
         if (response.headers.get(null).get(0).split(" ")[1].equals("404")) {
             result.channelNotFound = true;
@@ -197,29 +195,17 @@ public class YoutubeChannelHandler {
             String pageData = null;
             Elements scriptNodes = videosPage.select("script");
             for (Element scriptNode : scriptNodes) {
-                if (scriptNode.data().contains("var ytInitialData = ")) {
+                if (scriptNode.data().contains("WEB_PLAYER_CONTEXT_CONFIGS")) {
+                    result.clientConfig = parseYoutubeConfigSection(scriptNode.data());
+                }
+                if (scriptNode.data().startsWith("var ytInitialData = ")) {
                     pageData = scriptNode.data();
-                    break;
                 }
             }
-            String jsonText = pageData.replace("var ytInitialData = ", "");
-            jsonText = jsonText.substring(0, jsonText.length() - 1); // Cutting semicolon at the end off
+            // Cutting off "var ytInitialData = " at the beginning and ";" at the end
+            String jsonText = pageData.substring(20, pageData.length() - 1);
             JsonNode jsonRootNode = JSONUtils.parseJSON(jsonText);
-
-            JsonNode jsonNode = jsonRootNode.get("responseContext");
-            JsonNode stpNode = jsonNode.get("serviceTrackingParams");
-            for (JsonNode serviceNode : stpNode) {
-                if ("CSI".equals(serviceNode.get("service").asText())) {
-                    JsonNode paramsNode = serviceNode.get("params");
-                    for (JsonNode paramNode : paramsNode) {
-                        if ("cver".equals(paramNode.get("key").asText())) {
-                            result.clientVersion = paramNode.get("value").asText();
-                        }
-                    }
-                }
-            }
-
-            jsonNode = jsonRootNode.get("contents");
+            JsonNode jsonNode = jsonRootNode.get("contents");
             jsonNode = jsonNode.get("twoColumnBrowseResultsRenderer");
             jsonNode = jsonNode.get("tabs");
             jsonNode = jsonNode.get(1);
@@ -234,28 +220,8 @@ public class YoutubeChannelHandler {
 
             if (jsonNode.has("gridRenderer")) {
                 JsonNode gridRendererNode = jsonNode.get("gridRenderer");
-                JsonNode videoNodes = gridRendererNode.get("items");
-
-                for (JsonNode videoNode : videoNodes) {
-                    YoutubeVideo video = new YoutubeVideo();
-                    video.setChannelId(channelId);
-
-                    String videoId = videoNode.get("gridVideoRenderer").get("videoId").asText();
-                    video.setVideoId(videoId);
-
-                    String videoTitle = videoNode.get("gridVideoRenderer").get("title").get("runs").get(0).get("text").asText();
-                    video.setTitle(videoTitle);
-
-                    videos.add(video);
-                }
-
-                if (gridRendererNode.has("continuations")) {
-                    JsonNode continuationsNode = gridRendererNode.get("continuations");
-                    continuationsNode = continuationsNode.get(0);
-                    continuationsNode = continuationsNode.get("nextContinuationData");
-                    result.continuationToken = continuationsNode.get("continuation").asText();
-                    result.clickTrackingParams = continuationsNode.get("clickTrackingParams").asText();
-                }
+                JsonNode itemsNode = gridRendererNode.get("items");
+                parseVideoItems(itemsNode, videos, result);
             }
         } catch (Exception e) {
             PrintWriter pw = new PrintWriter("error-page-dump.dat");
@@ -268,72 +234,83 @@ public class YoutubeChannelHandler {
         return result;
     }
 
+    private static ClientConfig parseYoutubeConfigSection(String scriptNodeData) throws IOException {
+        String jsonStringWithJunk = scriptNodeData.split("ytcfg.set\\(")[1];
+        String jsonString = JSONUtils.trimAfterJsonEnds(jsonStringWithJunk);
+        JsonNode jsonRootNode = JSONUtils.parseJSON(jsonString);
+
+        ClientConfig clientConfig = new ClientConfig();
+        clientConfig.apiKey = jsonRootNode.get("INNERTUBE_API_KEY").asText();
+        clientConfig.apiVersion = jsonRootNode.get("INNERTUBE_API_VERSION").asText();
+        clientConfig.clientName = jsonRootNode.get("INNERTUBE_CLIENT_NAME").asText();
+        clientConfig.clientVersion = jsonRootNode.get("INNERTUBE_CLIENT_VERSION").asText();
+
+        return clientConfig;
+    }
+
+    private static void parseVideoItems(JsonNode itemsNode, List<YoutubeVideo> videos, Result result) {
+        for (JsonNode itemNode : itemsNode) {
+            if (itemNode.has("gridVideoRenderer")) {
+                YoutubeVideo video = new YoutubeVideo();
+                video.setChannelId(result.channelId);
+
+                JsonNode videoNode = itemNode.get("gridVideoRenderer");
+                String videoId = videoNode.get("videoId").asText();
+                video.setVideoId(videoId);
+
+                String videoTitle = videoNode.get("title").get("runs").get(0).get("text").asText();
+                video.setTitle(videoTitle);
+
+                videos.add(video);
+            } else if (itemNode.has("continuationItemRenderer")) {
+                JsonNode continuationsNode = itemNode.get("continuationItemRenderer");
+                JsonNode continuationEndpointNode = continuationsNode.get("continuationEndpoint");
+                result.clickTrackingParams = continuationEndpointNode.get("clickTrackingParams").asText();
+                JsonNode continuationCommandNode = continuationEndpointNode.get("continuationCommand");
+                result.continuationToken = continuationCommandNode.get("token").asText();
+            }
+        }
+    }
+
     private static Result downloadVideosListNextPage(String channelId, Result lastResult) throws IOException {
         List<YoutubeVideo> videos = new ArrayList<>();
         Result result = new Result();
+        ClientConfig clientConfig = lastResult.clientConfig;
+        result.clientConfig = clientConfig;
         result.newVideos = videos;
 
         try {
-            String url = "https://www.youtube.com/browse_ajax?ctoken=" + URLEncoder.encode(lastResult.continuationToken, "UTF-8") + "&continuation="
-                    + URLEncoder.encode(lastResult.continuationToken, "UTF-8") + "&itct=" + URLEncoder.encode(lastResult.clickTrackingParams, "UTF-8");
-            Map<String, String> headers = generateHeaders(channelId, lastResult);
-            Response response = DownloadUtils.downloadPage(url, headers);
-            String jsonText = response.body;
+//            String url = "https://www.youtube.com/browse_ajax?ctoken=" + URLEncoder.encode(lastResult.continuationToken, "UTF-8") + "&continuation="
+//                    + URLEncoder.encode(lastResult.continuationToken, "UTF-8") + "&itct=" + URLEncoder.encode(lastResult.clickTrackingParams, "UTF-8");
+            String url = "https://www.youtube.com/youtubei/" + clientConfig.apiVersion + "/browse?key=" + clientConfig.apiKey;
+            String jsonText = new StringBuilder()
+                    .append("{\n")
+                    .append("    \"context\": {\n")
+                    .append("        \"client\": {\n")
+                    .append("            \"clientName\": \"").append(clientConfig.clientName).append("\",\n")
+                    .append("            \"clientVersion\": \"").append(clientConfig.clientVersion).append("\"\n")
+                    .append("        },\n")
+                    .append("        \"clickTracking\": {\n")
+                    .append("            \"clickTrackingParams\": \"").append(lastResult.clickTrackingParams).append("\"\n")
+                    .append("        }\n")
+                    .append("    },\n")
+                    .append("    \"continuation\": \"").append(lastResult.continuationToken).append("\"\n")
+                    .append("}").toString();
+            Response response = DownloadUtils.downloadPageByPostJson(url, jsonText);
+            jsonText = response.body;
+
             JsonNode jsonNode = JSONUtils.parseJSON(jsonText);
-            if (!jsonNode.isArray()) {
-                // Request always returns Status 200 OK, but different content
-                result.channelNotFound = true;
-                return result;
-            }
+            jsonNode = jsonNode.get("onResponseReceivedActions").get(0);
+            jsonNode = jsonNode.get("appendContinuationItemsAction");
 
-            jsonNode = jsonNode.get(1);
-            jsonNode = jsonNode.get("response");
-            if (jsonNode.has("continuationContents")) {
-                jsonNode = jsonNode.get("continuationContents");
-                if (jsonNode.has("gridContinuation")) {
-                    JsonNode gridContinuationNode = jsonNode.get("gridContinuation");
-                    if (gridContinuationNode.has("items")) {
-                        // Parsing Videos
-                        JsonNode videoNodes = gridContinuationNode.get("items");
-                        for (JsonNode videoNode : videoNodes) {
-                            YoutubeVideo video = new YoutubeVideo();
-                            video.setChannelId(channelId);
-
-                            String videoId = videoNode.get("gridVideoRenderer").get("videoId").asText();
-                            video.setVideoId(videoId);
-
-                            String videoTitle = videoNode.get("gridVideoRenderer").get("title").get("runs").get(0).get("text").asText();
-                            video.setTitle(videoTitle);
-
-                            videos.add(video);
-                        }
-                    }
-
-                    // Parsing Continuation parameters
-                    if (gridContinuationNode.has("continuations")) {
-                        JsonNode continuationsNode = gridContinuationNode.get("continuations");
-                        continuationsNode = continuationsNode.get(0);
-                        continuationsNode = continuationsNode.get("nextContinuationData");
-                        result.continuationToken = continuationsNode.get("continuation").asText();
-                        result.clickTrackingParams = continuationsNode.get("clickTrackingParams").asText();
-                        result.clientVersion = lastResult.clientVersion;
-                    }
-                }
-            }
+            // Parsing Videos
+            JsonNode itemNodes = jsonNode.get("continuationItems");
+            parseVideoItems(itemNodes, videos, result);
         } catch (Exception e) {
             throw new RuntimeException("Could not parse Youtube Channel Videos page, Youtube page design was probably changed: " + e.getMessage(), e);
         }
 
         return result;
-    }
-
-    private static Map<String, String> generateHeaders(String channelId, Result lastResult) {
-        Map<String, String> headers = new HashMap<>();
-
-        headers.put("x-youtube-client-name", "1");
-        headers.put("x-youtube-client-version", lastResult.clientVersion);
-
-        return headers;
     }
 
     public static class Result {
@@ -343,8 +320,16 @@ public class YoutubeChannelHandler {
         public String newTitle;
         public String channelId;
         public List<YoutubeVideo> newVideos;
-        public String clientVersion;
+        public ClientConfig clientConfig;
         public String continuationToken;
         public String clickTrackingParams;
+    }
+
+    public static class ClientConfig {
+        public String apiKey;
+        public String apiVersion;
+        public String clientName;
+        public String clientVersion;
+
     }
 }
