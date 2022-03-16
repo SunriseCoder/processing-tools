@@ -20,6 +20,7 @@ import backuper.client.config.BackupTask;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
+import backuper.logger.Logger;
 import utils.CloseUtils;
 import utils.ThreadUtils;
 
@@ -160,7 +161,11 @@ public class CopyRemoteFileOperation {
             boolean success = false;
             do {
                 try {
+                    log("1-start", null);
+
                     Response response = HttpHelper.sendPostRequest(requestUrl, postData);
+
+                    log("2-request-sent", null);
 
                     if (response != null && response.getCode() != 200) {
                         System.out.println("Got response: " + response.getCode() + " " + new String(response.getData()));
@@ -168,19 +173,46 @@ public class CopyRemoteFileOperation {
                         continue;
                     }
 
+                    log("3-response-is-valid", null);
+
                     byte[] responseData = response.getData();
                     if (responseData.length != length) {
                         continue;
                     }
+
+                    log("4-data-length-is-valid", null);
+
                     ByteBuffer buffer = ByteBuffer.wrap(responseData);
                     saveToDisk(buffer, start, out);
+
+                    log("5-saved-to-disk", null);
+
                     fileCopyStatus.addCopiedSize(responseData.length);
+
+                    log("6-added-copy-size", null);
+
                     success = true;
+
+                    log("7-success-true", null);
                 } catch (Exception e) {
+                    log("0-exception", e);
                     e.printStackTrace();
                     ThreadUtils.sleep(5000);
                 }
             } while (!success);
+
+            log("8-task-end", null);
+        }
+
+        private void log(String stage, Exception e) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{\"stage\": \"").append(stage).append("\"")
+                    .append(", \"path\": \"").append(path).append("\"")
+                    .append(", \"start\": \"").append(start).append("\"")
+                    .append(", \"length\": \"").append(length).append("\"")
+                    .append(", \"error\": \"").append(e == null ? null : e.toString()).append("\"")
+                    .append("}");
+            Logger.trace(sb.toString());
         }
 
         private static synchronized void saveToDisk(ByteBuffer buffer, long start, FileChannel out) {
