@@ -24,7 +24,7 @@ public class RenderManagerTask extends AbstractManagerTask {
         File outputFolder = new File(sourceFolder, "rendered");
         outputFolder.mkdirs();
 
-        File[] files = sourceFolder.listFiles(new FilenameFilterImages());
+        File[] files = sourceFolder.listFiles(new FilenameFilterImages(false));
         int amountOfImages = files.length;
         if (amountOfImages == 0) {
             applicationContext.showWarning("There is no Images to Render", null);

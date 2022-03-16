@@ -32,6 +32,19 @@ public class PrimitiveUtils {
         return array;
     }
 
+    public static long bigEndianByteArrayToLong(byte[] bytes, int start, int size) {
+        long value = 0;
+        long bytePosition = 0;
+        for (int i = start + size - 1; i >= start; i--, bytePosition++) {
+            long byteValue = bytes[i];
+            if (byteValue < 0) {
+                byteValue += 256;
+            }
+            value += byteValue << bytePosition * 8;
+        }
+        return value;
+    }
+
     public static int[] listToIntArray(List<Integer> list) {
         int[] array = new int[list.size()];
 

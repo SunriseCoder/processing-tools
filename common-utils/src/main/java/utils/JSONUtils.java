@@ -63,4 +63,34 @@ public class JSONUtils {
         T result = mapper.readValue(text, typeReference);
         return result;
     }
+
+    public static String trimAfterJsonEnds(String jsonStringWithJunk) {
+        if (jsonStringWithJunk.charAt(0) != '{') {
+            return null;
+        }
+
+        int openBraceCounter = 0;
+        boolean isInsideString = false;
+        for (int i = 0; i < jsonStringWithJunk.length(); i++) {
+            char currentChar = jsonStringWithJunk.charAt(i);
+            if (currentChar == '{') {
+                openBraceCounter++;
+            }
+            if (!isInsideString && currentChar == '}') {
+                openBraceCounter--;
+            }
+            if (!isInsideString && currentChar == '"') {
+                isInsideString = true;
+            }
+            if (isInsideString && currentChar == '"' && jsonStringWithJunk.charAt(i - 1) != '\\') {
+                isInsideString = false;
+            }
+            if (openBraceCounter == 0) {
+                String result = jsonStringWithJunk.substring(0, i + 1);
+                return result;
+            }
+        }
+
+        return jsonStringWithJunk;
+    }
 }

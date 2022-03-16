@@ -146,10 +146,11 @@ public class FileUtils {
         try (FileWriter fileWriter = new FileWriter(file, true);
                 PrintWriter printWriter = new PrintWriter(fileWriter);) {
             printWriter.println(text);
+            printWriter.flush();
         }
     }
 
-    public static String replaceResolution(String filename, String replacement) {
+    public static String replaceFileExtension(String filename, String replacement) {
         String newFileName = getFileName(filename);
         newFileName += "." + replacement;
         return newFileName;

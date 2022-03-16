@@ -73,7 +73,7 @@ public class ReorderNode extends AbstractNode {
             File outputFolder = new File(inputFolder, "reordered");
             outputFolder.mkdir();
 
-            File[] files = inputFolder.listFiles(new FilenameFilterImages());
+            File[] files = inputFolder.listFiles(new FilenameFilterImages(false));
             int amountOfImages = files.length;
 
             for (int i = 0; i < amountOfImages; i++) {

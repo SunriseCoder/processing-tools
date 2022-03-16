@@ -74,7 +74,7 @@ public class SplitNode extends AbstractNode {
             File outputFolder = new File(inputFolder, "splitted");
             outputFolder.mkdir();
 
-            File[] files = inputFolder.listFiles(new FilenameFilterImages());
+            File[] files = inputFolder.listFiles(new FilenameFilterImages(false));
             int amountOfImages = files.length;
 
             for (int i = 0; i < amountOfImages; i++) {

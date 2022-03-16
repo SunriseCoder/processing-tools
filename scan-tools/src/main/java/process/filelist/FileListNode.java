@@ -88,7 +88,7 @@ public class FileListNode {
         applicationContext.reloadSelectionBoundaries(currentFolder);
 
         // Forming new list of FileListEntry for filesListView
-        String[] filenames = currentFolder.list(new FilenameFilterImages());
+        String[] filenames = currentFolder.list(new FilenameFilterImages(false));
         List<FileListEntry> fileEntries = Arrays.stream(filenames)
                 .map(filename -> {
                     boolean saved = applicationContext.getSelectionBoundaries(currentFolder, filename) != null;

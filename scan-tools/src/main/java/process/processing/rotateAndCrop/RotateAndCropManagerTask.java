@@ -25,7 +25,7 @@ public class RotateAndCropManagerTask extends AbstractManagerTask {
         File outputFolder = new File(sourceFolder, "rotated-and-cropped");
         outputFolder.mkdirs();
 
-        File[] files = sourceFolder.listFiles(new FilenameFilterImages());
+        File[] files = sourceFolder.listFiles(new FilenameFilterImages(false));
         int amountOfImages = files.length;
 
         List<Future<?>> taskFutures = new ArrayList<>();

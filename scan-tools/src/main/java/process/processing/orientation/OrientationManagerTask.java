@@ -23,7 +23,7 @@ public class OrientationManagerTask extends AbstractManagerTask {
         File outputFolder = new File(sourceFolder, "oriented");
         outputFolder.mkdirs();
 
-        File[] files = sourceFolder.listFiles(new FilenameFilterImages());
+        File[] files = sourceFolder.listFiles(new FilenameFilterImages(false));
         int amountOfImages = files.length;
 
         List<Future<?>> taskFutures = new ArrayList<>();

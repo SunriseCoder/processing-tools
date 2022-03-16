@@ -21,7 +21,7 @@ public class AutoMarkupManagerTask extends AbstractManagerTask {
     protected void runWithExceptions() throws Exception {
         File sourceFolder = applicationContext.getWorkFolder();
 
-        File[] files = sourceFolder.listFiles(new FilenameFilterImages());
+        File[] files = sourceFolder.listFiles(new FilenameFilterImages(false));
         int amountOfImages = files.length;
 
         List<Future<?>> taskFutures = new ArrayList<>();

@@ -24,7 +24,7 @@ public class MergeManagerTask extends AbstractManagerTask {
         File outputFolder = new File(sourceFolder, "merged");
         outputFolder.mkdirs();
 
-        File[] files = sourceFolder.listFiles(new FilenameFilterImages());
+        File[] files = sourceFolder.listFiles(new FilenameFilterImages(false));
         int amountOfImages = files.length;
         if (amountOfImages == 0) {
             applicationContext.showWarning("There is no Images to Merge", null);
