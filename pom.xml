@@ -17,9 +17,11 @@
         <module>graph-tools</module>
         <module>password-tools</module>
         <module>scan-tools</module>
+		<module>slide-show</module>
         <module>script-tools</module>
         <module>subtitles-tools</module>
         <module>updates-monitor</module>
+		<module>video-editor</module>
     </modules>
 
     <dependencyManagement>
