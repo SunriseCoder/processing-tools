@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.Line?>
+
+<SplitPane fx:id="verticalSplitPane" orientation="VERTICAL" prefHeight="768.0" prefWidth="1024.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1">
+    <!--<items>
+        <SplitPane fx:id="horizontalSplitPane" dividerPositions="0.5" orientation="HORIZONTAL">
+            <items>
+                <StackPane fx:id="textEditorPane" prefHeight="150.0" prefWidth="200.0">
+                    <children>
+                        <TextArea fx:id="textEditor" />
+                        <Line fx:id="lineSizeLine" endY="300.0" translateX="659.0" StackPane.alignment="TOP_LEFT" />
+                    </children>
+                </StackPane>
+            </items>
+        </SplitPane>
+    </items>-->
+</SplitPane>
