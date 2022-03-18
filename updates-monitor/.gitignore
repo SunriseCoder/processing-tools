@@ -3,6 +3,7 @@ database/
 
 # Download folder
 download/
+download
 
 # Error dumps
 error-page-dump.dat

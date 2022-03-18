@@ -2,6 +2,9 @@ package utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.TimeZone;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
@@ -92,5 +95,119 @@ public class JSONUtils {
         }
 
         return jsonStringWithJunk;
+    }
+
+    public static String extractJsonSubstringFromString(String jsonStringWithJunk) {
+        int startPos = -1, endPos = -1;
+        boolean isInsideStringValue = false;
+        List<CharAmountPair> openedBrackets = new ArrayList<>();
+
+        int length = jsonStringWithJunk.length();
+        for (int i = 0; i < length; i++) {
+            char currentChar = jsonStringWithJunk.charAt(i);
+            if (currentChar == '"') {
+                isInsideStringValue = !isInsideStringValue;
+            }
+            if (isInsideStringValue) {
+                continue;
+            }
+            switch (currentChar) {
+            case '[':
+                if (openedBrackets.size() == 0) {
+                    openedBrackets.add(new CharAmountPair('[', 1));
+                    if (startPos == -1) {
+                        startPos = i;
+                    }
+                } else if (openedBrackets.get(openedBrackets.size() - 1).character != '[') {
+                    openedBrackets.add(new CharAmountPair('[', 1));
+                } else {
+                    openedBrackets.get(openedBrackets.size() - 1).amount++;
+                }
+                break;
+            case '{':
+                if (openedBrackets.size() == 0) {
+                    openedBrackets.add(new CharAmountPair('{', 1));
+                    if (startPos == -1) {
+                        startPos = i;
+                    }
+                } else if (openedBrackets.get(openedBrackets.size() - 1).character != '{') {
+                    openedBrackets.add(new CharAmountPair('{', 1));
+                } else {
+                    openedBrackets.get(openedBrackets.size() - 1).amount++;
+                }
+                break;
+            case ']':
+                if (openedBrackets.size() == 0 || openedBrackets.get(openedBrackets.size() - 1).character != '[') {
+                    throw new IllegalStateException("Json Format Error: " + jsonStringWithJunk);
+                } else if (openedBrackets.get(openedBrackets.size() - 1).amount > 1) {
+                    openedBrackets.get(openedBrackets.size() - 1).amount--;
+                } else {
+                    openedBrackets.remove(openedBrackets.size() - 1);
+                    if (openedBrackets.size() == 0 && endPos == -1) {
+                        endPos = i;
+                    }
+                }
+                break;
+            case '}':
+                if (openedBrackets.size() == 0 || openedBrackets.get(openedBrackets.size() - 1).character != '{') {
+                    throw new IllegalStateException("Json Format Error: " + jsonStringWithJunk);
+                } else if (openedBrackets.get(openedBrackets.size() - 1).amount > 1) {
+                    openedBrackets.get(openedBrackets.size() - 1).amount--;
+                } else {
+                    openedBrackets.remove(openedBrackets.size() - 1);
+                    if (openedBrackets.size() == 0 && endPos == -1) {
+                        endPos = i;
+                    }
+                }
+                break;
+            }
+            if (startPos != -1 && endPos != -1 && openedBrackets.size() == 0) {
+                break;
+            }
+        }
+
+        if (startPos == -1 || endPos == -1 || startPos > endPos || openedBrackets.size() > 0) {
+            throw new IllegalStateException("Json Format Error: " + jsonStringWithJunk);
+        }
+
+        String result = jsonStringWithJunk.substring(startPos, endPos + 1);
+        return result;
+    }
+
+    private static class CharAmountPair {
+        private char character;
+        private int amount;
+
+        public CharAmountPair(char character, int amount) {
+            this.character = character;
+            this.amount = amount;
+        }
+    }
+
+    public static List<String> findAllEntriesRecursively(JsonNode json, String mustContainText) {
+        List<String> paths = new ArrayList<>();
+        findAllEntriesRecursively(json, mustContainText, paths, "/");
+        return paths;
+    }
+
+    public static void findAllEntriesRecursively(JsonNode json, String mustContainText, List<String> paths, String currentPath) {
+        if (json.isArray()) {
+            for (int i = 0; i < json.size(); i++) {
+                JsonNode node = json.get(i);
+                findAllEntriesRecursively(node, mustContainText, paths, currentPath + "[" + i + "]/");
+            }
+        } else if (json.isObject()) {
+            for (Iterator<String> iter = json.fieldNames(); iter.hasNext();) {
+                String fieldName = iter.next();
+                JsonNode fieldValue = json.get(fieldName);
+                if (fieldValue.isArray() || fieldValue.isObject()) {
+                    findAllEntriesRecursively(fieldValue, mustContainText, paths, currentPath + fieldName + "/");
+                } else if (fieldValue.isTextual()) {
+                    findAllEntriesRecursively(fieldValue, mustContainText, paths, currentPath + fieldName);
+                }
+            }
+        } else if (json.isTextual() && json.asText().contains(mustContainText)) {
+            paths.add(currentPath);
+        }
     }
 }

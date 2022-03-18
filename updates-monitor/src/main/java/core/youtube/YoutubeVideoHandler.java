@@ -5,22 +5,22 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import core.dto.YoutubeVideo;
 import util.DownloadUtils;
+import util.PageParsing;
 import utils.FileUtils;
 import utils.FormattingUtils;
 import utils.JSONUtils;
@@ -28,7 +28,6 @@ import utils.JSONUtils;
 public class YoutubeVideoHandler {
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?://www.youtube.com/watch?v=([0-9A-Za-z_-]+)&?.*$");
     private static final int UPDATE_PROGRESS_INTERVAL = 100;
-
 
     private boolean printProgress;
 
@@ -49,25 +48,37 @@ public class YoutubeVideoHandler {
     public Result downloadVideo(YoutubeVideo video, String downloadChannelPath, String temporaryFolderPath) throws IOException {
         Result result = new Result();
 
-        // Fetching Video Metadata
-        Map<String, String> metadata = fetchVideoMetadata(video.getVideoId());
-        if (!"ok".equals(metadata.get("status"))) {
+        // Downloading Video Page
+        String urlString = "https://www.youtube.com/watch?v=" + video.getVideoId();
+        DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null);
+        if (response.responseCode == 404) {
             result.notFound = true;
             return result;
+        } else if (response.responseCode != 200) {
+            throw new IOException("Error downloading page: \"" + urlString + "\", HTTP Status Code: " + response.responseCode);
         }
+        Document videoPage = Jsoup.parse(response.body);
 
         // Fetching Video Details
-        JsonNode playerResponseNode = JSONUtils.parseJSON(metadata.get("player_response"));
+        List<String> videoDetailsScriptSection = PageParsing.exctractSectionsFromPage(videoPage, "script", "var ytInitialPlayerResponse = ");
+        if (videoDetailsScriptSection.size() > 1) {
+            throw new IllegalStateException("More than 1 section has been found when the only section is expected, probably Youtube API was changed");
+        }
+        String videoDetailsJsonString = JSONUtils.extractJsonSubstringFromString(videoDetailsScriptSection.get(0));
+        JsonNode playerResponseNode = JSONUtils.parseJSON(videoDetailsJsonString);
         JsonNode videoDetailsNode = playerResponseNode.get("videoDetails");
         video.setTitle(videoDetailsNode.get("title").asText());
         video.setDescription(videoDetailsNode.get("shortDescription").asText());
         video.setDurationInSeconds(Integer.parseInt(videoDetailsNode.get("lengthSeconds").asText()));
+        String videoUploadDate = playerResponseNode.get("microformat").get("playerMicroformatRenderer").get("uploadDate").asText();
+        video.setUploadDate(videoUploadDate);
         String videoFilename = video.getVideoId() + "_" + FileUtils.getSafeFilename(video.getTitle());
         video.setFilename(videoFilename);
 
-        // Fetching Video Formats
-        List<VideoFormat> videoFormats = fetchVideoFormats(playerResponseNode);
-        List<AudioFormat> audioFormats = fetchAudioFormats(playerResponseNode);
+        // Fetching Media Formats
+        JsonNode streamingDataNode = playerResponseNode.get("streamingData");
+        List<VideoFormat> videoFormats = fetchVideoFormats(streamingDataNode);
+        List<AudioFormat> audioFormats = fetchAudioFormats(streamingDataNode);
 
         // Downloading Files itself
         String fileDownloadPath = downloadChannelPath + "/" + video.getFilename();
@@ -101,29 +112,12 @@ public class YoutubeVideoHandler {
         }
         result.completed &= downloadAudioResult.completed;
 
+        // TODO Combine Video and Audio via ffmpeg
+
         return result;
     }
 
-    private Map<String, String> fetchVideoMetadata(String videoId) throws IOException, UnsupportedEncodingException {
-        Map<String, String> metadataMap = new HashMap<>();
-
-        String urlString = "https://www.youtube.com/get_video_info?video_id=" + videoId + "&el=detailpage";
-        DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null);
-        String metadata = response.body;
-        String[] metadataParts = metadata.split("&");
-        for (int i = 0; i < metadataParts.length; i++) {
-            String metadataPart = URLDecoder.decode(metadataParts[i], "UTF-8");
-            int index = metadataPart.indexOf("=");
-            if (index > 0) {
-                metadataMap.put(metadataPart.substring(0, index), metadataPart.substring(index + 1));
-            }
-        }
-
-        return metadataMap;
-    }
-
-    private List<VideoFormat> fetchVideoFormats(JsonNode playerResponseNode) {
-        JsonNode streamingDataNode = playerResponseNode.get("streamingData");
+    private List<VideoFormat> fetchVideoFormats(JsonNode streamingDataNode) {
         JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
 
         List<VideoFormat> videoFormats = new ArrayList<>();
@@ -186,8 +180,7 @@ public class YoutubeVideoHandler {
         return videoFormats;
     }
 
-    private List<AudioFormat> fetchAudioFormats(JsonNode playerResponseNode) {
-        JsonNode streamingDataNode = playerResponseNode.get("streamingData");
+    private List<AudioFormat> fetchAudioFormats(JsonNode streamingDataNode) {
         JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
 
         List<AudioFormat> audioFormats = new ArrayList<>();
@@ -281,15 +274,17 @@ public class YoutubeVideoHandler {
             return result;
         }
 
+        long contentLength = connection.getContentLengthLong();
         if (printProgress) {
             System.out.print(format + " ");
             System.out.print(connection.getResponseCode() + " " + connection.getResponseMessage() + "... ");
+            System.out.println("Content-Length: " + contentLength + "... ");
         }
         byte[] buffer = new byte[65536];
         try (InputStream is = connection.getInputStream();
                 OutputStream os = new FileOutputStream(tempFile)) {
 
-            long fileSize = connection.getContentLengthLong();
+            long fileSize = contentLength;
 
             long fileDownloadStartTime = System.currentTimeMillis();
             long lastStatusUpdate = fileDownloadStartTime;
@@ -359,6 +354,11 @@ public class YoutubeVideoHandler {
             }
         }
 
+        if (tempFile.length() != contentLength) {
+            throw new IOException("Incorrect file size after download, file: \"" + tempFile.getAbsolutePath()
+                + "\", expected: " + contentLength + ", actual: " + tempFile.length());
+        }
+
         result.completed = FileUtils.renameOrCreateFileOrFolder(tempFile, resultFile);
 
         return result;
@@ -370,6 +370,7 @@ public class YoutubeVideoHandler {
     }
 
     private static class Format {
+        @SuppressWarnings("unused")
         protected int iTag;
 
         protected int bitrate;

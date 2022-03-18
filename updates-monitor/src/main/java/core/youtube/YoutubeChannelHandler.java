@@ -144,6 +144,7 @@ public class YoutubeChannelHandler {
             return result;
         }
 
+        // Stop parsing video pages if we got down to already existing videos
         for (YoutubeVideo video : videoListResult.newVideos) {
             if (channel.containVideo(video.getVideoId())) {
                 return result;
@@ -248,35 +249,12 @@ public class YoutubeChannelHandler {
         return clientConfig;
     }
 
-    private static void parseVideoItems(JsonNode itemsNode, List<YoutubeVideo> videos, Result result) {
-        for (JsonNode itemNode : itemsNode) {
-            if (itemNode.has("gridVideoRenderer")) {
-                YoutubeVideo video = new YoutubeVideo();
-                video.setChannelId(result.channelId);
-
-                JsonNode videoNode = itemNode.get("gridVideoRenderer");
-                String videoId = videoNode.get("videoId").asText();
-                video.setVideoId(videoId);
-
-                String videoTitle = videoNode.get("title").get("runs").get(0).get("text").asText();
-                video.setTitle(videoTitle);
-
-                videos.add(video);
-            } else if (itemNode.has("continuationItemRenderer")) {
-                JsonNode continuationsNode = itemNode.get("continuationItemRenderer");
-                JsonNode continuationEndpointNode = continuationsNode.get("continuationEndpoint");
-                result.clickTrackingParams = continuationEndpointNode.get("clickTrackingParams").asText();
-                JsonNode continuationCommandNode = continuationEndpointNode.get("continuationCommand");
-                result.continuationToken = continuationCommandNode.get("token").asText();
-            }
-        }
-    }
-
     private static Result downloadVideosListNextPage(String channelId, Result lastResult) throws IOException {
         List<YoutubeVideo> videos = new ArrayList<>();
         Result result = new Result();
         ClientConfig clientConfig = lastResult.clientConfig;
         result.clientConfig = clientConfig;
+        result.channelId = channelId;
         result.newVideos = videos;
 
         try {
@@ -311,6 +289,30 @@ public class YoutubeChannelHandler {
         }
 
         return result;
+    }
+
+    private static void parseVideoItems(JsonNode itemsNode, List<YoutubeVideo> videos, Result result) {
+        for (JsonNode itemNode : itemsNode) {
+            if (itemNode.has("gridVideoRenderer")) {
+                YoutubeVideo video = new YoutubeVideo();
+                video.setChannelId(result.channelId);
+
+                JsonNode videoNode = itemNode.get("gridVideoRenderer");
+                String videoId = videoNode.get("videoId").asText();
+                video.setVideoId(videoId);
+
+                String videoTitle = videoNode.get("title").get("runs").get(0).get("text").asText();
+                video.setTitle(videoTitle);
+
+                videos.add(video);
+            } else if (itemNode.has("continuationItemRenderer")) {
+                JsonNode continuationsNode = itemNode.get("continuationItemRenderer");
+                JsonNode continuationEndpointNode = continuationsNode.get("continuationEndpoint");
+                result.clickTrackingParams = continuationEndpointNode.get("clickTrackingParams").asText();
+                JsonNode continuationCommandNode = continuationEndpointNode.get("continuationCommand");
+                result.continuationToken = continuationCommandNode.get("token").asText();
+            }
+        }
     }
 
     public static class Result {

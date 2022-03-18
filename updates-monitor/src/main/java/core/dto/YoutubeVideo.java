@@ -6,6 +6,7 @@ public class YoutubeVideo {
     private String title;
     private String description;
     private int durationInSeconds;
+    private String uploadDate;
 
     private int bitrate;
     private int width;
@@ -54,6 +55,14 @@ public class YoutubeVideo {
 
     public void setDurationInSeconds(int durationInSeconds) {
         this.durationInSeconds = durationInSeconds;
+    }
+
+    public String getUploadDate() {
+        return uploadDate;
+    }
+
+    public void setUploadDate(String uploadDate) {
+        this.uploadDate = uploadDate;
     }
 
     public int getBitrate() {
