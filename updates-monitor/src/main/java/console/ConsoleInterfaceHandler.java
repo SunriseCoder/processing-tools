@@ -222,9 +222,9 @@ public class ConsoleInterfaceHandler {
                     result = youtubeVideoHandler.downloadVideo(youtubeVideo, downloadPath, TEMPORARY_FOLDER);
                     if (result.completed) {
                         youtubeVideo.setDownloaded(true);
-                        iterator.remove();
                         database.getYoutubeDownloadedVideos().put(youtubeVideo.getVideoId(), youtubeVideo);
                         saveDatabase();
+                        iterator.remove();
                     }
                 } catch (Exception e) {
                     System.out.println("Error: " + e.getMessage());

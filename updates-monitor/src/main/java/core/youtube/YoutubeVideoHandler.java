@@ -20,13 +20,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import core.dto.YoutubeVideo;
 import util.DownloadUtils;
+import util.FFMPEGUtils;
 import util.PageParsing;
 import utils.FileUtils;
 import utils.FormattingUtils;
 import utils.JSONUtils;
 
 public class YoutubeVideoHandler {
-    private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?://www.youtube.com/watch?v=([0-9A-Za-z_-]+)&?.*$");
+    private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
     private static final int UPDATE_PROGRESS_INTERVAL = 100;
 
     private boolean printProgress;
@@ -72,7 +73,7 @@ public class YoutubeVideoHandler {
         video.setDurationInSeconds(Integer.parseInt(videoDetailsNode.get("lengthSeconds").asText()));
         String videoUploadDate = playerResponseNode.get("microformat").get("playerMicroformatRenderer").get("uploadDate").asText();
         video.setUploadDate(videoUploadDate);
-        String videoFilename = video.getVideoId() + "_" + FileUtils.getSafeFilename(video.getTitle());
+        String videoFilename = video.getVideoId() + "_" + FileUtils.getSafeFilename(video.getTitle()) + ".mp4";
         video.setFilename(videoFilename);
 
         // Fetching Media Formats
@@ -81,14 +82,15 @@ public class YoutubeVideoHandler {
         List<AudioFormat> audioFormats = fetchAudioFormats(streamingDataNode);
 
         // Downloading Files itself
-        String fileDownloadPath = downloadChannelPath + "/" + video.getFilename();
+        String videoFileDownloadPrefix = temporaryFolderPath + "/" + video.getVideoId() + "_video";
+        String audioFileDownloadPrefix = temporaryFolderPath + "/" + video.getVideoId() + "_audio";
         String temporaryFilePath = temporaryFolderPath + "/" + video.getVideoId();
 
         // Downloading Video file
         if (printProgress) {
             System.out.print("\n\tDownloading video... ");
         }
-        Result downloadVideoResult = downloadFile(fileDownloadPath, temporaryFilePath, videoFormats);
+        Result downloadVideoResult = downloadFile(videoFileDownloadPrefix, temporaryFilePath, videoFormats);
         if (downloadVideoResult.notFound) {
             if (printProgress) {
                 System.out.print("Not found...");
@@ -102,7 +104,7 @@ public class YoutubeVideoHandler {
         if (printProgress) {
             System.out.print("\n\tDownloading audio... ");
         }
-        Result downloadAudioResult = downloadFile(fileDownloadPath, temporaryFilePath, audioFormats);
+        Result downloadAudioResult = downloadFile(audioFileDownloadPrefix, temporaryFilePath, audioFormats);
         if (downloadAudioResult.notFound) {
             if (printProgress) {
                 System.out.print("Not found...");
@@ -112,7 +114,20 @@ public class YoutubeVideoHandler {
         }
         result.completed &= downloadAudioResult.completed;
 
-        // TODO Combine Video and Audio via ffmpeg
+        // Combine Video and Audio via ffmpeg
+        if (printProgress) {
+            System.out.print("\n\tCombining video and audio tracks via ffmpeg... ");
+        }
+        String videoTrackPath = downloadVideoResult.resultFile.getAbsolutePath();
+        String audioTrackPath = downloadAudioResult.resultFile.getAbsolutePath();
+        String ffmpegResultPath = temporaryFolderPath + "/" + video.getVideoId() + "_combined.mp4";
+        result.completed &= FFMPEGUtils.combineVideoAndAudio(videoTrackPath, audioTrackPath, ffmpegResultPath);
+        if (printProgress) {
+            System.out.print(result.completed ? "Done" : "Failed");
+        }
+        result.completed &= FileUtils.moveFile(new File(ffmpegResultPath), new File(downloadChannelPath, video.getFilename()));
+        result.completed &= downloadVideoResult.resultFile.delete();
+        result.completed &= downloadAudioResult.resultFile.delete();
 
         return result;
     }
@@ -234,7 +249,7 @@ public class YoutubeVideoHandler {
         return audioFormats;
     }
 
-    private Result downloadFile(String downloadFilePath, String temporaryFilePath, List<? extends Format> formats) throws IOException {
+    private Result downloadFile(String downloadFilePrefix, String temporaryFilePath, List<? extends Format> formats) throws IOException {
         Result result = new Result();
 
         File tempFile = new File(temporaryFilePath);
@@ -249,14 +264,11 @@ public class YoutubeVideoHandler {
         while (responseCode == 404 && formatIterator.hasNext()) {
             format = formatIterator.next();
 
-            videoFilename = downloadFilePath + "." + format.fileExtension;
+            videoFilename = downloadFilePrefix + "." + format.fileExtension;
             resultFile = new File(videoFilename);
+            result.resultFile = resultFile;
             if (resultFile.exists()) {
-                if (printProgress) {
-                    System.out.print("Already downloaded");
-                }
-                result.completed = true;
-                return result;
+                resultFile.delete();
             }
 
             URL url = new URL(format.downloadURL);
@@ -278,7 +290,7 @@ public class YoutubeVideoHandler {
         if (printProgress) {
             System.out.print(format + " ");
             System.out.print(connection.getResponseCode() + " " + connection.getResponseMessage() + "... ");
-            System.out.println("Content-Length: " + contentLength + "... ");
+            System.out.print("Content-Length: " + contentLength + "... ");
         }
         byte[] buffer = new byte[65536];
         try (InputStream is = connection.getInputStream();
@@ -359,12 +371,13 @@ public class YoutubeVideoHandler {
                 + "\", expected: " + contentLength + ", actual: " + tempFile.length());
         }
 
-        result.completed = FileUtils.renameOrCreateFileOrFolder(tempFile, resultFile);
+        result.completed = FileUtils.moveFile(tempFile, resultFile);
 
         return result;
     }
 
     public static class Result {
+        public File resultFile;
         public boolean completed;
         public boolean notFound;
     }

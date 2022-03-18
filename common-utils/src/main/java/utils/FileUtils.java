@@ -171,6 +171,15 @@ public class FileUtils {
         return result;
     }
 
+    public static boolean moveFile(File oldFile, File newFile) {
+        boolean result;
+        if (!newFile.getParentFile().exists()) {
+            newFile.getParentFile().mkdirs();
+        }
+        result = oldFile.renameTo(newFile);
+        return result;
+    }
+
     public static void cleanupFolder(String path) {
         File folder = new File(path);
         cleanupFolder(folder);

@@ -11,13 +11,17 @@ public class DownloadSingleYoutubeVideoApp {
         System.out.print("Enter Youtube Video URL or Video ID: ");
         Scanner scanner = new Scanner(System.in);
         String input = scanner.next();
-        scanner.close();
 
         YoutubeVideoHandler handler = new YoutubeVideoHandler();
+        handler.setPrintProgress(true);
         String videoId = input.toLowerCase().startsWith("http") ? handler.parseVideoId(input) : input;
 
         YoutubeVideo video = new YoutubeVideo();
         video.setVideoId(videoId);
-        handler.downloadVideo(video, "tmp", "tmp");
+        handler.downloadVideo(video, "single-video", "tmp");
+
+        System.out.println("\nProgram is done, type anything and then press Enter to close");
+        scanner.next();
+        scanner.close();
     }
 }

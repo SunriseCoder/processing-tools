@@ -7,6 +7,7 @@ import java.util.List;
 
 import filters.FilenameFilterVideos;
 import utils.FileUtils;
+import utils.ProcessRunnerFileOutput;
 
 public class VidToAudCompareFolderApp {
 

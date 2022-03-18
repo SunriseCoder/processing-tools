@@ -12,6 +12,7 @@ error-page-dump.dat
 keystore
 
 # Staff folders
+single-video/
 test-data/
 dumps/
 tmp/

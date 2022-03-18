@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import utils.ProcessRunnerFileOutput;
 import wrappers.IntWrapper;
 
 public class VideoResolutionGeneratorApp {
