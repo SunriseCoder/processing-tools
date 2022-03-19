@@ -8,7 +8,7 @@ public class ByteArray {
     private int realSize;
 
     public ByteArray() {
-        this (4096);
+        this(4096);
     }
 
     public ByteArray(int arraySize) {
