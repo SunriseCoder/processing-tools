@@ -14,6 +14,7 @@ import core.Database;
 import core.dto.YoutubeChannel;
 import core.dto.YoutubeVideo;
 import core.youtube.YoutubeChannelHandler;
+import core.youtube.YoutubeResult;
 import core.youtube.YoutubeVideoHandler;
 import utils.FileUtils;
 import utils.JSONUtils;
@@ -205,7 +206,6 @@ public class ConsoleInterfaceHandler {
         System.out.print("Downloading Youtube videos... ");
 
         YoutubeVideoHandler youtubeVideoHandler = new YoutubeVideoHandler();
-        youtubeVideoHandler.setPrintProgress(true);
 
         Map<String, YoutubeVideo> youtubeVideos = database.getYoutubeNewVideos();
         System.out.println(youtubeVideos.size() + " video(s) to go...");
@@ -213,13 +213,17 @@ public class ConsoleInterfaceHandler {
         while (iterator.hasNext()) {
             YoutubeVideo youtubeVideo = iterator.next().getValue();
             YoutubeChannel youtubeChannel = database.getYoutubeChannel(youtubeVideo.getChannelId());
-            YoutubeVideoHandler.Result result = new YoutubeVideoHandler.Result();
+            YoutubeResult result = new YoutubeResult();
             while (!result.completed && !result.notFound) {
                 System.out.print("Downloading video: " + youtubeChannel + " - " + youtubeVideo + "... ");
                 try {
                     String downloadPath = DOWNLOAD_FOLDER + "/" + youtubeChannel.getFoldername();
                     FileUtils.createFolderIfNotExists(downloadPath);
                     result = youtubeVideoHandler.downloadVideo(youtubeVideo, downloadPath, TEMPORARY_FOLDER);
+                    if (result.unsupported) {
+                        System.out.println("Unsupported video format: " + youtubeVideo.getVideoId() + ", skipping...");
+                        break;
+                    }
                     if (result.completed) {
                         youtubeVideo.setDownloaded(true);
                         database.getYoutubeDownloadedVideos().put(youtubeVideo.getVideoId(), youtubeVideo);

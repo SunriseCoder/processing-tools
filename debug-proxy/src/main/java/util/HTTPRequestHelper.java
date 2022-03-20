@@ -41,7 +41,7 @@ public class HTTPRequestHelper {
                 }
                 break;
             case ProcessHeaderLine:
-                String stringLine = line.createString();
+                String stringLine = line.createString("UTF-8");
                 String stringLineLowerCase = stringLine.toLowerCase();
 
                 if (lineNumber == 0) {

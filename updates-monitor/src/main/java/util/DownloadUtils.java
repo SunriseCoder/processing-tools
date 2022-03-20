@@ -31,7 +31,7 @@ public class DownloadUtils {
         ByteArray byteArray = new ByteArray();
         try (InputStream is = connection.getInputStream();) {
             int read = 0;
-            byte[] buffer = new byte[65536];
+            byte[] buffer = new byte[4096];
             while (read > -1) {
                 read = is.read(buffer);
                 if (read > 0) {
@@ -40,7 +40,7 @@ public class DownloadUtils {
             }
         }
 
-        response.body = byteArray.createString();
+        response.body = byteArray.createString("UTF-8");
         return response;
     }
 
@@ -70,7 +70,7 @@ public class DownloadUtils {
         Response response = new Response();
         response.responseCode = connection.getResponseCode();
         response.headers = connection.getHeaderFields();
-        response.body = byteArray.createString();
+        response.body = byteArray.createString("UTF-8");
         return response;
     }
 

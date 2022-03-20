@@ -43,7 +43,7 @@ public class HTTPResponseHelper {
                 }
                 break;
             case ProcessHeaderLine:
-                String stringLine = line.createString();
+                String stringLine = line.createString("UTF-8");
                 String stringLineLowerCase = stringLine.toLowerCase();
 
                 //System.out.println("Line: " + stringLine);
@@ -136,7 +136,7 @@ public class HTTPResponseHelper {
             byteArray.append(oneByte);
             //System.out.println(byteArray.size());
         }
-        String line = byteArray.createString();
+        String line = byteArray.createString("UTF-8");
         //System.out.println(byteArray.size());
         line = line.replaceAll("(\\r|\\n)", "");
         return line;

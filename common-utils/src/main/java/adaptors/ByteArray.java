@@ -2,6 +2,7 @@ package adaptors;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 
 public class ByteArray {
     private byte[] storage;
@@ -18,6 +19,10 @@ public class ByteArray {
 
     public void clear() {
         realSize = 0;
+    }
+
+    public byte[] getStorage() {
+        return storage;
     }
 
     public int size() {
@@ -72,8 +77,8 @@ public class ByteArray {
         return bytes;
     }
 
-    public String createString() {
-        String string = new String(storage, 0, realSize);
+    public String createString(String charsetName) throws UnsupportedEncodingException {
+        String string = new String(storage, 0, realSize, charsetName);
         return string;
     }
 
