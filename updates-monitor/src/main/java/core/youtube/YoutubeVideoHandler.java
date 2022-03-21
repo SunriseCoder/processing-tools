@@ -79,7 +79,7 @@ public class YoutubeVideoHandler {
                 JsonNode streamingDataNode = playerResponseNode.get("streamingData");
                 List<YoutubeVideoFormat> videoFormats = fetchVideoFormats(streamingDataNode);
                 YoutubeVideoFormat videoFormat = videoFormats.isEmpty() ? null : videoFormats.get(0);
-                YoutubeVideoFormatTypes videoFormatType = videoFormat == null ? null : videoFormat.type;
+                YoutubeVideoFormatTypes videoFormatType = videoFormat == null ? YoutubeVideoFormatTypes.NotAdaptive : videoFormat.type;
                 video.setVideoFormatType(videoFormatType);
 
                 video.setScanned(true);
@@ -198,6 +198,9 @@ public class YoutubeVideoHandler {
         JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
 
         List<YoutubeVideoFormat> videoFormats = new ArrayList<>();
+        if (adaptiveFormatsNode == null) {
+            return videoFormats;
+        }
 
         for (JsonNode formatNode : adaptiveFormatsNode) {
             if (formatNode.get("mimeType").asText().startsWith("video")) {

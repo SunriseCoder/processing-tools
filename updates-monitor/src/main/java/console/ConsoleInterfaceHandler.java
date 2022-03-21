@@ -123,6 +123,7 @@ public class ConsoleInterfaceHandler {
                 + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.OrdinaryFile).size() + " ordinary, "
                 + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.OTF_Stream).size() + " otf, "
                 + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.Encrypted).size() + " encrypted, "
+                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.NotAdaptive).size() + " not adaptive, "
                 + database.getYoutubeNotDownloadedVideos().size() + " not downloaded, "
                 + database.getYoutubeDownloadedVideos().size() + " done, " + database.getYoutubeVideos().size() + " total");
     }
