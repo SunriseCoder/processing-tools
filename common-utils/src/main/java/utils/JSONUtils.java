@@ -105,7 +105,7 @@ public class JSONUtils {
         int length = jsonStringWithJunk.length();
         for (int i = 0; i < length; i++) {
             char currentChar = jsonStringWithJunk.charAt(i);
-            if (currentChar == '"') {
+            if (currentChar == '"' && jsonStringWithJunk.charAt(i - 1) != '\\') {
                 isInsideStringValue = !isInsideStringValue;
             }
             if (isInsideStringValue) {
