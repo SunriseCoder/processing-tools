@@ -195,13 +195,12 @@ public class YoutubeVideoHandler {
     }
 
     private List<YoutubeVideoFormat> fetchVideoFormats(JsonNode streamingDataNode) {
-        JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
-
         List<YoutubeVideoFormat> videoFormats = new ArrayList<>();
-        if (adaptiveFormatsNode == null) {
+        if (streamingDataNode == null || !streamingDataNode.has("adaptiveFormats")) {
             return videoFormats;
         }
 
+        JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
         for (JsonNode formatNode : adaptiveFormatsNode) {
             if (formatNode.get("mimeType").asText().startsWith("video")) {
                 YoutubeVideoFormat format = new YoutubeVideoFormat();
