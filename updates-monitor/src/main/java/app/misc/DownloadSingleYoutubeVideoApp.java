@@ -2,7 +2,7 @@ package app.misc;
 
 import java.util.Scanner;
 
-import core.dto.YoutubeVideo;
+import core.dto.youtube.YoutubeVideo;
 import core.youtube.YoutubeVideoHandler;
 
 public class DownloadSingleYoutubeVideoApp {

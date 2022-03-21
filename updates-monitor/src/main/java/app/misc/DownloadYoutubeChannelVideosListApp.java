@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
-import core.dto.YoutubeChannel;
-import core.dto.YoutubeVideo;
+import core.dto.youtube.YoutubeChannel;
+import core.dto.youtube.YoutubeVideo;
 import core.youtube.YoutubeChannelHandler;
 import core.youtube.YoutubeChannelHandler.Result;
 import utils.JSONUtils;

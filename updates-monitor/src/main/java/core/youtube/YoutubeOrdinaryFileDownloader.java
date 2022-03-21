@@ -18,7 +18,8 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import core.youtube.YoutubeVideoHandler.Format;
+import core.dto.youtube.YoutubeDownloadDetails;
+import core.dto.youtube.YoutubeResult;
 import download.DownloadProgressPrinter;
 import download.DownloadTask;
 import download.DownloadTask.Result;
@@ -44,24 +45,23 @@ public class YoutubeOrdinaryFileDownloader {
         this.progressPrinter = new DownloadProgressPrinter(UPDATE_PROGRESS_INTERVAL);
     }
 
-    public synchronized YoutubeResult download(String videoId, String downloadFilePrefix, String temporaryFilePath, Format format)
-            throws IOException, InterruptedException, ExecutionException {
+    public YoutubeResult download(YoutubeDownloadDetails downloadDetails) throws IOException, InterruptedException, ExecutionException {
         YoutubeResult result = new YoutubeResult();
 
         logger = new PrintWriter("ordinary-file-downloading-logging.log");
-        log("Content-Length = " + format.contentLength);
+        log("Content-Length = " + downloadDetails.getContentLength());
 
-        String videoFilename = downloadFilePrefix + "." + format.fileExtension;
+        String videoFilename = downloadDetails.getDownloadFilePrefix() + "." + downloadDetails.getFileExtension();
         File resultFile = new File(videoFilename);
         result.resultFile = resultFile;
         if (resultFile.exists()) {
             resultFile.delete();
         }
 
-        String baseDownloadUrl = format.downloadURL;
-        File tempFile = new File(temporaryFilePath);
+        String baseDownloadUrl = downloadDetails.getDownloadUrl();
+        File tempFile = new File(downloadDetails.getTemporaryFilePath());
         try (RandomAccessFile tempFileRAF = new RandomAccessFile(tempFile, "rw")) {
-            long fileSize = format.contentLength;
+            long fileSize = downloadDetails.getContentLength();
             tempFileRAF.setLength(fileSize);
             progressPrinter.start(fileSize);
 
@@ -78,7 +78,7 @@ public class YoutubeOrdinaryFileDownloader {
 
                 // Refreshing Download URL
                 if (generatedTasksSize < fileSize || !failedChunks.isEmpty()) {
-                    baseDownloadUrl = getFreshDownloadUrl(videoId, format.iTag);
+                    baseDownloadUrl = getFreshDownloadUrl(downloadDetails);
                     log("Refreshed link");
                 }
 
@@ -152,12 +152,12 @@ public class YoutubeOrdinaryFileDownloader {
         logger.flush();
     }
 
-    private String getFreshDownloadUrl(String videoId, int iTag) {
+    private String getFreshDownloadUrl(YoutubeDownloadDetails downloadDetails) {
         boolean successful = false;
         String result = null;
         do {
             try {
-                String urlString = "https://www.youtube.com/watch?v=" + videoId;
+                String urlString = "https://www.youtube.com/watch?v=" + downloadDetails.getVideoId();
                 DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null);
                 if (response.responseCode == 404) {
                     throw new IOException("404 Not found by refresihng download URL");
@@ -178,7 +178,7 @@ public class YoutubeOrdinaryFileDownloader {
                 JsonNode streamingDataNode = playerResponseNode.get("streamingData");
                 JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
                 for (JsonNode formatNode : adaptiveFormatsNode) {
-                    if (formatNode.get("itag").asInt() == iTag) {
+                    if (formatNode.get("itag").asInt() == downloadDetails.getITag()) {
                         result = formatNode.get("url").asText();
                         successful = true;
                     }

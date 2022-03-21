@@ -1,4 +1,4 @@
-package core.dto;
+package core.dto.youtube;
 
 public class YoutubeVideo {
     private String videoId;
@@ -8,14 +8,11 @@ public class YoutubeVideo {
     private int durationInSeconds;
     private String uploadDate;
 
-    private int bitrate;
-    private int width;
-    private int height;
-    private int fps;
-    private int itag;
-
+    private boolean scanned = false;
     private boolean downloaded = false;
+
     private String filename;
+    private YoutubeVideoFormatTypes videoFormatType;
 
     public String getVideoId() {
         return videoId;
@@ -65,44 +62,12 @@ public class YoutubeVideo {
         this.uploadDate = uploadDate;
     }
 
-    public int getBitrate() {
-        return bitrate;
+    public boolean isScanned() {
+        return scanned;
     }
 
-    public void setBitrate(int bitrate) {
-        this.bitrate = bitrate;
-    }
-
-    public int getWidth() {
-        return width;
-    }
-
-    public void setWidth(int width) {
-        this.width = width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public void setHeight(int height) {
-        this.height = height;
-    }
-
-    public int getFps() {
-        return fps;
-    }
-
-    public void setFps(int fps) {
-        this.fps = fps;
-    }
-
-    public int getItag() {
-        return itag;
-    }
-
-    public void setItag(int itag) {
-        this.itag = itag;
+    public void setScanned(boolean scanned) {
+        this.scanned = scanned;
     }
 
     public boolean isDownloaded() {
@@ -119,6 +84,14 @@ public class YoutubeVideo {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public YoutubeVideoFormatTypes getVideoFormatType() {
+        return videoFormatType;
+    }
+
+    public void setVideoFormatType(YoutubeVideoFormatTypes videoFormatType) {
+        this.videoFormatType = videoFormatType;
     }
 
     @Override

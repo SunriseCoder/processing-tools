@@ -2,19 +2,27 @@ package console;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
+import java.util.TimeZone;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
 
 import core.Database;
-import core.dto.YoutubeChannel;
-import core.dto.YoutubeVideo;
+import core.dto.youtube.YoutubeChannel;
+import core.dto.youtube.YoutubeResult;
+import core.dto.youtube.YoutubeVideo;
+import core.dto.youtube.YoutubeVideoFormatTypes;
 import core.youtube.YoutubeChannelHandler;
-import core.youtube.YoutubeResult;
 import core.youtube.YoutubeVideoHandler;
 import utils.FileUtils;
 import utils.JSONUtils;
@@ -28,6 +36,8 @@ public class ConsoleInterfaceHandler {
     private Scanner scanner;
     private File databaseFile;
     private Database database;
+
+    private YoutubeVideoHandler youtubeVideoHandler = new YoutubeVideoHandler();
 
     public ConsoleInterfaceHandler() {
         scanner = new Scanner(System.in);
@@ -65,7 +75,8 @@ public class ConsoleInterfaceHandler {
     private void mainMenu() throws IOException {
         String input;
         while (true) {
-            System.out.print("Select action: [1] Status, [2] Add resource, [8] Check updates, [9] Download files, [0] Exit ");
+            System.out.print("Select action: [1] Status, [2] Add resource, "
+                    + "[5] Check updates, [7] Scan videos, [8] Export download links, [9] Download files, [0] Exit ");
             input = scanner.next();
             switch (input) {
             case "1":
@@ -74,8 +85,14 @@ public class ConsoleInterfaceHandler {
             case "2":
                 addResource();
                 break;
-            case "8":
+            case "5":
                 checkUpdates();
+                break;
+            case "7":
+                scanVideoDetails();
+                break;
+            case "8":
+                exportDownloadLinks();
                 break;
             case "9":
                 downloadAllFiles();
@@ -91,6 +108,7 @@ public class ConsoleInterfaceHandler {
     }
 
     private void printStatus() {
+        // Youtube Videos by Channels
         System.out.println("Youtube channels:");
         Collection<YoutubeChannel> youtubeChannels = database.getYoutubeChannels().values();
         for (YoutubeChannel channel : youtubeChannels) {
@@ -98,7 +116,14 @@ public class ConsoleInterfaceHandler {
             System.out.println("\t\t" + channel.getStatusString());
         }
         System.out.println(youtubeChannels.size() + " channel(s) total");
-        System.out.println("Youtube videos: " + database.getYoutubeNewVideos().size() + " new, "
+
+        // Youtube Videos Total
+        System.out.println("Youtube videos: "
+                + database.getYoutubeNotScannedVideos().size() + " not scanned, "
+                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.OrdinaryFile).size() + " ordinary, "
+                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.OTF_Stream).size() + " otf, "
+                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.Encrypted).size() + " encrypted, "
+                + database.getYoutubeNotDownloadedVideos().size() + " not downloaded, "
                 + database.getYoutubeDownloadedVideos().size() + " done, " + database.getYoutubeVideos().size() + " total");
     }
 
@@ -141,10 +166,6 @@ public class ConsoleInterfaceHandler {
                 System.out.println("Unsupported resource URL: (" + input + ")");
             }
         }
-    }
-
-    private void saveDatabase() throws IOException {
-        JSONUtils.saveToDisk(database, databaseFile);
     }
 
     private void checkUpdates() throws IOException {
@@ -202,12 +223,34 @@ public class ConsoleInterfaceHandler {
         }
     }
 
-    private void downloadAllFiles() {
+    private void scanVideoDetails() throws IOException {
+        Map<String, YoutubeVideo> notScannedVideos = database.getYoutubeNotScannedVideos();
+        System.out.println("Scanning video details, to go: " + notScannedVideos.size() + " video(s)...");
+
+        List<YoutubeVideo> videos = new ArrayList<>(notScannedVideos.values());
+        for (int i = 0; i < videos.size(); i++) {
+            YoutubeVideo video = videos.get(i);
+            System.out.print("\tScanning video: " + i + " of " + videos.size() + " : " + video.getVideoId() + "... ");
+            YoutubeResult result = youtubeVideoHandler.scanVideo(video);
+            if (result.notFound) {
+                System.out.println("Failed. Response Code: 404 - Page not found");
+            } else {
+                saveDatabase();
+                System.out.println("Done. Title: " + video.getTitle());
+            }
+        }
+
+        System.out.println("Scanning video details is done");
+    }
+
+    private void exportDownloadLinks() {
+        // TODO Auto-generated method stub
+    }
+
+    private void downloadAllFiles() throws IOException {
         System.out.print("Downloading Youtube videos... ");
 
-        YoutubeVideoHandler youtubeVideoHandler = new YoutubeVideoHandler();
-
-        Map<String, YoutubeVideo> youtubeVideos = database.getYoutubeNewVideos();
+        Map<String, YoutubeVideo> youtubeVideos = database.getYoutubeNotDownloadedVideos();
         System.out.println(youtubeVideos.size() + " video(s) to go...");
         Iterator<Entry<String, YoutubeVideo>> iterator = youtubeVideos.entrySet().iterator();
         while (iterator.hasNext()) {
@@ -224,11 +267,9 @@ public class ConsoleInterfaceHandler {
                         System.out.println("Unsupported video format: " + youtubeVideo.getVideoId() + ", skipping...");
                         break;
                     }
-                    if (result.completed) {
-                        youtubeVideo.setDownloaded(true);
-                        database.getYoutubeDownloadedVideos().put(youtubeVideo.getVideoId(), youtubeVideo);
-                        saveDatabase();
-                        iterator.remove();
+                    if (result.notFound) {
+                        System.out.println("Page or track not found for Video: " + youtubeVideo.getVideoId() + ", skipping...");
+                        break;
                     }
                 } catch (Exception e) {
                     System.out.println("Error: " + e.getMessage());
@@ -237,6 +278,21 @@ public class ConsoleInterfaceHandler {
                 }
                 System.out.println();
             }
+
+            saveDatabase();
         }
+    }
+
+    private void saveDatabase() throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
+                .withFieldVisibility(Visibility.ANY)
+                .withGetterVisibility(Visibility.NONE)
+                .withSetterVisibility(Visibility.NONE)
+                .withCreatorVisibility(Visibility.NONE));
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.setDateFormat(new StdDateFormat().withColonInTimeZone(true));
+        mapper.setTimeZone(TimeZone.getDefault());
+        mapper.writerWithDefaultPrettyPrinter().writeValue(databaseFile, database);
     }
 }

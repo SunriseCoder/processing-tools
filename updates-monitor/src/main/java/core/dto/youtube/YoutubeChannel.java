@@ -1,4 +1,4 @@
-package core.dto;
+package core.dto.youtube;
 
 import java.util.HashMap;
 import java.util.Map;

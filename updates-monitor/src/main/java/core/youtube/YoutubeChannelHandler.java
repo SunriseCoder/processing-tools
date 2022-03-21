@@ -15,8 +15,8 @@ import org.jsoup.select.Elements;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import core.dto.YoutubeChannel;
-import core.dto.YoutubeVideo;
+import core.dto.youtube.YoutubeChannel;
+import core.dto.youtube.YoutubeVideo;
 import util.DownloadUtils;
 import util.DownloadUtils.Response;
 import utils.JSONUtils;
