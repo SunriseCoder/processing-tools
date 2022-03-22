@@ -151,7 +151,11 @@ public class YoutubeVideoHandler {
                 YoutubeVideoFormat format = new YoutubeVideoFormat();
 
                 if (!formatNode.has("url")) {
-                    format.type = YoutubeVideoFormatTypes.Encrypted;
+                    if (formatNode.has("type") && "FORMAT_STREAM_TYPE_OTF".equals(formatNode.get("type").asText())) {
+                        format.type = YoutubeVideoFormatTypes.OTF_Encrypted;
+                    } else {
+                        format.type = YoutubeVideoFormatTypes.Encrypted;
+                    }
                 } else if (formatNode.has("type") && "FORMAT_STREAM_TYPE_OTF".equals(formatNode.get("type").asText())) {
                     format.type = YoutubeVideoFormatTypes.OTF_Stream;
                 } else {
