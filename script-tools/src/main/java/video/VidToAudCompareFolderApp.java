@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import filters.FilenameFilterVideos;
+import process.ProcessRunnerToFile;
 import utils.FileUtils;
-import utils.ProcessRunnerFileOutput;
 
 public class VidToAudCompareFolderApp {
 
@@ -45,7 +45,7 @@ public class VidToAudCompareFolderApp {
         private File targetFolder;
         private FilenameFilter filenameFilter;
 
-        private ProcessRunnerFileOutput processRunner;
+        private ProcessRunnerToFile processRunner;
 
         public void setSourceFolder(File sourceFolder) {
             this.sourceFolder = sourceFolder;
@@ -61,7 +61,7 @@ public class VidToAudCompareFolderApp {
         }
 
         public void scan() {
-            processRunner = new ProcessRunnerFileOutput();
+            processRunner = new ProcessRunnerToFile();
             processRunner.setOutputFile(new File("generate-output.log"));
             processRunner.setErrorFile(new File("generate-errors.log"));
 

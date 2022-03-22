@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -76,7 +77,7 @@ public class ConsoleInterfaceHandler {
         String input;
         while (true) {
             System.out.print("Select action: [1] Status, [2] Add resource, "
-                    + "[5] Check updates, [7] Scan videos, [8] Export download links, [9] Download files, [0] Exit ");
+                    + "[5] Check updates, [7] Scan videos, [9] Download files, [0] Exit ");
             input = scanner.next();
             switch (input) {
             case "1":
@@ -91,9 +92,6 @@ public class ConsoleInterfaceHandler {
             case "7":
                 scanVideoDetails();
                 break;
-            case "8":
-                exportDownloadLinks();
-                break;
             case "9":
                 downloadAllFiles();
                 break;
@@ -102,7 +100,7 @@ public class ConsoleInterfaceHandler {
                 scanner.close();
                 System.exit(0);
             default:
-                System.out.println("Unknown command, please try again");
+                System.out.println("Unsupported command, please try again");
             }
         }
     }
@@ -120,12 +118,17 @@ public class ConsoleInterfaceHandler {
         // Youtube Videos Total
         System.out.println("Youtube videos: "
                 + database.getYoutubeNotScannedVideos().size() + " not scanned, "
-                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.OrdinaryFile).size() + " ordinary, "
-                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.OTF_Stream).size() + " otf, "
-                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.Encrypted).size() + " encrypted, "
-                + database.getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes.NotAdaptive).size() + " not adaptive, "
-                + database.getYoutubeNotDownloadedVideos().size() + " not downloaded, "
-                + database.getYoutubeDownloadedVideos().size() + " done, " + database.getYoutubeVideos().size() + " total");
+                + database.getYoutubeVideos().values().stream()
+                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.OrdinaryFile.equals(e.getVideoFormatType())).count() + " ordinary, "
+                + database.getYoutubeVideos().values().stream()
+                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.OTF_Stream.equals(e.getVideoFormatType())).count() + " otf, "
+                + database.getYoutubeVideos().values().stream()
+                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.Encrypted.equals(e.getVideoFormatType())).count() + " encrypted, "
+                + database.getYoutubeVideos().values().stream()
+                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.NotAdaptive.equals(e.getVideoFormatType())).count() + " not adaptive, "
+                + database.getYoutubeVideos().values().stream().filter(e -> !e.isDownloaded()).count() + " not downloaded, "
+                + database.getYoutubeVideos().values().stream().filter(e -> e.isDownloaded()).count() + " done, "
+                + database.getYoutubeVideos().size() + " total");
     }
 
     private void addResource() {
@@ -231,7 +234,7 @@ public class ConsoleInterfaceHandler {
         List<YoutubeVideo> videos = new ArrayList<>(notScannedVideos.values());
         for (int i = 0; i < videos.size(); i++) {
             YoutubeVideo video = videos.get(i);
-            System.out.print("\tScanning video: " + i + " of " + videos.size() + " : " + video.getVideoId() + "... ");
+            System.out.print("\tScanning video: " + (i + 1) + " of " + videos.size() + " : " + video.getVideoId() + "... ");
             YoutubeResult result = youtubeVideoHandler.scanVideo(video);
             if (result.notFound) {
                 System.out.println("Failed. Response Code: 404 - Page not found");
@@ -244,22 +247,24 @@ public class ConsoleInterfaceHandler {
         System.out.println("Scanning video details is done");
     }
 
-    private void exportDownloadLinks() {
-        // TODO Auto-generated method stub
+    private void downloadAllFiles() throws IOException {
+        List<YoutubeVideo> youtubeVideos = database.getYoutubeVideos().values().stream()
+                .filter(e -> !e.isDownloaded())
+                .collect(Collectors.toList());
+        downloadYoutubeVideos(youtubeVideos);
     }
 
-    private void downloadAllFiles() throws IOException {
-        System.out.print("Downloading Youtube videos... ");
+    private void downloadYoutubeVideos(List<YoutubeVideo> videos) throws IOException {
+        System.out.println("Downloading Youtube videos: " + videos.size() + " video(s) to go...");
 
-        Map<String, YoutubeVideo> youtubeVideos = database.getYoutubeNotDownloadedVideos();
-        System.out.println(youtubeVideos.size() + " video(s) to go...");
-        Iterator<Entry<String, YoutubeVideo>> iterator = youtubeVideos.entrySet().iterator();
-        while (iterator.hasNext()) {
-            YoutubeVideo youtubeVideo = iterator.next().getValue();
+        for (int i = 0; i < videos.size(); i++) {
+            YoutubeVideo youtubeVideo = videos.get(i);
             YoutubeChannel youtubeChannel = database.getYoutubeChannel(youtubeVideo.getChannelId());
             YoutubeResult result = new YoutubeResult();
+
             while (!result.completed && !result.notFound) {
-                System.out.print("Downloading video: " + youtubeChannel + " - " + youtubeVideo + "... ");
+                System.out.print("Downloading video: " + (i + 1) + " of " + videos.size() + " : " + youtubeChannel + " - " + youtubeVideo + "... ");
+
                 try {
                     String downloadPath = DOWNLOAD_FOLDER + "/" + youtubeChannel.getFoldername();
                     FileUtils.createFolderIfNotExists(downloadPath);
@@ -268,6 +273,7 @@ public class ConsoleInterfaceHandler {
                         System.out.println("Unsupported video format: " + youtubeVideo.getVideoId() + ", skipping...");
                         break;
                     }
+
                     if (result.notFound) {
                         System.out.println("Page or track not found for Video: " + youtubeVideo.getVideoId() + ", skipping...");
                         break;

@@ -1,30 +1,34 @@
-package helpers;
+package process;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.List;
 
-public class ProcessRunner {
+public class ProcessRunnerToString extends AbstractProcessRunner<StringBuilder> {
     private StringBuilder errors;
     private StringBuilder output;
 
-    public ProcessRunner() {
+    public ProcessRunnerToString() {
         errors = new StringBuilder();
         output = new StringBuilder();
     }
 
+    @Override
     public StringBuilder getErrors() {
         return errors;
     }
 
+    @Override
     public StringBuilder getOutput() {
         return output;
     }
 
-    public void execute(List<String> command) {
+    @Override
+    public int execute(List<String> command) {
+        Process process = null;
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(command);
-            Process process = processBuilder.start();
+            process = processBuilder.start();
 
             try (
                     BufferedReader outputReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -40,10 +44,14 @@ public class ProcessRunner {
                         output.append(line).append("\n");
                     }
                 }
+
+                int result = process.exitValue();
+                return result ;
             }
         } catch (Exception e) {
             e.printStackTrace();
-            throw new RuntimeException(e);
         }
+
+        return -1;
     }
 }

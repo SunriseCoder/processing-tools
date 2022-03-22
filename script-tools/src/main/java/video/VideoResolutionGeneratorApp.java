@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import utils.ProcessRunnerFileOutput;
+import process.ProcessRunnerToFile;
 import wrappers.IntWrapper;
 
 public class VideoResolutionGeneratorApp {
@@ -25,7 +25,7 @@ public class VideoResolutionGeneratorApp {
 
         Map<String, List<String>> convertCommands = generator.generateCommands();
 
-        ProcessRunnerFileOutput processRunner = new ProcessRunnerFileOutput();
+        ProcessRunnerToFile processRunner = new ProcessRunnerToFile();
         processRunner.setOutputFile(new File("generate-output.log"));
         processRunner.setErrorFile(new File("generate-errors.log"));
 
@@ -39,7 +39,6 @@ public class VideoResolutionGeneratorApp {
 
         System.out.println("Generation done, took " + (System.currentTimeMillis() - startTime) + "ms");
     }
-
 
     private static void printUsage() {
         System.out.println("Usage: " + VideoResolutionGeneratorApp.class.getName() + " <source-folder> <target-folder> <target-resolutions-file>\n"

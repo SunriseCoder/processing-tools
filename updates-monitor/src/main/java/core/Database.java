@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import core.dto.youtube.YoutubeChannel;
 import core.dto.youtube.YoutubeVideo;
-import core.dto.youtube.YoutubeVideoFormatTypes;
 
 public class Database {
     private Map<String, YoutubeChannel> youtubeChannels;
@@ -52,27 +51,6 @@ public class Database {
     public Map<String, YoutubeVideo> getYoutubeNotScannedVideos() {
         Map<String, YoutubeVideo> result = youtubeVideos.values().stream()
                 .filter(e -> !e.isScanned())
-                .collect(Collectors.toMap(YoutubeVideo::getVideoId, Function.identity()));
-        return result;
-    }
-
-    public Map<String, YoutubeVideo> getYoutubeNotDownloadedVideos() {
-        Map<String, YoutubeVideo> result = youtubeVideos.values().stream()
-                .filter(e -> !e.isDownloaded())
-                .collect(Collectors.toMap(YoutubeVideo::getVideoId, Function.identity()));
-        return result;
-    }
-
-    public Map<String, YoutubeVideo> getYoutubeDownloadedVideos() {
-        Map<String, YoutubeVideo> result = youtubeVideos.values().stream()
-                .filter(e -> e.isDownloaded())
-                .collect(Collectors.toMap(YoutubeVideo::getVideoId, Function.identity()));
-        return result;
-    }
-
-    public Map<String, YoutubeVideo> getYoutubeVideosByVideoFormatType(YoutubeVideoFormatTypes type) {
-        Map<String, YoutubeVideo> result = youtubeVideos.values().stream()
-                .filter(e -> type.equals(e.getVideoFormatType()))
                 .collect(Collectors.toMap(YoutubeVideo::getVideoId, Function.identity()));
         return result;
     }

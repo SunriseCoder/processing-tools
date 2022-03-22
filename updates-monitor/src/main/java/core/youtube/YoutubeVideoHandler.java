@@ -19,7 +19,6 @@ import core.dto.youtube.YoutubeVideo;
 import core.dto.youtube.YoutubeVideoFormat;
 import core.dto.youtube.YoutubeVideoFormatTypes;
 import util.DownloadUtils;
-import util.FFMPEGUtils;
 import util.PageParsing;
 import utils.FileUtils;
 import utils.JSONUtils;
@@ -28,10 +27,12 @@ import utils.ThreadUtils;
 public class YoutubeVideoHandler {
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
 
-    private YoutubeOrdinaryFileDownloader youtubeOrdinaryFileDownloader;
+    private AbstractYoutubeFileDownloader youtubeOrdinaryFileDownloader;
+    private AbstractYoutubeFileDownloader youtubeOFTFileDownloader;
 
     public YoutubeVideoHandler() {
         youtubeOrdinaryFileDownloader = new YoutubeOrdinaryFileDownloader();
+        youtubeOFTFileDownloader = new YoutubeOTFFileDownloader();
     }
 
     public String parseVideoId(String url) {
@@ -100,7 +101,7 @@ public class YoutubeVideoHandler {
     public YoutubeResult downloadVideo(YoutubeVideo video, String downloadChannelPath, String temporaryFolderPath) throws Exception {
         YoutubeResult result = scanVideo(video);
 
-        String videoFilename = video.getVideoId() + "_" + FileUtils.getSafeFilename(video.getTitle()) + ".mp4";
+        String videoFilename = downloadChannelPath + "/" + video.getVideoId() + "_" + FileUtils.getSafeFilename(video.getTitle()) + ".mp4";
         video.setFilename(videoFilename);
 
         // Fetching Media Formats
@@ -113,82 +114,30 @@ public class YoutubeVideoHandler {
             result.unsupported = true;
             return result;
         }
+        YoutubeAudioFormat audioFormat = audioFormats.get(0);
 
         // Downloading Files itself
-        String videoFileDownloadPrefix = temporaryFolderPath + "/" + video.getVideoId() + "_video";
-        String audioFileDownloadPrefix = temporaryFolderPath + "/" + video.getVideoId() + "_audio";
         String temporaryFilePath = temporaryFolderPath + "/" + video.getVideoId();
 
-        // Downloading Video file
-        System.out.print("\n\tDownloading video... ");
-
-        YoutubeResult downloadVideoResult = null;
         YoutubeVideoFormat videoFormat = result.videoFormat;
-        YoutubeDownloadDetails downloadDetails = new YoutubeDownloadDetails();
+        YoutubeDownloadDetails downloadDetails = new YoutubeDownloadDetails()
+                .setVideoId(video.getVideoId())
+                .setTemporaryFilePath(temporaryFilePath)
+                .setVideoFormat(videoFormat)
+                .setAudioFormat(audioFormat);
         switch (videoFormat.type) {
         case OrdinaryFile:
-                downloadDetails.setVideoId(video.getVideoId())
-                .setDownloadFilePrefix(videoFileDownloadPrefix)
-                .setTemporaryFilePath(temporaryFilePath)
-                .setContentLength(videoFormat.contentLength)
-                .setFileExtension(videoFormat.fileExtension)
-                .setDownloadURL(videoFormat.downloadURL)
-                .setITag(videoFormat.iTag);
-            downloadVideoResult = youtubeOrdinaryFileDownloader.download(downloadDetails);
+            result = youtubeOrdinaryFileDownloader.download(video, downloadDetails);
             break;
         case OTF_Stream:
-            // TODO Implement
-            System.out.println("Unsupported video format type: " + YoutubeVideoFormatTypes.OTF_Stream);
-            result.unsupported = true;
-            return result;
-        case Encrypted:
-            // TODO Implement
-            System.out.println("Unsupported video format type: " + YoutubeVideoFormatTypes.Encrypted);
-            result.unsupported = true;
-            return result;
+            result = youtubeOFTFileDownloader.download(video, downloadDetails);
+            break;
+            // TODO Implement Encrypted
         default:
-            System.out.println("Unsupported video format: " + video.getVideoId() + ", format type: " + videoFormat.type.name());
+            System.out.println("Unsupported video format: " + video.getVideoId()
+                    + ", format type: " + (videoFormat.type == null ? null : videoFormat.type.name()));
             result.unsupported = true;
             return result;
-        }
-        result.completed = downloadVideoResult.completed;
-
-        // Downloading Audio file
-        if (!result.completed) {
-            return result;
-        }
-        System.out.print("\n\tDownloading audio... ");
-        YoutubeAudioFormat audioFormat = audioFormats.get(0);
-        downloadDetails.setDownloadFilePrefix(audioFileDownloadPrefix)
-            .setContentLength(audioFormat.contentLength)
-            .setFileExtension(audioFormat.fileExtension)
-            .setDownloadURL(audioFormat.downloadURL)
-            .setITag(audioFormat.iTag);
-        YoutubeResult downloadAudioResult = youtubeOrdinaryFileDownloader.download(downloadDetails);
-        result.completed &= downloadAudioResult.completed;
-
-        // Combine Video and Audio via ffmpeg
-        if (!result.completed) {
-            return result;
-        }
-        System.out.print("\n\tCombining video and audio tracks via ffmpeg... ");
-        String videoTrackPath = downloadVideoResult.resultFile.getAbsolutePath();
-        String audioTrackPath = downloadAudioResult.resultFile.getAbsolutePath();
-        String ffmpegResultPath = temporaryFolderPath + "/" + video.getVideoId() + "_combined.mp4";
-        result.completed &= FFMPEGUtils.combineVideoAndAudio(videoTrackPath, audioTrackPath, ffmpegResultPath);
-        result.completed &= downloadVideoResult.resultFile.delete();
-        result.completed &= downloadAudioResult.resultFile.delete();
-        System.out.print(result.completed ? "Done" : "Failed");
-
-        // Moving Temp file to Destination folder
-        if (!result.completed) {
-            return result;
-        }
-        System.out.print("\n\tMoving temporary file to the channel folder... ");
-        result.completed &= FileUtils.moveFile(new File(ffmpegResultPath), new File(downloadChannelPath, video.getFilename()));
-        System.out.print(result.completed ? "Done" : "Failed");
-        if (result.completed) {
-            video.setDownloaded(true);
         }
 
         return result;

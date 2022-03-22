@@ -140,7 +140,7 @@ public class FileUtils {
         return parent;
     }
 
-    public static void saveToFile(String text, String filename) throws IOException {
+    public static boolean saveToFile(String text, String filename) throws IOException {
         File file = createFile(filename, true);
 
         try (FileWriter fileWriter = new FileWriter(file, true);
@@ -148,6 +148,8 @@ public class FileUtils {
             printWriter.println(text);
             printWriter.flush();
         }
+
+        return true;
     }
 
     public static String replaceFileExtension(String filename, String replacement) {
