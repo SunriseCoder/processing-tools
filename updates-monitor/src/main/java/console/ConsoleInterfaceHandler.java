@@ -264,7 +264,8 @@ public class ConsoleInterfaceHandler {
             YoutubeChannel youtubeChannel = database.getYoutubeChannel(youtubeVideo.getChannelId());
             YoutubeResult result = new YoutubeResult();
 
-            while (!result.completed && !result.notFound) {
+            int attempts = 5;
+            while (!result.completed && !result.notFound && attempts > 0) {
                 System.out.print("Downloading video: " + (i + 1) + " of " + videos.size() + " : " + youtubeChannel + " - " + youtubeVideo + "... ");
 
                 try {
@@ -286,6 +287,7 @@ public class ConsoleInterfaceHandler {
                     ThreadUtils.sleep(5000);
                 }
                 System.out.println();
+                attempts--;
             }
 
             saveDatabase();
