@@ -43,9 +43,9 @@ public class DownloadProgressPrinter implements SimpleProgressListener {
         }
 
         // Calculations
-        long momentumSpeed = 1000 * dataSinceLastReport / timeSinceLastReport;
+        long momentumSpeed = timeSinceLastReport == 0 ? 0 : 1000 * dataSinceLastReport / timeSinceLastReport;
         long timeSinceStart = now - startTime;
-        long averageSpeed = 1000 * dataCompletedTotal / timeSinceStart;
+        long averageSpeed = timeSinceStart == 0 ? 0 : 1000 * dataCompletedTotal / timeSinceStart;
         long remainingTime = dataCompletedTotal == 0 ? 0 :
             MathUtils.roundToLong((double) (fileSize - dataCompletedTotal) * timeSinceStart / dataCompletedTotal);
 
