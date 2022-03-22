@@ -27,12 +27,14 @@ import utils.ThreadUtils;
 public class YoutubeVideoHandler {
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
 
-    private AbstractYoutubeFileDownloader youtubeOrdinaryFileDownloader;
-    private AbstractYoutubeFileDownloader youtubeOFTFileDownloader;
+    private AbstractYoutubeFileDownloader youtubeOrdinaryVideoDownloader;
+    private AbstractYoutubeFileDownloader youtubeOFTVideoDownloader;
+    private AbstractYoutubeFileDownloader youtubeEncryptedVideoDownloader;
 
     public YoutubeVideoHandler() {
-        youtubeOrdinaryFileDownloader = new YoutubeOrdinaryFileDownloader();
-        youtubeOFTFileDownloader = new YoutubeOTFFileDownloader();
+        youtubeOrdinaryVideoDownloader = new YoutubeOrdinaryVideoDownloader();
+        youtubeOFTVideoDownloader = new YoutubeOTFVideoDownloader();
+        youtubeEncryptedVideoDownloader = new YoutubeEncryptedVideoDownloader();
     }
 
     public String parseVideoId(String url) {
@@ -108,31 +110,25 @@ public class YoutubeVideoHandler {
         JsonNode playerResponseNode = result.jsonNode;
         JsonNode streamingDataNode = playerResponseNode.get("streamingData");
         List<YoutubeAudioFormat> audioFormats = fetchAudioFormats(streamingDataNode);
-
-        if (result.videoFormat == null || audioFormats.size() < 1) {
-            System.out.println("Video or Audio format not found for the video: " + video.getVideoId());
-            result.unsupported = true;
-            return result;
-        }
-        YoutubeAudioFormat audioFormat = audioFormats.get(0);
-
-        // Downloading Files itself
-        String temporaryFilePath = temporaryFolderPath + "/" + video.getVideoId();
-
         YoutubeVideoFormat videoFormat = result.videoFormat;
-        YoutubeDownloadDetails downloadDetails = new YoutubeDownloadDetails()
-                .setVideoId(video.getVideoId())
+        YoutubeAudioFormat audioFormat = audioFormats.isEmpty() ? null : audioFormats.get(0);
+
+        String temporaryFilePath = temporaryFolderPath + "/" + video.getVideoId();
+        YoutubeDownloadDetails downloadDetails = new YoutubeDownloadDetails().setVideoId(video.getVideoId())
                 .setTemporaryFilePath(temporaryFilePath)
-                .setVideoFormat(videoFormat)
-                .setAudioFormat(audioFormat);
+                .setVideoFormat(videoFormat).setAudioFormat(audioFormat);
+
+        // Downloading the Files
         switch (videoFormat.type) {
         case OrdinaryFile:
-            result = youtubeOrdinaryFileDownloader.download(video, downloadDetails);
+            result = youtubeOrdinaryVideoDownloader.download(video, downloadDetails);
             break;
         case OTF_Stream:
-            result = youtubeOFTFileDownloader.download(video, downloadDetails);
+            result = youtubeOFTVideoDownloader.download(video, downloadDetails);
             break;
-            // TODO Implement Encrypted
+        case Encrypted:
+            result = youtubeEncryptedVideoDownloader.download(video, downloadDetails);
+            break;
         default:
             System.out.println("Unsupported video format: " + video.getVideoId()
                     + ", format type: " + (videoFormat.type == null ? null : videoFormat.type.name()));
@@ -221,11 +217,6 @@ public class YoutubeVideoHandler {
         List<YoutubeAudioFormat> audioFormats = new ArrayList<>();
 
         for (JsonNode formatNode : adaptiveFormatsNode) {
-            // Strange, but happens sometimes
-            if (!formatNode.has("url")) {
-                continue;
-            }
-
             if (formatNode.get("mimeType").asText().startsWith("audio")) {
                 YoutubeAudioFormat format = new YoutubeAudioFormat();
 
@@ -240,7 +231,9 @@ public class YoutubeVideoHandler {
                 }
 
                 format.iTag = formatNode.get("itag").asInt();
-                format.downloadURL = formatNode.get("url").asText();
+                if (formatNode.has("url")) {
+                    format.downloadURL = formatNode.get("url").asText();
+                }
                 format.contentLength = formatNode.get("contentLength").asLong();
                 format.bitrate = formatNode.get("bitrate").asInt();
                 format.sampleRate = formatNode.get("audioSampleRate").asInt();

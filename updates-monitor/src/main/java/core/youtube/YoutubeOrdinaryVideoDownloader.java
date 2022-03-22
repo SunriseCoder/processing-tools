@@ -20,7 +20,7 @@ import utils.FileUtils;
 import utils.JSONUtils;
 import utils.ThreadUtils;
 
-public class YoutubeOrdinaryFileDownloader extends AbstractYoutubeFileDownloader {
+public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloader {
 
     @Override
     protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {

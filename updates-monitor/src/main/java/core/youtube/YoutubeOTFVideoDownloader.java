@@ -13,7 +13,7 @@ import util.FFMPEGUtils;
 import util.YoutubeDLUtils;
 import utils.FileUtils;
 
-public class YoutubeOTFFileDownloader extends AbstractYoutubeFileDownloader {
+public class YoutubeOTFVideoDownloader extends AbstractYoutubeFileDownloader {
 
     @Override
     protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {
