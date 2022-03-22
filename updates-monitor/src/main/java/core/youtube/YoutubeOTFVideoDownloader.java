@@ -19,7 +19,7 @@ public class YoutubeOTFVideoDownloader extends AbstractYoutubeFileDownloader {
     protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {
         YoutubeResult result = new YoutubeResult();
 
-        logger = new PrintWriter("otf-stream-downloading-logging.log");
+        logger = new PrintWriter(getClass().getName() + "-logging.log");
 
         System.out.print("\n\tDownloading MPD Manifest... ");
         String manifestString = getMPDManifest(downloadDetails.getVideoId());

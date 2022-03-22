@@ -25,7 +25,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
     @Override
     protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {
         YoutubeResult result = new YoutubeResult();
-        logger = new PrintWriter("ordinary-file-downloading-logging.log");
+        logger = new PrintWriter(getClass().getName() + "-logging.log");
 
         // Downloading Video and Audio Tracks
         YoutubeResult downloadVideoResult = downloadVideo(downloadDetails);
