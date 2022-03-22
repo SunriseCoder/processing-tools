@@ -51,6 +51,8 @@ public class ConsoleInterfaceHandler {
         FileUtils.createFolderIfNotExists(DOWNLOAD_FOLDER);
         FileUtils.createFolderIfNotExists(TEMPORARY_FOLDER);
 
+        FileUtils.cleanupFolder(TEMPORARY_FOLDER);
+
         System.out.println("Loading database...");
         databaseFile = new File(DATABASE_FOLDER, "database.json");
         if (databaseFile.exists()) {
