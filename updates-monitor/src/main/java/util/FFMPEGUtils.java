@@ -9,7 +9,8 @@ import process.ProcessRunnerToFile;
 
 public class FFMPEGUtils {
 
-    public static synchronized boolean combineVideoAndAudio(String videoTrackPath, String audioTrackPath, String resultFilename) {
+    public static boolean combineVideoAndAudio(String videoTrackPath,
+            String audioTrackPath, String resultFilename, String videoId) {
         List<String> command = new ArrayList<>();
 
         // Base settings
@@ -33,8 +34,8 @@ public class FFMPEGUtils {
 
         // Preparing OS process runner
         ProcessRunnerToFile processRunner = new ProcessRunnerToFile();
-        processRunner.setOutputFile(new File("ffmpeg-output.log"));
-        processRunner.setErrorFile(new File("ffmpeg-errors.log"));
+        processRunner.setOutputFile(new File("logs/ffmpeg-output-" + videoId + ".log"));
+        processRunner.setErrorFile(new File("logs/ffmpeg-errors-" + videoId + ".log"));
 
         // Executing the OS process
         int exitCode = processRunner.execute(command);
@@ -42,7 +43,8 @@ public class FFMPEGUtils {
         return result;
     }
 
-    public static boolean muxMPDMManifest(String manifestFilename, String resultFilename, YoutubeDownloadDetails downloadDetails) {
+    public static boolean muxMPDMManifest(String manifestFilename, String resultFilename,
+            YoutubeDownloadDetails downloadDetails) {
         List<String> command = new ArrayList<>();
 
         // Base settings
@@ -70,8 +72,8 @@ public class FFMPEGUtils {
 
         // Preparing OS process runner
         ProcessRunnerToFile processRunner = new ProcessRunnerToFile();
-        processRunner.setOutputFile(new File("ffmpeg-output.log"));
-        processRunner.setErrorFile(new File("ffmpeg-errors.log"));
+        processRunner.setOutputFile(new File("logs/ffmpeg-output-" + downloadDetails.getVideoId() + ".log"));
+        processRunner.setErrorFile(new File("logs/ffmpeg-errors-" + downloadDetails.getVideoId() + ".log"));
 
         // Executing the OS process
         int exitCode = processRunner.execute(command);

@@ -25,7 +25,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
     @Override
     protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {
         YoutubeResult result = new YoutubeResult();
-        logger = new PrintWriter(getClass().getName() + "-logging.log");
+        logger = new PrintWriter("logs/" + getClass().getName() + "-" + video.getVideoId() + "-logging.log");
 
         // Downloading Video and Audio Tracks
         YoutubeResult downloadVideoResult = downloadVideo(downloadDetails);
@@ -58,7 +58,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
     private YoutubeResult downloadVideo(YoutubeDownloadDetails downloadDetails) throws Exception {
         YoutubeResult result = new YoutubeResult();
 
-        log("Video: Content-Length = " + downloadDetails.getVideoFormat().contentLength);
+        log("Downloading Video: Content-Length = " + downloadDetails.getVideoFormat().contentLength);
 
         // Creating Result File
         String videoFilename = downloadDetails.getTemporaryFilePath() + "_video." + downloadDetails.getVideoFormat().fileExtension;
@@ -86,7 +86,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
     private YoutubeResult downloadAudio(YoutubeDownloadDetails downloadDetails) throws Exception {
         YoutubeResult result = new YoutubeResult();
 
-        log("Audio: Content-Length = " + downloadDetails.getVideoFormat().contentLength);
+        log("Downloading Audio: Content-Length = " + downloadDetails.getVideoFormat().contentLength);
 
         // Creating Result File
         String audioFilename = downloadDetails.getTemporaryFilePath() + "_audio." + downloadDetails.getAudioFormat().fileExtension;
@@ -118,7 +118,8 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
 
         String ffmpegResultPath = downloadDetails.getTemporaryFilePath() + "_combined.mp4";
         result.resultFile = new File(ffmpegResultPath);
-        result.completed = FFMPEGUtils.combineVideoAndAudio(videoFile.getAbsolutePath(), audioFile.getAbsolutePath(), ffmpegResultPath);
+        result.completed = FFMPEGUtils.combineVideoAndAudio(videoFile.getAbsolutePath(),
+                audioFile.getAbsolutePath(), ffmpegResultPath, downloadDetails.getVideoId());
         result.completed &= videoFile.delete();
         result.completed &= audioFile.delete();
 

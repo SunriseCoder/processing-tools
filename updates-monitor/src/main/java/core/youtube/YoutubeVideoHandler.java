@@ -1,9 +1,12 @@
 package core.youtube;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +21,7 @@ import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;
 import core.dto.youtube.YoutubeVideoFormat;
 import core.dto.youtube.YoutubeVideoFormatTypes;
+import function.LambdaCommand;
 import util.DownloadUtils;
 import util.PageParsing;
 import utils.FileUtils;
@@ -25,15 +29,20 @@ import utils.JSONUtils;
 import utils.ThreadUtils;
 
 public class YoutubeVideoHandler {
+    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 100;
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
 
+    private ExecutorService youtubeOFTExecutorService;
+    private List<YoutubeOTFStruct> youtubeOTFFutures;
+
     private AbstractYoutubeFileDownloader youtubeOrdinaryVideoDownloader;
-    private AbstractYoutubeFileDownloader youtubeOFTVideoDownloader;
     private AbstractYoutubeFileDownloader youtubeEncryptedVideoDownloader;
 
     public YoutubeVideoHandler() {
+        youtubeOFTExecutorService = Executors.newFixedThreadPool(YOUTUBE_OTF_MAX_DOWNLOAD_THREADS);
+        youtubeOTFFutures = new ArrayList<>();
+
         youtubeOrdinaryVideoDownloader = new YoutubeOrdinaryVideoDownloader();
-        youtubeOFTVideoDownloader = new YoutubeOTFVideoDownloader();
         youtubeEncryptedVideoDownloader = new YoutubeEncryptedVideoDownloader();
     }
 
@@ -124,7 +133,11 @@ public class YoutubeVideoHandler {
             result = youtubeOrdinaryVideoDownloader.download(video, downloadDetails);
             break;
         case OTF_Stream:
-            result = youtubeOFTVideoDownloader.download(video, downloadDetails);
+            YoutubeOTFVideoDownloadTask task = new YoutubeOTFVideoDownloadTask(video, downloadDetails);
+            Future<YoutubeResult> future = youtubeOFTExecutorService.submit(task);
+            YoutubeOTFStruct struct = new YoutubeOTFStruct(task, future);
+            youtubeOTFFutures.add(struct);
+            result.queued = true;
             break;
         case Encrypted:
             result = youtubeEncryptedVideoDownloader.download(video, downloadDetails);
@@ -267,10 +280,48 @@ public class YoutubeVideoHandler {
         return audioFormats;
     }
 
-    public static class Result {
-        public boolean unsupported;
-        public File resultFile;
-        public boolean completed;
-        public boolean notFound;
+    public int getQueueSize() {
+        return youtubeOTFFutures.size();
+    }
+
+    public void takeCareOfOTFQueue(LambdaCommand saveDatabaseCommand) throws Exception {
+        do {
+            doOTFQueueIteration(saveDatabaseCommand);
+            ThreadUtils.sleep(100);
+        }
+        while (!youtubeOTFFutures.isEmpty());
+    }
+
+    public void doOTFQueueIteration(LambdaCommand saveDatabaseCommand) throws Exception {
+        Iterator<YoutubeOTFStruct> iterator = youtubeOTFFutures.iterator();
+        while (iterator.hasNext()) {
+            YoutubeOTFStruct struct = iterator.next();
+            if (!struct.future.isDone()) {
+                continue;
+            }
+
+            YoutubeResult result = struct.future.get();
+            if (result.completed) {
+                YoutubeVideo video = struct.task.getVideo();
+                video.setDownloaded(true);
+                saveDatabaseCommand.perform();
+                System.out.println("Queued Video has been completed: " + video);
+                iterator.remove();
+            } else {
+                System.out.println("Queued Video has been failed, restarting: " + struct.task.getVideo());
+                struct.future = youtubeOFTExecutorService.submit(struct.task);
+            }
+        }
+    }
+
+    private static final class YoutubeOTFStruct {
+        private YoutubeOTFVideoDownloadTask task;
+        private Future<YoutubeResult> future;
+
+        public YoutubeOTFStruct(YoutubeOTFVideoDownloadTask task, Future<YoutubeResult> future) {
+            super();
+            this.task = task;
+            this.future = future;
+        }
     }
 }

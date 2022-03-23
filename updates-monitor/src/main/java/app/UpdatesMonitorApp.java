@@ -1,12 +1,10 @@
 package app;
 
-import java.io.IOException;
-
 import console.ConsoleInterfaceHandler;
 
 public class UpdatesMonitorApp {
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         ConsoleInterfaceHandler handler = new ConsoleInterfaceHandler();
         handler.start();
     }

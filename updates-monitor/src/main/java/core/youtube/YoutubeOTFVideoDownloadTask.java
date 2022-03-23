@@ -3,6 +3,7 @@ package core.youtube;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.concurrent.Callable;
 
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
@@ -13,47 +14,53 @@ import util.FFMPEGUtils;
 import util.YoutubeDLUtils;
 import utils.FileUtils;
 
-public class YoutubeOTFVideoDownloader extends AbstractYoutubeFileDownloader {
+public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader implements Callable<YoutubeResult> {
+    private YoutubeVideo video;
+    private YoutubeDownloadDetails downloadDetails;
+
+    public YoutubeOTFVideoDownloadTask(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) {
+        this.video = video;
+        this.downloadDetails = downloadDetails;
+    }
+
+    public YoutubeVideo getVideo() {
+        return video;
+    }
 
     @Override
-    protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {
+    public YoutubeResult call() throws Exception {
         YoutubeResult result = new YoutubeResult();
+        logger = new PrintWriter("logs/" + getClass().getName() + "-" + video.getVideoId() + "-logging.log");
 
-        logger = new PrintWriter(getClass().getName() + "-logging.log");
-
-        System.out.print("\n\tDownloading MPD Manifest... ");
+        logger.print("\n\tDownloading MPD Manifest... ");
         String manifestString = getMPDManifest(downloadDetails.getVideoId());
         result.completed = manifestString != null;
-        System.out.print(result.completed ? "Done" : "Failed");
+        logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
-            logger.close();
             return result;
         }
 
-        System.out.print("\n\tSaving MPD Manifest... ");
+        logger.print("\n\tSaving MPD Manifest... ");
         String manifestFilename = downloadDetails.getTemporaryFilePath() + "_manifest.mpd";
         result.completed &= FileUtils.saveToFile(manifestString, manifestFilename);
-        System.out.print(result.completed ? "Done" : "Failed");
+        logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
-            logger.close();
             return result;
         }
 
-        // Muxing MPD-Manifest using FFMPEG
-        System.out.print("\n\tDownloading Stream via FFMPEG... ");
+        logger.print("\n\tDownloading Stream via FFMPEG... ");
         String ffmpegResultFilename = downloadDetails.getTemporaryFilePath() + ".mp4";
         result.completed &= FFMPEGUtils.muxMPDMManifest(manifestFilename, ffmpegResultFilename, downloadDetails);
-        System.out.print(result.completed ? "Done" : "Failed");
+        logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
-            logger.close();
             return result;
         }
 
-        // Moving Temp file to Destination folder
-        System.out.print("\n\tMoving temporary file to the channel folder... ");
+        logger.print("\n\tMoving temporary file to the channel folder... ");
         result.resultFile = new File(video.getFilename());
         result.completed &= FileUtils.moveFile(new File(ffmpegResultFilename), result.resultFile);
-        System.out.print(result.completed ? "Done" : "Failed");
+        new File(manifestFilename).delete();
+        logger.print(result.completed ? "Done" : "Failed");
         if (result.completed) {
             video.setDownloaded(true);
         }
@@ -78,7 +85,12 @@ public class YoutubeOTFVideoDownloader extends AbstractYoutubeFileDownloader {
     }
 
     @Override
+    protected YoutubeResult download(YoutubeVideo video, YoutubeDownloadDetails downloadDetails) throws Exception {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected String getFreshDownloadUrl(String videoId, int iTag) {
-        throw new UnsupportedOperationException("Operation not supported");
+        throw new UnsupportedOperationException();
     }
 }

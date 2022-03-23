@@ -25,6 +25,7 @@ import core.dto.youtube.YoutubeVideo;
 import core.dto.youtube.YoutubeVideoFormatTypes;
 import core.youtube.YoutubeChannelHandler;
 import core.youtube.YoutubeVideoHandler;
+import function.LambdaCommand;
 import utils.FileUtils;
 import utils.JSONUtils;
 import utils.ThreadUtils;
@@ -32,6 +33,7 @@ import utils.ThreadUtils;
 public class ConsoleInterfaceHandler {
     private static final String DATABASE_FOLDER = "database";
     private static final String DOWNLOAD_FOLDER = "download";
+    private static final String LOGS_FOLDER = "logs";
     private static final String TEMPORARY_FOLDER = "tmp";
 
     private Scanner scanner;
@@ -44,13 +46,15 @@ public class ConsoleInterfaceHandler {
         scanner = new Scanner(System.in);
     }
 
-    public void start() throws IOException {
+    public void start() throws Exception {
         System.out.println("Application is starting...");
 
         FileUtils.createFolderIfNotExists(DATABASE_FOLDER);
         FileUtils.createFolderIfNotExists(DOWNLOAD_FOLDER);
+        FileUtils.createFolderIfNotExists(LOGS_FOLDER);
         FileUtils.createFolderIfNotExists(TEMPORARY_FOLDER);
 
+        FileUtils.cleanupFolder(LOGS_FOLDER);
         FileUtils.cleanupFolder(TEMPORARY_FOLDER);
 
         System.out.println("Loading database...");
@@ -75,7 +79,7 @@ public class ConsoleInterfaceHandler {
         mainMenu();
     }
 
-    private void mainMenu() throws IOException {
+    private void mainMenu() throws Exception {
         String input;
         while (true) {
             System.out.print("Select action: [1] Status, [2] Add resource, "
@@ -249,21 +253,30 @@ public class ConsoleInterfaceHandler {
         System.out.println("Scanning video details is done");
     }
 
-    private void downloadAllFiles() throws IOException {
+    private void downloadAllFiles() throws Exception {
         List<YoutubeVideo> youtubeVideos = database.getYoutubeVideos().values().stream()
                 .filter(e -> !e.isDownloaded())
                 .collect(Collectors.toList());
         downloadYoutubeVideos(youtubeVideos);
     }
 
-    private void downloadYoutubeVideos(List<YoutubeVideo> videos) throws IOException {
+    private void downloadYoutubeVideos(List<YoutubeVideo> videos) throws Exception {
         System.out.println("Downloading Youtube videos: " + videos.size() + " video(s) to go...");
+
+        LambdaCommand saveDatabaseCommand = () -> {
+            try {
+                saveDatabase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
 
         for (int i = 0; i < videos.size(); i++) {
             YoutubeVideo youtubeVideo = videos.get(i);
             YoutubeChannel youtubeChannel = database.getYoutubeChannel(youtubeVideo.getChannelId());
             YoutubeResult result = new YoutubeResult();
 
+            // Downloading files and giving Tasks
             int attempts = 5;
             while (!result.completed && !result.notFound && attempts > 0) {
                 System.out.print("Downloading video: " + (i + 1) + " of " + videos.size() + " : " + youtubeChannel + " - " + youtubeVideo + "... ");
@@ -272,6 +285,11 @@ public class ConsoleInterfaceHandler {
                     String downloadPath = DOWNLOAD_FOLDER + "/" + youtubeChannel.getFoldername();
                     FileUtils.createFolderIfNotExists(downloadPath);
                     result = youtubeVideoHandler.downloadVideo(youtubeVideo, downloadPath, TEMPORARY_FOLDER);
+                    if (result.queued) {
+                        System.out.println("\n\tVideo has been queued: " + youtubeVideo);
+                        break;
+                    }
+
                     if (result.unsupported) {
                         System.out.println("Unsupported video format: " + youtubeVideo.getVideoId() + ", skipping...");
                         break;
@@ -291,7 +309,13 @@ public class ConsoleInterfaceHandler {
             }
 
             saveDatabase();
+
+            // Checking OTF Streams Downloading Queue
+            youtubeVideoHandler.doOTFQueueIteration(saveDatabaseCommand);
+            System.out.println("Videos in the queued: " + youtubeVideoHandler.getQueueSize());
         }
+
+        youtubeVideoHandler.takeCareOfOTFQueue(saveDatabaseCommand);
     }
 
     private void saveDatabase() throws IOException {
