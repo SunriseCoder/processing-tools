@@ -8,7 +8,9 @@ import process.ProcessRunnerToString;
 public class YoutubeDLUtils {
 
     public static String getOTFManifestURL(String videoId) {
-        List<String> command = Arrays.asList("youtube-dl", "-f", "bestvideo[ext=mp4]/bestvideo", "-g", "https://www.youtube.com/watch?v=" + videoId);
+        List<String> command = Arrays.asList("youtube-dl", "-f", "bestvideo[ext=mp4]/bestvideo",
+                "--cookies", "youtube.com_cookies.txt",
+                "-g", "https://www.youtube.com/watch?v=" + videoId);
 
         ProcessRunnerToString runner = new ProcessRunnerToString();
         int exitCode = runner.execute(command);
@@ -23,7 +25,9 @@ public class YoutubeDLUtils {
     }
 
     public static String getDownloadURL(String videoId, int iTag) {
-        List<String> command = Arrays.asList("youtube-dl", "-f", String.valueOf(iTag), "-g", "https://www.youtube.com/watch?v=" + videoId);
+        List<String> command = Arrays.asList("youtube-dl", "-f", String.valueOf(iTag),
+                "--cookies", "youtube.com_cookies.txt",
+                "-g", "https://www.youtube.com/watch?v=" + videoId);
 
         ProcessRunnerToString runner = new ProcessRunnerToString();
         int exitCode = runner.execute(command);
@@ -38,7 +42,9 @@ public class YoutubeDLUtils {
     }
 
     public static String getNonAdaptiveDownloadURL(String videoId) {
-        List<String> command = Arrays.asList("youtube-dl", "-f", "best", "-g", "https://www.youtube.com/watch?v=" + videoId);
+        List<String> command = Arrays.asList("youtube-dl", "-f", "best",
+                "--cookies", "youtube.com_cookies.txt",
+                "-g", "https://www.youtube.com/watch?v=" + videoId);
 
         ProcessRunnerToString runner = new ProcessRunnerToString();
         int exitCode = runner.execute(command);

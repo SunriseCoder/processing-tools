@@ -15,6 +15,7 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import core.Configuration;
 import core.dto.youtube.YoutubeAudioFormat;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
@@ -64,7 +65,7 @@ public class YoutubeVideoHandler {
             // Downloading Video Page
             String urlString = "https://www.youtube.com/watch?v=" + video.getVideoId();
             try {
-                DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null);
+                DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null, Configuration.getYoutubeCookies());
                 if (response.responseCode == 404) {
                     result.notFound = true;
                     return result;

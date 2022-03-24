@@ -23,7 +23,7 @@ import utils.ThreadUtils;
 public abstract class AbstractYoutubeFileDownloader {
     protected static final int MAX_YOUTUBE_DOWNLOAD_THREADS = 100;
     protected static final int MIN_CHUNK_SIZE = 64 * 1024;
-    protected static final int MAX_CHUNK_SIZE = 1024 * 1024;
+    protected static final int MAX_CHUNK_SIZE = 4 * 1024 * 1024;
     protected static final int UPDATE_PROGRESS_INTERVAL = 1000;
 
     protected ExecutorService executorService;

@@ -12,7 +12,7 @@ import adaptors.ByteArray;
 
 public class DownloadUtils {
 
-    public static Response downloadPageByGet(String urlString, Map<String, String> headers) throws IOException {
+    public static Response downloadPageByGet(String urlString, Map<String, String> headers, String cookie) throws IOException {
         Response response = new Response();
 
         URL url = new URL(urlString);
@@ -21,6 +21,9 @@ public class DownloadUtils {
             for (Entry<String, String> headerEntry : headers.entrySet()) {
                 connection.setRequestProperty(headerEntry.getKey(), headerEntry.getValue());
             }
+        }
+        if (cookie != null) {
+            connection.setRequestProperty("Cookie", cookie);
         }
         response.responseCode = connection.getResponseCode();
         response.headers = connection.getHeaderFields();

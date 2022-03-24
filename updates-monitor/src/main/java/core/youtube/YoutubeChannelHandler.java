@@ -15,6 +15,7 @@ import org.jsoup.select.Elements;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import core.Configuration;
 import core.dto.youtube.YoutubeChannel;
 import core.dto.youtube.YoutubeVideo;
 import util.DownloadUtils;
@@ -115,7 +116,7 @@ public class YoutubeChannelHandler {
 
     private static Result downloadChannelIdByCustomURL(String url) throws IOException {
         Result result = new Result();
-        Response response = DownloadUtils.downloadPageByGet(url, null);
+        Response response = DownloadUtils.downloadPageByGet(url, null, Configuration.getYoutubeCookies());
         if (response.responseCode == 404) {
             result.channelNotFound = true;
             return result;
@@ -184,7 +185,7 @@ public class YoutubeChannelHandler {
         result.newVideos = videos;
 
         String urlString = "https://www.youtube.com/channel/" + channelId + "/videos";
-        Response response = DownloadUtils.downloadPageByGet(urlString, null);
+        Response response = DownloadUtils.downloadPageByGet(urlString, null, Configuration.getYoutubeCookies());
 
         if (response.headers.get(null).get(0).split(" ")[1].equals("404")) {
             result.channelNotFound = true;

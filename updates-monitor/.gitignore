@@ -1,6 +1,9 @@
 # Application database
 database/
 
+# Cookie files
+youtube.com_cookies.txt
+
 # Download folder
 download/
 download

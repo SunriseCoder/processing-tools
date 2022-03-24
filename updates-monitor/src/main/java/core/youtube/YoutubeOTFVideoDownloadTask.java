@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.Callable;
 
+import core.Configuration;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;
@@ -75,7 +76,7 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
             throw new IOException("Couldn't get MPD-Manifest URL for video: " + videoId);
         }
 
-        Response manifestResponse = DownloadUtils.downloadPageByGet(manifestURL, null);
+        Response manifestResponse = DownloadUtils.downloadPageByGet(manifestURL, null, Configuration.getYoutubeCookies());
         if (manifestResponse.responseCode != 200) {
             throw new IOException("Response Code: " + manifestResponse.responseCode);
         }

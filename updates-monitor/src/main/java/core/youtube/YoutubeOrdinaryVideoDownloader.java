@@ -10,6 +10,7 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import core.Configuration;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;
@@ -135,7 +136,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
         do {
             try {
                 String urlString = "https://www.youtube.com/watch?v=" + videoId;
-                DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null);
+                DownloadUtils.Response response = DownloadUtils.downloadPageByGet(urlString, null, Configuration.getYoutubeCookies());
                 if (response.responseCode == 404) {
                     throw new IOException("404 Not found by refresihng download URL");
                 } else if (response.responseCode != 200) {

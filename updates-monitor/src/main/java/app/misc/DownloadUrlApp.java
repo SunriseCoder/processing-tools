@@ -18,7 +18,7 @@ public class DownloadUrlApp {
         String filename = scanner.next();
         scanner.close();
 
-        Response page = DownloadUtils.downloadPageByGet(url, null);
+        Response page = DownloadUtils.downloadPageByGet(url, null, null);
         FileUtils.saveToFile(page.body, filename);
         System.out.println("Done");
     }
