@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.TimeZone;
@@ -83,7 +82,7 @@ public class ConsoleInterfaceHandler {
         String input;
         while (true) {
             System.out.print("Select action: [1] Status, [2] Add resource, "
-                    + "[5] Check updates, [7] Scan videos, [9] Download files, [0] Exit ");
+                    + "[5] Check updates, [7] Scan videos, [8] Re-scan videos, [9] Download files, [0] Exit ");
             input = scanner.next();
             switch (input) {
             case "1":
@@ -97,6 +96,9 @@ public class ConsoleInterfaceHandler {
                 break;
             case "7":
                 scanVideoDetails();
+                break;
+            case "8":
+                rescanVideoDetails();
                 break;
             case "9":
                 downloadAllFiles();
@@ -122,19 +124,25 @@ public class ConsoleInterfaceHandler {
         System.out.println(youtubeChannels.size() + " channel(s) total");
 
         // Youtube Videos Total
-        System.out.println("Youtube videos: "
-                + database.getYoutubeNotScannedVideos().size() + " not scanned, "
-                + database.getYoutubeVideos().values().stream()
-                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.OrdinaryFile.equals(e.getVideoFormatType())).count() + " ordinary, "
-                + database.getYoutubeVideos().values().stream()
-                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.OTF_Stream.equals(e.getVideoFormatType())).count() + " otf, "
-                + database.getYoutubeVideos().values().stream()
-                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.Encrypted.equals(e.getVideoFormatType())).count() + " encrypted, "
-                + database.getYoutubeVideos().values().stream()
-                        .filter(e -> !e.isDownloaded() && YoutubeVideoFormatTypes.NotAdaptive.equals(e.getVideoFormatType())).count() + " not adaptive, "
-                + database.getYoutubeVideos().values().stream().filter(e -> !e.isDownloaded()).count() + " not downloaded, "
-                + database.getYoutubeVideos().values().stream().filter(e -> e.isDownloaded()).count() + " done, "
-                + database.getYoutubeVideos().size() + " total");
+        StringBuilder sb = new StringBuilder();
+        sb.append("Youtube Videos: ")
+            .append("Not Scanned: ").append(database.getYoutubeNotScannedVideos().size())
+            .append(", Not Downloaded: ").append(database.getYoutubeVideos().values().stream().filter(e -> !e.isDownloaded()).count())
+            .append(", Done: ").append(database.getYoutubeVideos().values().stream().filter(e -> e.isDownloaded()).count())
+            .append(", Total: ").append(database.getYoutubeVideos().size());
+        System.out.println(sb);
+
+        // Youtube Videos by Types
+        sb = new StringBuilder();
+        sb.append("Youtube Videos (Non-Downloaded) by Type: ");
+        for (YoutubeVideoFormatTypes youtubeVideoType : YoutubeVideoFormatTypes.values()) {
+            sb.append(youtubeVideoType.name()).append(": ")
+                .append(database.getYoutubeVideos().values().stream()
+                    .filter(e -> !e.isDownloaded() && youtubeVideoType.equals(e.getVideoFormatType())).count())
+                .append(", ");
+        }
+        sb.delete(sb.length() - 2, sb.length());
+        System.out.println(sb);
     }
 
     private void addResource() {
@@ -234,10 +242,39 @@ public class ConsoleInterfaceHandler {
     }
 
     private void scanVideoDetails() throws IOException {
-        Map<String, YoutubeVideo> notScannedVideos = database.getYoutubeNotScannedVideos();
-        System.out.println("Scanning video details, to go: " + notScannedVideos.size() + " video(s)...");
+        List<YoutubeVideo> videos = new ArrayList<>(database.getYoutubeNotScannedVideos().values());
+        scanVideoDetails(videos);
+    }
 
-        List<YoutubeVideo> videos = new ArrayList<>(notScannedVideos.values());
+    private void rescanVideoDetails() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Choose YoutubeVideoType for rescan:\n");
+        for (YoutubeVideoFormatTypes type : YoutubeVideoFormatTypes.values()) {
+            sb.append("[").append(type.ordinal()).append("] - ").append(type.name()).append("\n");
+        }
+        sb.append("[").append(YoutubeVideoFormatTypes.values().length).append("] - Exit to previous menu");
+        System.out.println(sb);
+
+        boolean valid = false;
+        int input;
+        do {
+            input = Integer.parseInt(scanner.next());
+            valid = input >= 0 && input <= YoutubeVideoFormatTypes.values().length;
+        } while (!valid);
+
+        if (YoutubeVideoFormatTypes.values().length == input) {
+            return;
+        }
+
+        YoutubeVideoFormatTypes type = YoutubeVideoFormatTypes.values()[input];
+        List<YoutubeVideo> videos = database.getYoutubeVideos().values().stream()
+                .filter(e -> type.equals(e.getVideoFormatType())).collect(Collectors.toList());
+        scanVideoDetails(videos);
+    }
+
+    private void scanVideoDetails(List<YoutubeVideo> videos) throws IOException {
+        System.out.println("Scanning video details, to go: " + videos.size() + " video(s)...");
+
         for (int i = 0; i < videos.size(); i++) {
             YoutubeVideo video = videos.get(i);
             System.out.print("\tScanning video: " + (i + 1) + " of " + videos.size() + " : " + video.getVideoId() + "... ");
@@ -255,8 +292,7 @@ public class ConsoleInterfaceHandler {
 
     private void downloadAllFiles() throws Exception {
         List<YoutubeVideo> youtubeVideos = database.getYoutubeVideos().values().stream()
-                .filter(e -> !e.isDownloaded())
-                .collect(Collectors.toList());
+                .filter(e -> !e.isDownloaded()).collect(Collectors.toList());
         downloadYoutubeVideos(youtubeVideos);
     }
 

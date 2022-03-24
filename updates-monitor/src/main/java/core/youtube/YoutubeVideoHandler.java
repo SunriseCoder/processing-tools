@@ -89,15 +89,23 @@ public class YoutubeVideoHandler {
                 video.setUploadDate(videoUploadDate);
 
                 JsonNode streamingDataNode = playerResponseNode.get("streamingData");
-                List<YoutubeVideoFormat> videoFormats = fetchVideoFormats(streamingDataNode);
-                YoutubeVideoFormat videoFormat = videoFormats.isEmpty() ? null : videoFormats.get(0);
-                YoutubeVideoFormatTypes videoFormatType = videoFormat == null ? YoutubeVideoFormatTypes.NotAdaptive : videoFormat.type;
-                video.setVideoFormatType(videoFormatType);
+                if (streamingDataNode == null) {
+                    video.setVideoFormatType(YoutubeVideoFormatTypes.NoStreamData);
+                } else if (!streamingDataNode.has("adaptiveFormats")) {
+                    video.setVideoFormatType(YoutubeVideoFormatTypes.NotAdaptive);
+                } else {
+                    List<YoutubeVideoFormat> videoFormats = fetchVideoFormats(streamingDataNode);
+                    if (videoFormats.isEmpty()) {
+                        video.setVideoFormatType(YoutubeVideoFormatTypes.NotAdaptive);
+                    } else {
+                        YoutubeVideoFormat videoFormat = videoFormats.get(0);
+                        result.videoFormat = videoFormat;
+                    }
+                }
 
                 video.setScanned(true);
 
                 result.jsonNode = playerResponseNode;
-                result.videoFormat = videoFormat;
                 successful = true;
             } catch (Exception e) {
                 System.out.println("\n" + e.getClass() + ": " + e.getMessage());
@@ -154,9 +162,6 @@ public class YoutubeVideoHandler {
 
     private List<YoutubeVideoFormat> fetchVideoFormats(JsonNode streamingDataNode) {
         List<YoutubeVideoFormat> videoFormats = new ArrayList<>();
-        if (streamingDataNode == null || !streamingDataNode.has("adaptiveFormats")) {
-            return videoFormats;
-        }
 
         JsonNode adaptiveFormatsNode = streamingDataNode.get("adaptiveFormats");
         for (JsonNode formatNode : adaptiveFormatsNode) {

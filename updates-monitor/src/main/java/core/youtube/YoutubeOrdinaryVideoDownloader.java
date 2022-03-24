@@ -72,7 +72,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
         File tempFile = new File(downloadDetails.getTemporaryFilePath());
         long fileSize = downloadDetails.getVideoFormat().contentLength;
         result.completed = downloadFile(tempFile, fileSize, downloadDetails.getVideoId(), downloadDetails.getVideoFormat().iTag);
-        System.out.print(result.completed ? "Done" : "Failed");
+        System.out.print(result.completed ? " Done" : " Failed");
         if (!result.completed) {
             return result;
         }
@@ -100,7 +100,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
         File tempFile = new File(downloadDetails.getTemporaryFilePath());
         long fileSize = downloadDetails.getAudioFormat().contentLength;
         result.completed = downloadFile(tempFile, fileSize, downloadDetails.getVideoId(), downloadDetails.getAudioFormat().iTag);
-        System.out.print(result.completed ? "Done" : "Failed");
+        System.out.print(result.completed ? " Done" : " Failed");
         if (!result.completed) {
             return result;
         }
