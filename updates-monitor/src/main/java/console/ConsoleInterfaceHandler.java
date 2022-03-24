@@ -81,7 +81,7 @@ public class ConsoleInterfaceHandler {
     private void mainMenu() throws Exception {
         String input;
         while (true) {
-            System.out.print("Select action: [1] Status, [2] Add resource, "
+            System.out.print("Select action: [1] Status, [2] Add resource, [4] Print Video list "
                     + "[5] Check updates, [7] Scan videos, [8] Re-scan videos, [9] Download files, [0] Exit ");
             input = scanner.next();
             switch (input) {
@@ -90,6 +90,9 @@ public class ConsoleInterfaceHandler {
                 break;
             case "2":
                 addResource();
+                break;
+            case "4":
+                printVideoList();
                 break;
             case "5":
                 checkUpdates();
@@ -186,6 +189,46 @@ public class ConsoleInterfaceHandler {
         }
     }
 
+    private void printVideoList() throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Choose YoutubeVideoType for list:\n")
+                .append("[-2] All non-scanned\n")
+                .append("[-1] All non-downloaded\n");
+
+        for (YoutubeVideoFormatTypes type : YoutubeVideoFormatTypes.values()) {
+            sb.append("[").append(type.ordinal()).append("] - ").append(type.name()).append("\n");
+        }
+        sb.append("[").append(YoutubeVideoFormatTypes.values().length).append("] - Exit to previous menu");
+        System.out.println(sb);
+
+        int input = Integer.parseInt(scanner.next());
+        if (input == YoutubeVideoFormatTypes.values().length) {
+            return;
+        }
+
+        List<YoutubeVideo> videos;
+        switch (input) {
+        case -2:
+            videos = database.getYoutubeVideos().values().stream()
+                    .filter(e -> !e.isScanned()).collect(Collectors.toList());
+            break;
+        case -1:
+            videos = database.getYoutubeVideos().values().stream()
+                    .filter(e -> !e.isDownloaded()).collect(Collectors.toList());
+            break;
+        default:
+            YoutubeVideoFormatTypes type = YoutubeVideoFormatTypes.values()[input];
+            videos = database.getYoutubeVideos().values().stream()
+                    .filter(e -> type.equals(e.getVideoFormatType())).collect(Collectors.toList());
+        }
+
+        for (YoutubeVideo video : videos) {
+            YoutubeChannel channel = database.getYoutubeChannel(video.getChannelId());
+            System.out.println("Channel: " + (channel == null ? video.getChannelId() : channel) + ", video: " + video);
+        }
+        System.out.println("Videos total: " + videos.size());
+    }
+
     private void checkUpdates() throws IOException {
         System.out.println("Updating Youtube Channels...");
         Iterator<Entry<String, YoutubeChannel>> youtubeChannelsIterator = database.getYoutubeChannels().entrySet().iterator();
@@ -255,20 +298,15 @@ public class ConsoleInterfaceHandler {
         sb.append("[").append(YoutubeVideoFormatTypes.values().length).append("] - Exit to previous menu");
         System.out.println(sb);
 
-        boolean valid = false;
-        int input;
-        do {
-            input = Integer.parseInt(scanner.next());
-            valid = input >= 0 && input <= YoutubeVideoFormatTypes.values().length;
-        } while (!valid);
-
-        if (YoutubeVideoFormatTypes.values().length == input) {
+        int input = Integer.parseInt(scanner.next());
+        if (input == YoutubeVideoFormatTypes.values().length) {
             return;
         }
 
         YoutubeVideoFormatTypes type = YoutubeVideoFormatTypes.values()[input];
         List<YoutubeVideo> videos = database.getYoutubeVideos().values().stream()
                 .filter(e -> type.equals(e.getVideoFormatType())).collect(Collectors.toList());
+
         scanVideoDetails(videos);
     }
 
@@ -327,7 +365,8 @@ public class ConsoleInterfaceHandler {
                     }
 
                     if (result.unsupported) {
-                        System.out.println("Unsupported video format: " + youtubeVideo.getVideoId() + ", skipping...");
+                        System.out.println("Unsupported video format type: " + youtubeVideo.getVideoFormatType().name()
+                                + " for video: " + youtubeVideo.getVideoId() + ", skipping...");
                         break;
                     }
 
