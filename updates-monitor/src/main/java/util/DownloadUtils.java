@@ -41,6 +41,7 @@ public class DownloadUtils {
         }
 
         response.body = byteArray.createString("UTF-8");
+        connection.disconnect();
         return response;
     }
 
@@ -71,6 +72,7 @@ public class DownloadUtils {
         response.responseCode = connection.getResponseCode();
         response.headers = connection.getHeaderFields();
         response.body = byteArray.createString("UTF-8");
+        connection.disconnect();
         return response;
     }
 
@@ -78,5 +80,18 @@ public class DownloadUtils {
         public int responseCode;
         public Map<String, List<String>> headers;
         public String body;
+    }
+
+    public static long getContentLength(String downloadUrl) throws IOException {
+        URL url = new URL(downloadUrl);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        int responseCode = connection.getResponseCode();
+        if (responseCode != 200) {
+            throw new IOException("HTTP Response Code: " + responseCode);
+        }
+
+        long contentLength = connection.getContentLengthLong();
+        connection.disconnect();
+        return contentLength;
     }
 }

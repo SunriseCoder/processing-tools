@@ -99,6 +99,7 @@ public class YoutubeVideoHandler {
                         video.setVideoFormatType(YoutubeVideoFormatTypes.NotAdaptive);
                     } else {
                         YoutubeVideoFormat videoFormat = videoFormats.get(0);
+                        video.setVideoFormatType(videoFormat.type);
                         result.videoFormat = videoFormat;
                     }
                 }
@@ -126,17 +127,18 @@ public class YoutubeVideoHandler {
         // Fetching Media Formats
         JsonNode playerResponseNode = result.jsonNode;
         JsonNode streamingDataNode = playerResponseNode.get("streamingData");
-        List<YoutubeAudioFormat> audioFormats = fetchAudioFormats(streamingDataNode);
-        YoutubeVideoFormat videoFormat = result.videoFormat;
-        YoutubeAudioFormat audioFormat = audioFormats.isEmpty() ? null : audioFormats.get(0);
+        if (streamingDataNode != null && streamingDataNode.has("adaptiveFormats")) {
+            List<YoutubeAudioFormat> audioFormats = fetchAudioFormats(streamingDataNode);
+            result.audioFormat = audioFormats.isEmpty() ? null : audioFormats.get(0);
+        }
 
         String temporaryFilePath = temporaryFolderPath + "/" + video.getVideoId();
         YoutubeDownloadDetails downloadDetails = new YoutubeDownloadDetails().setVideoId(video.getVideoId())
                 .setTemporaryFilePath(temporaryFilePath)
-                .setVideoFormat(videoFormat).setAudioFormat(audioFormat);
+                .setVideoFormat(result.videoFormat).setAudioFormat(result.audioFormat);
 
         // Downloading the Files
-        switch (videoFormat.type) {
+        switch (video.getVideoFormatType()) {
         case OrdinaryFile:
             result = youtubeOrdinaryVideoDownloader.download(video, downloadDetails);
             break;
@@ -152,7 +154,7 @@ public class YoutubeVideoHandler {
             break;
         default:
             System.out.println("Unsupported video format: " + video.getVideoId()
-                    + ", format type: " + (videoFormat.type == null ? null : videoFormat.type.name()));
+                    + ", format type: " + (result.videoFormat == null ? null : result.videoFormat.type.name()));
             result.unsupported = true;
             return result;
         }

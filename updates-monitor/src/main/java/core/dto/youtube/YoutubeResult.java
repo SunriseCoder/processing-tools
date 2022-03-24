@@ -13,4 +13,5 @@ public class YoutubeResult {
     public File resultFile;
     public JsonNode jsonNode;
     public YoutubeVideoFormat videoFormat;
+    public YoutubeAudioFormat audioFormat;
 }
