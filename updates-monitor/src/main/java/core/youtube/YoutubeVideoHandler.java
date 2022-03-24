@@ -143,6 +143,7 @@ public class YoutubeVideoHandler {
             result = youtubeOrdinaryVideoDownloader.download(video, downloadDetails);
             break;
         case OTF_Stream:
+        case OTF_Encrypted:
             YoutubeOTFVideoDownloadTask task = new YoutubeOTFVideoDownloadTask(video, downloadDetails);
             Future<YoutubeResult> future = youtubeOFTExecutorService.submit(task);
             YoutubeOTFStruct struct = new YoutubeOTFStruct(task, future);
@@ -311,7 +312,9 @@ public class YoutubeVideoHandler {
             if (result.completed) {
                 YoutubeVideo video = struct.task.getVideo();
                 video.setDownloaded(true);
-                saveDatabaseCommand.perform();
+                if (saveDatabaseCommand != null) {
+                    saveDatabaseCommand.perform();
+                }
                 System.out.println("Queued Video has been completed: " + video);
                 iterator.remove();
             } else {
