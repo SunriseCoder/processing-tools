@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.Callable;
 
-import core.Configuration;
+import core.dto.Configuration;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;

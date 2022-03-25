@@ -10,7 +10,7 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import core.Configuration;
+import core.dto.Configuration;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;

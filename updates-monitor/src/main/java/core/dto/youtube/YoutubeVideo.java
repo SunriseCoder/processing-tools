@@ -8,8 +8,9 @@ public class YoutubeVideo {
     private int durationInSeconds;
     private String uploadDate;
 
-    private boolean scanned = false;
-    private boolean downloaded = false;
+    private boolean scanned;
+    private boolean downloaded;
+    private boolean deleted;
 
     private String filename;
     private long fileSize;
@@ -77,6 +78,14 @@ public class YoutubeVideo {
 
     public void setDownloaded(boolean downloaded) {
         this.downloaded = downloaded;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     public String getFilename() {

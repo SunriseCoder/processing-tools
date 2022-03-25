@@ -1,9 +1,12 @@
 package console;
 
+import java.awt.Image;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -11,13 +14,16 @@ import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
+
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 
-import core.Database;
+import core.dto.Database;
+import core.dto.VideoPreview;
 import core.dto.youtube.YoutubeChannel;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;
@@ -25,13 +31,16 @@ import core.dto.youtube.YoutubeVideoFormatTypes;
 import core.youtube.YoutubeChannelHandler;
 import core.youtube.YoutubeVideoHandler;
 import function.LambdaCommand;
+import util.FFMPEGUtils;
 import utils.FileUtils;
 import utils.JSONUtils;
+import utils.MathUtils;
 import utils.ThreadUtils;
 
 public class ConsoleInterfaceHandler {
     private static final String DATABASE_FOLDER = "database";
     private static final String DOWNLOAD_FOLDER = "download";
+    private static final String PREVIEW_FOLDER = "preview";
     private static final String LOGS_FOLDER = "logs";
     private static final String TEMPORARY_FOLDER = "tmp";
 
@@ -50,6 +59,7 @@ public class ConsoleInterfaceHandler {
 
         FileUtils.createFolderIfNotExists(DATABASE_FOLDER);
         FileUtils.createFolderIfNotExists(DOWNLOAD_FOLDER);
+        FileUtils.createFolderIfNotExists(PREVIEW_FOLDER);
         FileUtils.createFolderIfNotExists(LOGS_FOLDER);
         FileUtils.createFolderIfNotExists(TEMPORARY_FOLDER);
 
@@ -83,7 +93,7 @@ public class ConsoleInterfaceHandler {
         while (true) {
             System.out.print("Select action: [1] Status, [2] Add resource, [4] Print Video list "
                     + "[5] Check updates, [7] Scan videos, [8] Re-scan videos, [9] Download files, [0] Exit\n"
-                    + "[11] Fix Downloaded ");
+                    + "[11] Fix Downloaded, [12] Make Previews ");
             input = scanner.next();
             switch (input) {
             case "1":
@@ -113,6 +123,9 @@ public class ConsoleInterfaceHandler {
                 System.exit(0);
             case "11":
                 fixDownloaded();
+                break;
+            case "12":
+                makePreviews();
                 break;
             default:
                 System.out.println("Unsupported command, please try again");
@@ -399,7 +412,7 @@ public class ConsoleInterfaceHandler {
 
     private void fixDownloaded() throws IOException {
         ArrayList<YoutubeVideo> videos = new ArrayList<>(database.getYoutubeVideos().values().stream()
-                .filter(e -> e.isDownloaded()).collect(Collectors.toList()));
+                .filter(e -> e.isDownloaded() && !e.isDeleted()).collect(Collectors.toList()));
 
         int fixedCounter = 0;
         for (int i = 0; i < videos.size(); i++) {
@@ -428,6 +441,80 @@ public class ConsoleInterfaceHandler {
             saveDatabase();
         }
         System.out.println("Fixing downloaded videos is done, fixed videos: " + fixedCounter);
+    }
+
+    private void makePreviews() throws IOException {
+        // Retrieving Preview Database
+        TypeReference<List<VideoPreview>> typeReference = new TypeReference<List<VideoPreview>>() {};
+        File previewDatabaseFile = new File(DATABASE_FOLDER, "previews.json");
+        List<VideoPreview> previews = previewDatabaseFile.exists()
+                ? JSONUtils.loadFromDisk(previewDatabaseFile, typeReference) : new ArrayList<>();
+        HashSet<String> previewSet = new HashSet<>(previews.stream().map(e -> e.getVideoId()).collect(Collectors.toList()));
+
+        // Retrieving Videos From Database
+        System.out.println("Retrieving video data from Database...");
+        ArrayList<YoutubeVideo> videos = new ArrayList<>(database.getYoutubeVideos().values().stream()
+                .filter(e -> e.isDownloaded() && !e.isDeleted() && !previewSet.contains(e.getVideoId()))
+                .collect(Collectors.toList()));
+
+        System.out.println("Sorting videos by size descending...");
+        videos.sort((a, b) -> MathUtils.sign(b.getFileSize() - a.getFileSize()));
+
+        System.out.println("Starting making video previews...");
+        for (int i = 0; i < videos.size(); i++) {
+            YoutubeVideo video = videos.get(i);
+            System.out.println("\tMaking preview for video: " + video);
+
+            // Preparing Temp Folder
+            File tempFolder = new File(PREVIEW_FOLDER, video.getVideoId());
+            tempFolder.mkdirs();
+
+            // Making preview images
+            double duration = FFMPEGUtils.getVideoDuration(video.getFilename());
+            int interval = Math.min(MathUtils.roundToInt(duration / 28), 120);
+            boolean result = FFMPEGUtils.makePreview(video.getFilename(), PREVIEW_FOLDER + "/" + video.getVideoId() + "/", interval);
+            if (!result) {
+                System.out.println("Failed: FFMPEG error");
+                System.exit(-1);
+            }
+
+            int cols = 6;
+            // Putting all the slides together
+            File previewFolder = new File(PREVIEW_FOLDER, video.getVideoId());
+            File[] files = previewFolder.listFiles();
+            BufferedImage image = ImageIO.read(files[0]);
+            int rows = MathUtils.ceilToInt((double) files.length / cols);
+            int smallWidth = image.getWidth();
+            int smallHeight = image.getHeight();
+            int resultWidth = smallWidth * cols;
+            int resultHeight = smallHeight * rows;
+            BufferedImage resultImage = new BufferedImage(resultWidth, resultHeight, BufferedImage.TYPE_INT_RGB);
+            int x = 0, y = 0;
+            for (int j = 0; j < files.length; j++) {
+                // Copying small image into big one
+                Image smallImage = ImageIO.read(files[j]);
+                resultImage.getGraphics().drawImage(smallImage, x * smallWidth, y * smallHeight, null);
+
+                x++;
+                if (x == cols) {
+                    x = 0;
+                    y++;
+                }
+            }
+
+            // Saving Preview Image
+            String previewResultPath = PREVIEW_FOLDER + "/" + video.getVideoId() + ".jpg";
+            ImageIO.write(resultImage, "JPG", new File(previewResultPath));
+
+            // Adding to Preview Database
+            VideoPreview preview = new VideoPreview(video.getVideoId(), previewResultPath);
+            previews.add(preview);
+            JSONUtils.saveToDisk(previews, previewDatabaseFile);
+
+            // Cleanup Temp Folder
+            FileUtils.cleanupFolder(tempFolder);
+            tempFolder.delete();
+        }
     }
 
     private void saveDatabase() throws IOException {

@@ -40,4 +40,9 @@ public class MathUtils {
         double result = sum / values.length;
         return result;
     }
+
+    public static int sign(long value) {
+        int result = value == 0 ? 0 : value > 0 ? 1 : -1;
+        return result;
+    }
 }
