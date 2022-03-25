@@ -5,6 +5,10 @@ public class VideoPreview {
     private String filename;
     private boolean processed;
 
+    public VideoPreview() {
+        // Default constructor
+    }
+
     public VideoPreview(String videoId, String filename) {
         this.videoId = videoId;
         this.filename = filename;

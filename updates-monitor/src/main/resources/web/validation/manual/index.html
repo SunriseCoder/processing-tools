@@ -1,0 +1,29 @@
+<html>
+    <head>
+        <script src="scripts.js"></script>
+        <style>
+            th { font-size: 50pt; }
+            button {
+                font-size: 50pt;
+                display: inline-block;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body onload="init();">
+        <table>
+            <thead>
+                <tr>
+                    <th width="12%"><button onclick="protect(this); del();">Delete</button></th>
+                    <th id="title" width="76%">Image Title</th>
+                    <th width="12%"><button onclick="protect(this); keep();">Keep</button></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td colspan="3"><img id="image" /></td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>
