@@ -12,6 +12,7 @@ public class YoutubeVideo {
     private boolean downloaded = false;
 
     private String filename;
+    private long fileSize;
     private YoutubeVideoFormatTypes videoFormatType;
 
     public String getVideoId() {
@@ -84,6 +85,14 @@ public class YoutubeVideo {
 
     public void setFilename(String filename) {
         this.filename = filename;
+    }
+
+    public long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(long fileSize) {
+        this.fileSize = fileSize;
     }
 
     public YoutubeVideoFormatTypes getVideoFormatType() {

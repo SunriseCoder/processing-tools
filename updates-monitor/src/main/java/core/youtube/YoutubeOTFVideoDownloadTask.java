@@ -64,6 +64,7 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         logger.print(result.completed ? "Done" : "Failed");
         if (result.completed) {
             video.setDownloaded(true);
+            video.setFileSize(result.resultFile.length());
         }
 
         logger.close();

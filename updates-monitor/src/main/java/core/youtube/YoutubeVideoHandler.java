@@ -330,7 +330,6 @@ public class YoutubeVideoHandler {
         private Future<YoutubeResult> future;
 
         public YoutubeOTFStruct(YoutubeOTFVideoDownloadTask task, Future<YoutubeResult> future) {
-            super();
             this.task = task;
             this.future = future;
         }

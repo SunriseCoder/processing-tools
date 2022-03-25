@@ -82,7 +82,8 @@ public class ConsoleInterfaceHandler {
         String input;
         while (true) {
             System.out.print("Select action: [1] Status, [2] Add resource, [4] Print Video list "
-                    + "[5] Check updates, [7] Scan videos, [8] Re-scan videos, [9] Download files, [0] Exit ");
+                    + "[5] Check updates, [7] Scan videos, [8] Re-scan videos, [9] Download files, [0] Exit\n"
+                    + "[11] Fix Downloaded ");
             input = scanner.next();
             switch (input) {
             case "1":
@@ -110,6 +111,9 @@ public class ConsoleInterfaceHandler {
                 System.out.println("Exiting...");
                 scanner.close();
                 System.exit(0);
+            case "11":
+                fixDownloaded();
+                break;
             default:
                 System.out.println("Unsupported command, please try again");
             }
@@ -391,6 +395,39 @@ public class ConsoleInterfaceHandler {
         }
 
         youtubeVideoHandler.takeCareOfOTFQueue(saveDatabaseCommand);
+    }
+
+    private void fixDownloaded() throws IOException {
+        ArrayList<YoutubeVideo> videos = new ArrayList<>(database.getYoutubeVideos().values().stream()
+                .filter(e -> e.isDownloaded()).collect(Collectors.toList()));
+
+        int fixedCounter = 0;
+        for (int i = 0; i < videos.size(); i++) {
+            YoutubeVideo video = videos.get(i);
+            System.out.print("Checking video " + (i + 1) + " of " + videos.size() + " - " + video + "... ");
+            File videoFile = new File(video.getFilename());
+            if (!videoFile.exists()) {
+                System.out.print("Fixing... ");
+                YoutubeChannel channel = database.getYoutubeChannel(video.getChannelId());
+                String fixedFilename = DOWNLOAD_FOLDER + "/" + channel.getFoldername() + "/" + video.getFilename();
+                videoFile = new File(fixedFilename);
+                if (videoFile.exists()) {
+                    video.setFilename(fixedFilename);
+                    System.out.println("Fixed");
+                    fixedCounter++;
+                } else {
+                    System.out.println("Couldn't fix file for video: " + video);
+                    System.exit(-1);
+                }
+            } else {
+                System.out.println(" Ok");
+            }
+        }
+
+        if (fixedCounter > 0) {
+            saveDatabase();
+        }
+        System.out.println("Fixing downloaded videos is done, fixed videos: " + fixedCounter);
     }
 
     private void saveDatabase() throws IOException {

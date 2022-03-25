@@ -50,6 +50,7 @@ public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloade
         System.out.print(result.completed ? "Done" : "Failed");
         if (result.completed) {
             video.setDownloaded(true);
+            video.setFileSize(result.resultFile.length());
         }
 
         logger.close();

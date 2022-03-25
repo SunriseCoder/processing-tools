@@ -40,6 +40,7 @@ public class YoutubeNonAdaptiveVideoDownloader extends AbstractYoutubeFileDownlo
         result.completed &= FileUtils.moveFile(tempFile, result.resultFile);
         if (result.completed) {
             video.setDownloaded(true);
+            video.setFileSize(result.resultFile.length());
         }
 
         logger.close();
