@@ -520,6 +520,7 @@ public class ConsoleInterfaceHandler {
             // Cleanup Temp Folder
             FileUtils.cleanupFolder(tempFolder);
             tempFolder.delete();
+            System.out.println("Successful");
         }
     }
 

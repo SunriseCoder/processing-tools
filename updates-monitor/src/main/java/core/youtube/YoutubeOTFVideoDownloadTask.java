@@ -38,6 +38,7 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         result.completed = manifestString != null;
         logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
+            result.reason = "Manifest download failed";
             return result;
         }
 
@@ -46,6 +47,7 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         result.completed &= FileUtils.saveToFile(manifestString, manifestFilename);
         logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
+            result.reason = "Manifest was not saved";
             return result;
         }
 
@@ -54,6 +56,7 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         result.completed &= FFMPEGUtils.muxMPDMManifest(manifestFilename, ffmpegResultFilename, downloadDetails);
         logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
+            result.reason = "FFMPEG download failed";
             return result;
         }
 
@@ -65,6 +68,8 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         if (result.completed) {
             video.setDownloaded(true);
             video.setFileSize(result.resultFile.length());
+        } else {
+            result.reason = "Move from temp to destination failed";
         }
 
         logger.close();

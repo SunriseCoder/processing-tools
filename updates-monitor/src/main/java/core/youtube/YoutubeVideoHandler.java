@@ -319,7 +319,7 @@ public class YoutubeVideoHandler {
                 System.out.println("Queued Video has been completed: " + video);
                 iterator.remove();
             } else {
-                System.out.println("Queued Video has been failed, restarting: " + struct.task.getVideo());
+                System.out.println("Queued Video has been failed due to: \"" + result.reason + "\", restarting: " + struct.task.getVideo());
                 struct.future = youtubeOFTExecutorService.submit(struct.task);
             }
         }

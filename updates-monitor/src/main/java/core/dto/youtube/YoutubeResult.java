@@ -9,6 +9,7 @@ public class YoutubeResult {
     public boolean notFound;
     public boolean completed;
     public boolean queued;
+    public String reason;
 
     public File resultFile;
     public JsonNode jsonNode;
