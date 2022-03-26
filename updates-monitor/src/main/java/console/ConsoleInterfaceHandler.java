@@ -463,7 +463,14 @@ public class ConsoleInterfaceHandler {
         System.out.println("Starting making video previews...");
         for (int i = 0; i < videos.size(); i++) {
             YoutubeVideo video = videos.get(i);
-            System.out.println("\tMaking preview for video: " + video);
+            String previewResultPath = PREVIEW_FOLDER + "/" + video.getVideoId() + ".jpg";
+            System.out.print("\tMaking preview for video: " + video + "... ");
+
+            File previewResultFile = new File(previewResultPath);
+            if (previewResultFile.exists()) {
+                System.out.println("Already exists, skipping");
+                continue;
+            }
 
             // Preparing Temp Folder
             File tempFolder = new File(PREVIEW_FOLDER, video.getVideoId());
@@ -503,8 +510,7 @@ public class ConsoleInterfaceHandler {
             }
 
             // Saving Preview Image
-            String previewResultPath = PREVIEW_FOLDER + "/" + video.getVideoId() + ".jpg";
-            ImageIO.write(resultImage, "JPG", new File(previewResultPath));
+            ImageIO.write(resultImage, "JPG", previewResultFile);
 
             // Adding to Preview Database
             VideoPreview preview = new VideoPreview(video.getVideoId(), previewResultPath);

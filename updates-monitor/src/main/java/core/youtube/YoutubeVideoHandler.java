@@ -30,7 +30,7 @@ import utils.JSONUtils;
 import utils.ThreadUtils;
 
 public class YoutubeVideoHandler {
-    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 100;
+    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 10;
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
 
     private ExecutorService youtubeOFTExecutorService;

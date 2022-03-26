@@ -28,6 +28,6 @@ public class Configuration {
     }
 
     public static String getYoutubeCookies() {
-        return configuration.get("YoutubeCookie");
+        return configuration.get("youtubeCookie");
     }
 }
