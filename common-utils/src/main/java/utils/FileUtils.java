@@ -174,11 +174,15 @@ public class FileUtils {
     }
 
     public static boolean moveFile(File oldFile, File newFile) {
-        boolean result;
         if (!newFile.getParentFile().exists()) {
             newFile.getParentFile().mkdirs();
         }
-        result = oldFile.renameTo(newFile);
+
+        if (newFile.exists()) {
+            newFile.delete();
+        }
+
+        boolean result = oldFile.renameTo(newFile);
         return result;
     }
 
