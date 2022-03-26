@@ -30,7 +30,7 @@ import utils.JSONUtils;
 import utils.ThreadUtils;
 
 public class YoutubeVideoHandler {
-    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 3;
+    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 1;
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
 
     private ExecutorService youtubeOFTExecutorService;
@@ -296,7 +296,7 @@ public class YoutubeVideoHandler {
     public void takeCareOfOTFQueue(LambdaCommand saveDatabaseCommand) throws Exception {
         do {
             doOTFQueueIteration(saveDatabaseCommand);
-            ThreadUtils.sleep(100);
+            ThreadUtils.sleep(1000);
         }
         while (!youtubeOTFFutures.isEmpty());
     }

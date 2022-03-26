@@ -28,7 +28,7 @@ function fillView() {
         return;
     }
 
-    document.getElementById('title').innerText = dataRow['videoId'];
+    document.getElementById('title').innerText = dataRow['videoId'] + " - " + dataRow['title'];
     document.getElementById('image').src = dataRow['filename'];
 }
 

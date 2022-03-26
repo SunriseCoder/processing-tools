@@ -464,7 +464,7 @@ public class ConsoleInterfaceHandler {
         for (int i = 0; i < videos.size(); i++) {
             YoutubeVideo video = videos.get(i);
             String previewResultPath = PREVIEW_FOLDER + "/" + video.getVideoId() + ".jpg";
-            System.out.print("\tMaking preview for video: " + video + "... ");
+            System.out.print("\tMaking preview for video " + (i + 1) + " of " + videos.size() + ": " + video + "... ");
 
             File previewResultFile = new File(previewResultPath);
             if (previewResultFile.exists()) {
@@ -513,7 +513,8 @@ public class ConsoleInterfaceHandler {
             ImageIO.write(resultImage, "JPG", previewResultFile);
 
             // Adding to Preview Database
-            VideoPreview preview = new VideoPreview(video.getVideoId(), previewResultPath);
+            String title = database.getYoutubeVideos().get(video.getVideoId()).getTitle();
+            VideoPreview preview = new VideoPreview(video.getVideoId(), previewResultPath, title);
             previews.add(preview);
             JSONUtils.saveToDisk(previews, previewDatabaseFile);
 

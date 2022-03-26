@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import core.dto.youtube.YoutubeDownloadDetails;
 import process.ProcessRunnerToFile;
@@ -72,6 +73,8 @@ public class FFMPEGUtils {
         // Output file
         command.add("\"" + resultFilename + "\"");
 
+        dumpCommand(command);
+
         // Preparing OS process runner
         ProcessRunnerToFile processRunner = new ProcessRunnerToFile();
         processRunner.setOutputFile(new File("logs/ffmpeg-output-" + downloadDetails.getVideoId() + ".log"));
@@ -131,5 +134,9 @@ public class FFMPEGUtils {
         double result = Double.parseDouble(stringValue);
 
         return result;
+    }
+
+    public static String dumpCommand(List<String> command) {
+        return command.stream().collect(Collectors.joining(" "));
     }
 }
