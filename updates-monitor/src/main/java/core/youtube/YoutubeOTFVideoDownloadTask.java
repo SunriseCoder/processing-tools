@@ -52,17 +52,21 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         }
 
         logger.print("\n\tDownloading Stream via FFMPEG... ");
-        String ffmpegResultFilename = downloadDetails.getTemporaryFilePath() + ".mp4";
-        result.completed &= FFMPEGUtils.muxMPDMManifest(manifestFilename, ffmpegResultFilename, downloadDetails);
+        String videoTempFilename = downloadDetails.getTemporaryFilePath() + ".mp4";
+        result.completed &= FFMPEGUtils.muxMPDMManifest(manifestFilename, videoTempFilename, downloadDetails);
+        if (!result.completed) {
+            logger.print("FFMPEG failed, trying youtube-dl... ");
+            result.completed |= downloadViaYoutubeDL(videoTempFilename);
+        }
         logger.print(result.completed ? "Done" : "Failed");
         if (!result.completed) {
-            result.reason = "FFMPEG download failed";
+            result.reason = "FFMPEG and youtube-dl download failed";
             return result;
         }
 
         logger.print("\n\tMoving temporary file to the channel folder... ");
         result.resultFile = new File(video.getFilename());
-        result.completed &= FileUtils.moveFile(new File(ffmpegResultFilename), result.resultFile);
+        result.completed &= FileUtils.moveFile(new File(videoTempFilename), result.resultFile);
         new File(manifestFilename).delete();
         logger.print(result.completed ? "Done" : "Failed");
         if (result.completed) {
@@ -89,6 +93,63 @@ public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader i
         String manifestString = manifestResponse.body;
 
         return manifestString;
+    }
+
+    private boolean downloadViaYoutubeDL(String resultFilename) {
+        boolean result;
+
+        // Downloading Video Track
+        String format = String.valueOf(downloadDetails.getVideoFormat().iTag);
+        String videoTrackFilename = downloadDetails.getTemporaryFilePath()
+                + "_video." + downloadDetails.getVideoFormat().fileExtension;
+        String logSuffix = video.getVideoId() + "-video";
+        result = YoutubeDLUtils.downloadVideo(video.getVideoId(), format, videoTrackFilename, logSuffix);
+        File videoTrackFile = new File(videoTrackFilename);
+        if (!result) {
+            if (videoTrackFile.exists()) {
+                videoTrackFile.delete();
+            }
+            return result;
+        }
+
+        // Downloading Audio Track
+        format = String.valueOf(downloadDetails.getAudioFormat().iTag);
+        String audioTrackFilename = downloadDetails.getTemporaryFilePath()
+                + "_audio." + downloadDetails.getAudioFormat().fileExtension;
+        logSuffix = video.getVideoId() + "-audio";
+        result = YoutubeDLUtils.downloadVideo(video.getVideoId(), format, audioTrackFilename, logSuffix);
+        File audioTrackFile = new File(audioTrackFilename);
+        if (!result) {
+            if (audioTrackFile.exists()) {
+                audioTrackFile.delete();
+            }
+            return result;
+        }
+
+        // Muxing via FFMPEG
+        String ffmpegResultFilename = downloadDetails.getTemporaryFilePath() + "_combined.mp4";
+        File ffmpegResultFile = new File(ffmpegResultFilename);
+        result = FFMPEGUtils.combineVideoAndAudio(videoTrackFilename, audioTrackFilename,
+                ffmpegResultFilename, downloadDetails.getVideoId());
+        if (!result) {
+            if (ffmpegResultFile.exists()) {
+                ffmpegResultFile.delete();
+            }
+            return result;
+        }
+
+        // Moving Temp File to Result File
+        File resultFile = new File(resultFilename);
+        if (resultFile.exists()) {
+            resultFile.delete();
+        }
+        result = ffmpegResultFile.renameTo(resultFile);
+
+        // Clean up
+        result &= videoTrackFile.delete();
+        result &= audioTrackFile.delete();
+
+        return result;
     }
 
     @Override

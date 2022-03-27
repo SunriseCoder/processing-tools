@@ -30,7 +30,7 @@ import utils.JSONUtils;
 import utils.ThreadUtils;
 
 public class YoutubeVideoHandler {
-    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 1;
+    private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 10;
     private static final Pattern VIDEO_URL_PATTERN = Pattern.compile("^https?:\\/\\/www.youtube.com\\/watch\\?v=([0-9A-Za-z_-]+)&?.*$");
 
     private ExecutorService youtubeOFTExecutorService;
@@ -38,6 +38,7 @@ public class YoutubeVideoHandler {
 
     private AbstractYoutubeFileDownloader youtubeOrdinaryVideoDownloader;
     private AbstractYoutubeFileDownloader youtubeEncryptedVideoDownloader;
+    private AbstractYoutubeFileDownloader youtubeNonAdaptiveVideoDownloader;
 
     public YoutubeVideoHandler() {
         youtubeOFTExecutorService = Executors.newFixedThreadPool(YOUTUBE_OTF_MAX_DOWNLOAD_THREADS);
@@ -45,6 +46,7 @@ public class YoutubeVideoHandler {
 
         youtubeOrdinaryVideoDownloader = new YoutubeOrdinaryVideoDownloader();
         youtubeEncryptedVideoDownloader = new YoutubeEncryptedVideoDownloader();
+        youtubeNonAdaptiveVideoDownloader = new YoutubeNonAdaptiveVideoDownloader();
     }
 
     public String parseVideoId(String url) {
@@ -153,6 +155,9 @@ public class YoutubeVideoHandler {
             break;
         case Encrypted:
             result = youtubeEncryptedVideoDownloader.download(video, downloadDetails);
+            break;
+        case NotAdaptive:
+            result = youtubeNonAdaptiveVideoDownloader.download(video, downloadDetails);
             break;
         default:
             System.out.println("Unsupported video format: " + video.getVideoId()

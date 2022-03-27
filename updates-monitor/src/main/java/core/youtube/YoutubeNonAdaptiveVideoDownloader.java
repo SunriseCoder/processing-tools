@@ -30,7 +30,7 @@ public class YoutubeNonAdaptiveVideoDownloader extends AbstractYoutubeFileDownlo
         String downloadUrl = getFreshDownloadUrl(video.getVideoId(), 0);
         long contentLength = DownloadUtils.getContentLength(downloadUrl);
         log("Downloading Video: Content-Length = " + contentLength);
-        result.completed = downloadFile(tempFile, contentLength, downloadDetails.getVideoId(), downloadDetails.getVideoFormat().iTag);
+        result.completed = downloadFile(tempFile, contentLength, downloadDetails.getVideoId(), 0);
         System.out.print(result.completed ? " Done" : " Failed");
         if (!result.completed) {
             return result;
