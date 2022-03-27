@@ -1,7 +1,5 @@
 package console;
 
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,8 +11,6 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
-
-import javax.imageio.ImageIO;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -472,55 +468,22 @@ public class ConsoleInterfaceHandler {
                 continue;
             }
 
-            // Preparing Temp Folder
-            File tempFolder = new File(PREVIEW_FOLDER, video.getVideoId());
-            tempFolder.mkdirs();
-
-            // Making preview images
+            // Making Preview Image
             double duration = FFMPEGUtils.getVideoDuration(video.getFilename());
             int interval = Math.min(MathUtils.roundToInt(duration / 28), 120);
-            boolean result = FFMPEGUtils.makePreview(video.getFilename(), PREVIEW_FOLDER + "/" + video.getVideoId() + "/", interval);
+            int cols = 6;
+            int rows = MathUtils.ceilToInt(duration / interval / cols);
+            boolean result = FFMPEGUtils.makePreview(video.getFilename(), previewResultPath, interval, cols, rows);
             if (!result) {
                 System.out.println("Failed: FFMPEG error");
                 System.exit(-1);
             }
-
-            int cols = 6;
-            // Putting all the slides together
-            File previewFolder = new File(PREVIEW_FOLDER, video.getVideoId());
-            File[] files = previewFolder.listFiles();
-            BufferedImage image = ImageIO.read(files[0]);
-            int rows = MathUtils.ceilToInt((double) files.length / cols);
-            int smallWidth = image.getWidth();
-            int smallHeight = image.getHeight();
-            int resultWidth = smallWidth * cols;
-            int resultHeight = smallHeight * rows;
-            BufferedImage resultImage = new BufferedImage(resultWidth, resultHeight, BufferedImage.TYPE_INT_RGB);
-            int x = 0, y = 0;
-            for (int j = 0; j < files.length; j++) {
-                // Copying small image into big one
-                Image smallImage = ImageIO.read(files[j]);
-                resultImage.getGraphics().drawImage(smallImage, x * smallWidth, y * smallHeight, null);
-
-                x++;
-                if (x == cols) {
-                    x = 0;
-                    y++;
-                }
-            }
-
-            // Saving Preview Image
-            ImageIO.write(resultImage, "JPG", previewResultFile);
 
             // Adding to Preview Database
             String title = database.getYoutubeVideos().get(video.getVideoId()).getTitle();
             VideoPreview preview = new VideoPreview(video.getVideoId(), previewResultPath, title);
             previews.add(preview);
             JSONUtils.saveToDisk(previews, previewDatabaseFile);
-
-            // Cleanup Temp Folder
-            FileUtils.cleanupFolder(tempFolder);
-            tempFolder.delete();
             System.out.println("Successful");
         }
     }

@@ -86,7 +86,7 @@ public class FFMPEGUtils {
         return result;
     }
 
-    public static boolean makePreview(String sourceVideo, String resultFilePrefix, int interval) {
+    public static boolean makePreview(String sourceVideo, String resultFilePrefix, int interval, int cols, int rows) {
         List<String> command = new ArrayList<>();
 
         // Base settings
@@ -101,15 +101,18 @@ public class FFMPEGUtils {
 
         // Settings
         command.add("-vf");
-        command.add("fps=1/" + interval + ",scale=320:-1");
+        command.add("select=isnan(prev_selected_t)+gte(t-prev_selected_t\\," + interval + ")"
+                + ",scale=320:-1,tile=" + cols + "x" + rows);
 
         // Output file
-        command.add("\"" + resultFilePrefix + "%04d.jpg" + "\"");
+        command.add("\"" + resultFilePrefix + ".jpg" + "\"");
+
+        dumpCommand(command);
 
         // Preparing OS process runner
         ProcessRunnerToFile processRunner = new ProcessRunnerToFile();
         processRunner.setOutputFile(new File("logs/ffmpeg-output-preview.log"));
-        processRunner.setErrorFile(new File("logs/ffmpeg-errors.log"));
+        processRunner.setErrorFile(new File("logs/ffmpeg-errors-preview.log"));
 
         // Executing the OS process
         int exitCode = processRunner.execute(command);
