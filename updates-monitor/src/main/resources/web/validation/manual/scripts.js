@@ -28,29 +28,23 @@ function fillView() {
         return;
     }
 
-    document.getElementById('title').innerText = dataRow['videoId'] + " - " + dataRow['title'];
+    var title = (dataCursor + 1) + ' of ' + data.length + ': '
+            + dataRow['videoId'] + " - " + dataRow['title'];
+    document.getElementById('title').innerText = title;
+    document.getElementById('title2').innerText = title;
     document.getElementById('image').src = dataRow['filename'];
 }
 
 function done() {
     document.getElementById('title').innerText = 'No more data';
+    document.getElementById('title2').innerText = 'No more data';
     document.getElementById('image').src = '';
 }
 
-function del() {
+function action(action) {
     var dataRow = data[dataCursor];
     xhttp = new XMLHttpRequest();
-    xhttp.open('GET', '/ajax_del?id=' + dataRow['videoId'], true);
-    xhttp.send();
-
-    dataCursor++;
-    fillView();
-}
-
-function keep() {
-    var dataRow = data[dataCursor];
-    xhttp = new XMLHttpRequest();
-    xhttp.open('GET', '/ajax_keep?id=' + dataRow['videoId'], true);
+    xhttp.open('GET', '/ajax_action?action=' + action + '&id=' + dataRow['videoId'], true);
     xhttp.send();
 
     dataCursor++;

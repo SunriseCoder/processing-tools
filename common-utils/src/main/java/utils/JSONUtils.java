@@ -33,6 +33,10 @@ public class JSONUtils {
         return result;
     }
 
+    public static void saveToDisk(Object object, String filename) throws IOException {
+        saveToDisk(object, new File(filename));
+    }
+
     public static void saveToDisk(Object object, File file) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.setVisibility(PropertyAccessor.ALL, Visibility.ANY);
@@ -181,6 +185,14 @@ public class JSONUtils {
         public CharAmountPair(char character, int amount) {
             this.character = character;
             this.amount = amount;
+        }
+    }
+
+    public static void findAndPrintAllEntriesRecursively(JsonNode jsonRootNode, String mustContainText) {
+        List<String> entries = findAllEntriesRecursively(jsonRootNode, mustContainText);
+        System.out.println("Searching for text: " + mustContainText + "...");
+        for (String entry : entries) {
+            System.out.println(entry);
         }
     }
 

@@ -18,15 +18,15 @@ public class YoutubeNonAdaptiveVideoDownloader extends AbstractYoutubeFileDownlo
         logger = new PrintWriter("logs/" + getClass().getName() + "-" + video.getVideoId() + "-logging.log");
 
         // Creating Result File
-        String videoFilename = downloadDetails.getTemporaryFilePath() + ".mp4";
-        result.resultFile = new File(videoFilename);
+        result.resultFile = new File(video.getFilename());
         if (result.resultFile.exists()) {
             result.resultFile.delete();
         }
 
         // Downloading Video+Audio Track
         System.out.print("\n\tDownloading video+audio track... ");
-        File tempFile = new File(downloadDetails.getTemporaryFilePath());
+        String videoFilename = downloadDetails.getTemporaryFilePath() + ".mp4";
+        File tempFile = new File(videoFilename);
         String downloadUrl = getFreshDownloadUrl(video.getVideoId(), 0);
         long contentLength = DownloadUtils.getContentLength(downloadUrl);
         log("Downloading Video: Content-Length = " + contentLength);

@@ -12,6 +12,10 @@ public class Configuration {
     private static Map<String, String> configuration;
 
     static {
+        loadFromFile();
+    }
+
+    private static void loadFromFile() {
         File configFile = new File("configuration.json");
         if (configFile.exists()) {
             try {
@@ -29,5 +33,9 @@ public class Configuration {
 
     public static String getYoutubeCookies() {
         return configuration.get("youtubeCookie");
+    }
+
+    public synchronized static void reload() {
+        loadFromFile();
     }
 }

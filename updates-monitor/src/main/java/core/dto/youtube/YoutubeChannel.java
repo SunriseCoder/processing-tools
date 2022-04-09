@@ -12,6 +12,8 @@ public class YoutubeChannel {
     private String foldername;
 
     @JsonIgnore
+    private Map<String, YoutubePlaylist> playlists;
+    @JsonIgnore
     private Map<String, YoutubeVideo> videos;
 
     public YoutubeChannel() {
@@ -20,6 +22,7 @@ public class YoutubeChannel {
 
     public YoutubeChannel(String channelId) {
         this.channelId = channelId;
+        playlists = new HashMap<>();
         videos = new HashMap<>();
     }
 
@@ -47,11 +50,29 @@ public class YoutubeChannel {
         this.title = title;
     }
 
+    public void addPlaylist(YoutubePlaylist playlist) {
+        playlists.put(playlist.getPlaylistId(), playlist);
+    }
+
+    public Map<String, YoutubeVideo> getVideos() {
+        return videos;
+    }
+
     public void addVideo(YoutubeVideo video) {
         videos.put(video.getVideoId(), video);
     }
 
-    public boolean containVideo(String videoId) {
+    public void cleanup() {
+        playlists.clear();
+        videos.clear();
+    }
+
+    public boolean containsPlaylist(String playlistId) {
+        boolean result = playlists.containsKey(playlistId);
+        return result;
+    }
+
+    public boolean containsVideo(String videoId) {
         boolean result = videos.containsKey(videoId);
         return result;
     }
@@ -59,8 +80,13 @@ public class YoutubeChannel {
     @JsonIgnore
     public String getStatusString() {
         long completedVideos = videos.values().stream().filter(v -> v.isDownloaded()).count();
-        long newVideos = videos.size() - completedVideos;
-        return "Videos: " + completedVideos + " done, " + newVideos + " new, " + videos.size() + " total";
+        StringBuilder sb = new StringBuilder();
+        sb.append("Videos: ")
+        .append(completedVideos).append(" done, ")
+        .append(videos.size() - completedVideos).append(" new, ")
+        .append(videos.size()).append(" total, ")
+        .append(playlists.size()).append(" playlists");
+        return sb.toString();
     }
 
     @Override

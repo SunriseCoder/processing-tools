@@ -28,9 +28,9 @@ public class PreviewUtils {
         JSONUtils.saveToDisk(previews, databaseFile);
     }
 
-    public static void addToDelete(String id) throws IOException {
+    public static void addToList(String name, String id) throws IOException {
         TypeReference<List<String>> typeReference = new TypeReference<List<String>>() {};
-        File databaseFile = new File("database/to-delete.json");
+        File databaseFile = new File("database/to-" + name + ".json");
         List<String> toDeleteIds = databaseFile.exists()
                 ? JSONUtils.loadFromDisk(databaseFile, typeReference) : new ArrayList<>();
 

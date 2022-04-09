@@ -2,28 +2,47 @@
     <head>
         <script src="scripts.js"></script>
         <style>
-            th { font-size: 50pt; }
+            td { font-size: 50pt; text-align: center; }
             button {
                 font-size: 50pt;
                 display: inline-block;
                 cursor: pointer;
+                margin-left: 100pt;
+                margin-right: 100pt;
             }
         </style>
     </head>
     <body onload="init();">
-        <table>
-            <thead>
-                <tr>
-                    <th width="12%"><button onclick="protect(this); del();">Delete</button></th>
-                    <th id="title" width="76%">Image Title</th>
-                    <th width="12%"><button onclick="protect(this); keep();">Keep</button></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="3"><img id="image" /></td>
-                </tr>
-            </tbody>
+        <table border="1">
+
+            <tr>
+                <td id="title" colspan="3">Image Title</td>
+            </tr>
+
+            <tr>
+                <td colspan="3">
+                    <button onclick="protect(this); action('keep');">Keep</button>
+                    <button onclick="protect(this); action('clarify');">Clarify</button>
+                    <button onclick="protect(this); action('delete');">Delete</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="3"><img id="image" /></td>
+            </tr>
+
+            <tr>
+                <td colspan="3">
+                    <button onclick="protect(this); action('keep');">Keep</button>
+                    <button onclick="protect(this); action('clarify');">Clarify</button>
+                    <button onclick="protect(this); action('delete');">Delete</button>
+                </td>
+            </tr>
+
+            <tr>
+                <td id="title2" colspan="3">Image Title</td>
+            </tr>
+
         </table>
     </body>
 </html>

@@ -49,8 +49,11 @@ public class DownloadUtils {
     }
 
     public static Response downloadPageByPostJson(String urlString, String jsonBody) throws IOException {
+        Response response = new Response();
         URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setConnectTimeout(60 * 1000);
+        connection.setReadTimeout(60 * 1000);
         connection.setDoOutput(true);
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", "application/json");
@@ -58,6 +61,10 @@ public class DownloadUtils {
         connection.setUseCaches(false);
 
         connection.getOutputStream().write(jsonBody.getBytes());
+        response.responseCode = connection.getResponseCode();
+        if (response.responseCode != 200) {
+            return response;
+        }
 
         ByteArray byteArray = new ByteArray();
         try (InputStream is = connection.getInputStream();) {
@@ -71,7 +78,6 @@ public class DownloadUtils {
             }
         }
 
-        Response response = new Response();
         response.responseCode = connection.getResponseCode();
         response.headers = connection.getHeaderFields();
         response.body = byteArray.createString("UTF-8");
