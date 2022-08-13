@@ -17,8 +17,9 @@ import audio.api.FrameStreamProcessor;
 import audio.wav.WaveInputStream;
 import audio.wav.WaveOutputStream;
 import process.dto.ChannelOperation;
+import process.tools.adjust.FrameStreamAdjuster2;
 import process.utils.AudioFormatHelper;
-import process.utils.ProgressPrinter;
+import progress.ProgressPrinter;
 import utils.FileUtils;
 
 public class FileScanner {
@@ -110,9 +111,10 @@ public class FileScanner {
                 }
 
                 processedFramesTotal += read;
-                progressPrinter.updateProgress(processedFramesTotal);
+                progressPrinter.printProgress(processedFramesTotal, false);
             }
         } while (processedFramesTotal < framesCount);
+        progressPrinter.printProgressFinished();
         close(inputStream);
         return fileStatistics;
     }
@@ -124,38 +126,30 @@ public class FileScanner {
         fileInfoPrint(operations);
 
         List<FrameStreamProcessor> processors = new ArrayList<>();
-        long framesCount = 0;
         for (ChannelOperation operation : operations) {
 
             int inputChannel = operation.getInputChannel();
             int outputChannel = operation.getOutputChannel();
 
             FrameInputStream inputStream = WaveInputStream.create(inputFile, inputChannel);
-            framesCount = inputStream.getFramesCount();
 
             FrameStreamProcessor processor;
             if (operation.isAdjust()) { // Need to adjust channel
-                processor = new FrameStreamAdjuster(inputStream, outputStream, outputChannel);
+                processor = new FrameStreamAdjuster2(inputFile, inputChannel, outputStream, outputChannel);
             } else {
                 processor = new FrameStreamCopier(inputStream, outputStream, outputChannel);
             }
-            processor.setChunkSize(chunkSize);
+            processor.setPortionSize(chunkSize);
+            ProgressPrinter progressPrinter = new ProgressPrinter();
+            processor.setProgressPrinter(progressPrinter);
             processor.prepareOperation();
             processors.add(processor);
         }
 
-        ProgressPrinter progressPrinter = new ProgressPrinter();
-        progressPrinter.setTotal(framesCount);
-        long processedFramesTotal = 0;
-        long processedFrames = 0;
-        do {
-            for (FrameStreamProcessor processor : processors) {
-                processedFrames = processor.processPortion();
-            }
+        for (FrameStreamProcessor processor : processors) {
+            processor.process();
+        }
 
-            processedFramesTotal += processedFrames;
-            progressPrinter.updateProgress(processedFramesTotal);
-        } while (processedFramesTotal < framesCount);
         close(processors);
     }
 

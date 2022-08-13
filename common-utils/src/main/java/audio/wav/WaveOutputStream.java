@@ -55,6 +55,13 @@ public class WaveOutputStream implements FrameOutputStream {
     }
 
     @Override
+    public void write(int channel, int value) throws IOException, UnsupportedAudioFileException {
+        FrameBuffer frameBuffer = frameBuffers[channel];
+        frameBuffer.push(value);
+        checkAndWrite();
+    }
+
+    @Override
     public void write(int channel, int[] buffer) throws IOException, UnsupportedAudioFileException {
         FrameBuffer frameBuffer = frameBuffers[channel];
         frameBuffer.push(buffer);

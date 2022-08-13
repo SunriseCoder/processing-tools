@@ -9,6 +9,7 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 import audio.api.FrameInputStream;
 import audio.api.FrameOutputStream;
 import audio.api.FrameStreamProcessor;
+import progress.ProgressPrinter;
 
 public class FrameStreamAdjuster implements FrameStreamProcessor {
     private static final int SPEECH_NORMAL_MEANING = 4000;
@@ -23,6 +24,8 @@ public class FrameStreamAdjuster implements FrameStreamProcessor {
 
     private Map<Integer, Object> chunkMap;
     private int[] frameBuffer;
+    private ProgressPrinter progressPrinter;
+    private int totalFramesRead;
 
     private int decodingPosition;
     private int processingPosition;
@@ -38,12 +41,21 @@ public class FrameStreamAdjuster implements FrameStreamProcessor {
     }
 
     @Override
-    public void setChunkSize(int chunkSize) {
+    public void setPortionSize(int chunkSize) {
         frameBuffer = new int[chunkSize];
     }
 
     @Override
+    public void setProgressPrinter(ProgressPrinter progressPrinter) {
+        this.progressPrinter = progressPrinter;
+    }
+
+    @Override
     public void prepareOperation() throws IOException, UnsupportedAudioFileException {
+        progressPrinter.reset();
+        progressPrinter.setTotal(inputStream.getFramesCount());
+        totalFramesRead = 0;
+
         decodingPosition = 0;
         processingPosition = 0;
         chunkMap = new HashMap<>();
@@ -52,58 +64,63 @@ public class FrameStreamAdjuster implements FrameStreamProcessor {
     }
 
     @Override
-    public long processPortion() throws IOException, UnsupportedAudioFileException {
-        // If there is something to read, reading and putting to map
-        boolean available = inputStream.available();
-        if (available) {
-            int read = inputStream.readFrames(frameBuffer);
-            int[] buffer = new int[read];
-            System.arraycopy(frameBuffer, 0, buffer, 0, read);
-            chunkMap.put(decodingPosition++, buffer);
+    public void process() throws IOException, UnsupportedAudioFileException {
+        while (totalFramesRead < inputStream.getFramesCount()) {
+            // If there is something to read, reading and putting to map
+            boolean available = inputStream.available();
+            if (available) {
+                int read = inputStream.readFrames(frameBuffer);
+                int[] buffer = new int[read];
+                System.arraycopy(frameBuffer, 0, buffer, 0, read);
+                chunkMap.put(decodingPosition++, buffer);
+                totalFramesRead += read;
+            }
+
+            // If there are not enough data for smooth analysis, skipping
+            //available = inputStream.available(channel);
+            if (!available && decodingPosition <= processingPosition + NEIGHBOUR_CHUNK_NUMBER) {
+                return;
+            }
+
+            // Calculating smooth meaning and factor
+            StatsCalculator statistics = new StatsCalculator();
+            for (int i = processingPosition - NEIGHBOUR_CHUNK_NUMBER; i <= processingPosition + NEIGHBOUR_CHUNK_NUMBER; i++) {
+                int[] buffer = (int[]) chunkMap.get(i);
+                if (buffer != null) {
+                    statistics.add(buffer);
+                }
+            }
+            int smoothMean = statistics.getMathMeaning();
+
+            int[] buffer = (int[]) chunkMap.get(processingPosition);
+            if (smoothMean != 0) {
+                // Adjusting current chunk
+                double factor = (double) SPEECH_NORMAL_MEANING / smoothMean;
+                //System.out.println("Position: " + position + ", factor: " + factor);
+                if (factor > maxFactor) {
+                    maxFactor = (int) factor;
+                }
+                if (factor < minFactor) {
+                    minFactor = (int) factor;
+                }
+                if (factor > MAX_FACTOR) {
+                    factor = MAX_FACTOR;
+                }
+
+                // Amplifying only. If the volume level is already above normal, doing nothing
+                if (factor > 1) {
+                    buffer = adjustFrameBuffer(buffer, factor);
+                }
+            }
+            outputStream.write(outputChannel, buffer);
+
+            // Removing old chunk, which is not needed anymore
+            chunkMap.remove(processingPosition - NEIGHBOUR_CHUNK_NUMBER);
+            processingPosition++;
+
+            progressPrinter.printProgress(totalFramesRead, false);
         }
-
-        // If there are not enough data for smooth analysis, skipping
-        //available = inputStream.available(channel);
-        if (!available && decodingPosition <= processingPosition + NEIGHBOUR_CHUNK_NUMBER) {
-            return 0;
-        }
-
-        // Calculating smooth meaning and factor
-        StatsCalculator statistics = new StatsCalculator();
-        for (int i = processingPosition - NEIGHBOUR_CHUNK_NUMBER; i <= processingPosition + NEIGHBOUR_CHUNK_NUMBER; i++) {
-            int[] buffer = (int[]) chunkMap.get(i);
-            if (buffer != null) {
-                statistics.add(buffer);
-            }
-        }
-        int smoothMean = statistics.getMathMeaning();
-
-        int[] buffer = (int[]) chunkMap.get(processingPosition);
-        if (smoothMean != 0) {
-            // Adjusting current chunk
-            double factor = (double) SPEECH_NORMAL_MEANING / smoothMean;
-            //System.out.println("Position: " + position + ", factor: " + factor);
-            if (factor > maxFactor) {
-                maxFactor = (int) factor;
-            }
-            if (factor < minFactor) {
-                minFactor = (int) factor;
-            }
-            if (factor > MAX_FACTOR) {
-                factor = MAX_FACTOR;
-            }
-
-            // Amplifying only. If the volume level is already above normal, doing nothing
-            if (factor > 1) {
-                buffer = adjustFrameBuffer(buffer, factor);
-            }
-        }
-        outputStream.write(outputChannel, buffer);
-
-        // Removing old chunk, which is not needed anymore
-        chunkMap.remove(processingPosition - NEIGHBOUR_CHUNK_NUMBER);
-        processingPosition++;
-        return buffer.length;
+        progressPrinter.printProgressFinished();
     }
 
     private int[] adjustFrameBuffer(int[] sourceBuffer, double factor) {

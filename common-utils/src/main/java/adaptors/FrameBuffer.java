@@ -5,6 +5,11 @@ public class FrameBuffer {
     private int positionOfFirst;
     private int positionOfNext;
 
+    public void reset() {
+        positionOfFirst = 0;
+        positionOfNext = 0;
+    }
+
     public int available() {
         return positionOfNext - positionOfFirst;
     }

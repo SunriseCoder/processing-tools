@@ -12,9 +12,10 @@ import adaptors.FrameBuffer;
 import audio.api.FrameInputStream;
 import utils.PrimitiveUtils;
 
-public class WaveInputStream implements FrameInputStream {
+public class WaveInputStream implements FrameInputStream, AutoCloseable {
     private static final int PARSE_DATA_CHUNK_SIZE = 4096;
 
+    private File inputFile;
     private AudioFormat format;
     private AudioInputStream inputStream;
     private long framesCount;
@@ -28,12 +29,12 @@ public class WaveInputStream implements FrameInputStream {
     // Service variables
     private byte[] parseDataBuffer = new byte[PARSE_DATA_CHUNK_SIZE];
 
-
-    private WaveInputStream(AudioInputStream audioInputStream) throws UnsupportedAudioFileException {
-        this(audioInputStream, -1);
+    private WaveInputStream(AudioInputStream audioInputStream, File inputFile) throws UnsupportedAudioFileException {
+        this(audioInputStream, -1, inputFile);
     }
 
-    private WaveInputStream(AudioInputStream audioInputStream, int channel) throws UnsupportedAudioFileException {
+    private WaveInputStream(AudioInputStream audioInputStream, int channel, File inputFile) throws UnsupportedAudioFileException {
+        this.inputFile = inputFile;
         this.format = audioInputStream.getFormat();
 
         if (!format.getEncoding().equals(AudioFormat.Encoding.PCM_SIGNED)) {
@@ -62,6 +63,16 @@ public class WaveInputStream implements FrameInputStream {
     }
 
     @Override
+    public void reset() throws IOException, UnsupportedAudioFileException {
+        if (channel == -1) {
+            throw new IllegalStateException("Default channel was not set");
+        }
+        // Recreating input stream because JVM implementation does not support inputStream.reset();
+        inputStream = AudioSystem.getAudioInputStream(inputFile);
+        frameBuffers[channel].reset();
+    }
+
+    @Override
     public boolean available() throws IOException {
         if (channel == -1) {
             throw new IllegalStateException("Default channel was not set");
@@ -81,6 +92,27 @@ public class WaveInputStream implements FrameInputStream {
     @Override
     public AudioFormat getFormat() {
         return format;
+    }
+
+    @Override
+    public int readFrame() throws IOException {
+        if (channel == -1) {
+            throw new IllegalStateException("Default channel was not set");
+        }
+        int value = readFrame(channel);
+        return value;
+    }
+
+    @Override
+    public int readFrame(int channel) throws IOException {
+        FrameBuffer frameBuffer = frameBuffers[channel];
+
+        if (frameBuffer.available() < 1 && inputStream.available() > 0) {
+            parseFrameChunk(channel);
+        }
+
+        int value = frameBuffer.read();
+        return value;
     }
 
     @Override
@@ -152,7 +184,7 @@ public class WaveInputStream implements FrameInputStream {
 
     public static WaveInputStream create(File inputFile, int channel) throws UnsupportedAudioFileException, IOException {
         AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(inputFile);
-        WaveInputStream waveInputStream = new WaveInputStream(audioInputStream, channel);
+        WaveInputStream waveInputStream = new WaveInputStream(audioInputStream, channel, inputFile);
         return waveInputStream;
     }
 }

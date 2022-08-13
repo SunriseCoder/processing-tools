@@ -4,13 +4,13 @@ import java.io.IOException;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import progress.ProgressPrinter;
+
 public interface FrameStreamProcessor {
-    void setChunkSize(int chunkSize);
+    void setPortionSize(int chunkSize);
+    void setProgressPrinter(ProgressPrinter progressPrinter);
 
     void prepareOperation() throws IOException, UnsupportedAudioFileException;
-    /**
-     * @return <b>true</b> if processed some data, otherwise <b>false</b>.
-     */
-    long processPortion() throws IOException, UnsupportedAudioFileException;
+    void process() throws IOException, UnsupportedAudioFileException;
     void close();
 }
