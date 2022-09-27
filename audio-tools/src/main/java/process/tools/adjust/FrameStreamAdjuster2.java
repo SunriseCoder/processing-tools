@@ -63,6 +63,7 @@ public class FrameStreamAdjuster2 implements FrameStreamProcessor {
         findAllGroups();
         extractLeaderGroups();
         assignGroupToLeaders();
+        harmonizeLeaders();
         adjustVolume();
     }
 
@@ -100,6 +101,14 @@ public class FrameStreamAdjuster2 implements FrameStreamProcessor {
                     : 1.0 * MIN_VALUE / group.peakValue;
             group.factor = Math.min(group.factor, MAX_FACTOR);
         }
+    }
+
+    private void harmonizeLeaders() {
+        LeaderHarmonizer harmonizer = new LeaderHarmonizer();
+        harmonizer.setProgressPrinter(progressPrinter);
+        harmonizer.setSampleRate(sampleRate);
+        progressPrinter.println("\n\tHarmonizing positive and negative leader groups:");
+        harmonizer.harmonize(positiveLeaderGroups, negativeLeaderGroups);
     }
 
     private void adjustVolume() throws IOException, UnsupportedAudioFileException {
