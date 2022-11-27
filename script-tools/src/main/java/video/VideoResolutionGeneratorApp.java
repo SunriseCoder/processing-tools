@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import process.ProcessRunnerToFile;
 import wrappers.IntWrapper;
@@ -32,9 +33,10 @@ public class VideoResolutionGeneratorApp {
         IntWrapper counter = new IntWrapper(1);
         convertCommands.entrySet().stream().forEach(command -> {
             long lastTime = System.currentTimeMillis();
-            System.out.print("Processing " + counter.postIncrement() + " of " + convertCommands.size() + ": " + command.getKey());
+            System.out.println("Processing " + counter.postIncrement() + " of " + convertCommands.size() + ": " + command.getKey() + "...");
+            System.out.println("Executing: " + commandToString(command.getValue()));
             processRunner.execute(command.getValue());
-            System.out.println(" - took " + (System.currentTimeMillis() - lastTime) + " ms");
+            System.out.println("\tGenerating took " + (System.currentTimeMillis() - lastTime) + " ms");
         });
 
         System.out.println("Generation done, took " + (System.currentTimeMillis() - startTime) + "ms");
@@ -46,5 +48,10 @@ public class VideoResolutionGeneratorApp {
                 + "\t\t <source-folder> is a folder with original files to be converted\n"
                 + "\t\t <target-folder> is a folder, where new generated files should be saved\n"
                 + "\t\t <target-resolutions-file> is a file, containing all required resolutions\n");
+    }
+
+    private static String commandToString(List<String> command) {
+        String result = command.stream().collect(Collectors.joining(" "));
+        return result;
     }
 }

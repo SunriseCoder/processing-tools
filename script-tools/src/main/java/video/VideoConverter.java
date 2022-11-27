@@ -58,12 +58,10 @@ public class VideoConverter {
         command.add("23");
         command.add("-vsync");
         command.add("vfr");
-        command.add("-r");
-        command.add(fps);
         command.add("-video_track_timescale");
         command.add("90000");
         command.add("-vf");
-        command.add("\"scale=" + resolution + "\"");
+        command.add("\"scale=" + resolution + ",fps=" + fps + "\"");
         // Audio settings
         command.add("-c:a");
         command.add("aac");
