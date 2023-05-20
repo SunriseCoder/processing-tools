@@ -22,7 +22,7 @@ public class VideoResolutionGenerator {
     private File targetResolutionsFile;
 
     private List<FileParameters> originalFileParameters;
-    private TargetParameters targetParameters;
+    private List<TargetParameters> targetParameterGroups;
     private Map<String, List<String>> convertCommands;
 
     public void setSourceFolder(String filename) {
@@ -73,46 +73,50 @@ public class VideoResolutionGenerator {
     }
 
     private void getTargetResolutions() throws IOException {
-        TypeReference<TargetParameters> typeReference = new TypeReference<TargetParameters>() {
-        };
-        targetParameters = JSONUtils.loadFromDisk(targetResolutionsFile, typeReference);
-        System.out.println("Loaded following target resolutions:" + targetParameters.resolutions);
+        TypeReference<List<TargetParameters>> typeReference = new TypeReference<List<TargetParameters>>() { };
+        targetParameterGroups = JSONUtils.loadFromDisk(targetResolutionsFile, typeReference);
+        System.out.println("Target resolutions has been loaded successfully.");
     }
 
     private void generateConvertCommands() {
         convertCommands = new LinkedHashMap<>();
         VideoConverter converter = new VideoConverter();
-        for (String prefix : targetParameters.prefixes) {
-            for (String resolution : targetParameters.resolutions) {
-                converter.setResolution(resolution);
+        for (TargetParameters targetParameters : targetParameterGroups) {
+            System.out.println("Generating group: " + targetParameters.name);
+            for (String prefix : targetParameters.prefixes) {
+                for (String resolution : targetParameters.resolutions) {
+                    converter.setResolution(resolution);
 
-                FileParameters sourceFileParameters = getCloserSourceFile(prefix, resolution);
-                converter.setSourceFile(sourceFileParameters.file);
+                    FileParameters sourceFileParameters = getCloserSourceFile(prefix, resolution);
+                    converter.setSourceFile(sourceFileParameters.file);
 
-                for (String frequency : targetParameters.audioFrequences) {
-                    converter.setFrequency(frequency);
+                    for (String frequency : targetParameters.audioFrequences) {
+                        converter.setFrequency(frequency);
 
-                    for (String channel : targetParameters.audioChannels) {
-                        converter.setAudioChannels(channel);
+                        for (String channel : targetParameters.audioChannels) {
+                            converter.setAudioChannels(channel);
 
-                        for (String fps : targetParameters.videoFPS) {
-                            converter.setFPS(fps);
+                            for (String fps : targetParameters.videoFPS) {
+                                converter.setFPS(fps);
 
-                            for (Map.Entry<String, String> silence : targetParameters.silence.entrySet()) {
-                                converter.setSilence(silence.getValue());
+                                for (Map.Entry<String, String> silence : targetParameters.silence.entrySet()) {
+                                    converter.setSilence(silence.getValue());
 
-                                String targetFileName = prefix + resolution + "-" + fps + "fps-" + frequency + "Hz-"
-                                        + channel + "Ch-" + silence.getKey() + ".mp4";
-                                File targetFile = new File(targetFolder, targetFileName);
-                                converter.setTargetFile(targetFile);
+                                    String targetFileName = prefix + resolution + "-" + fps + "fps-" + frequency + "Hz-"
+                                            + channel + "Ch-" + silence.getKey() + ".mp4";
+                                    if (!convertCommands.containsKey(targetFileName)) {
+                                        File targetFile = new File(targetFolder, targetFileName);
+                                        converter.setTargetFile(targetFile);
 
-                                if (targetFile.exists()) {
-                                    System.out.println("Skipping file " + targetFileName + ", because it's already exist.");
-                                    continue;
+                                        if (targetFile.exists()) {
+                                            System.out.println("Skipping file " + targetFileName + ", because it's already exist.");
+                                            continue;
+                                        }
+
+                                        List<String> command = converter.generateCommand();
+                                        convertCommands.put(targetFileName, command);
+                                    }
                                 }
-
-                                List<String> command = converter.generateCommand();
-                                convertCommands.put(targetFileName, command);
                             }
                         }
                     }
@@ -156,6 +160,7 @@ public class VideoResolutionGenerator {
     }
 
     private static class TargetParameters {
+        private String name;
         private List<String> prefixes;
         private List<String> resolutions;
         private List<String> audioFrequences;
