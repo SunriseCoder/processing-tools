@@ -1,0 +1,23 @@
+{
+	"start": {
+		"name": "start",
+		"operations": [
+			{ "name": "move", "args": [ "500", "500" ] },
+			{ "name": "click", "args": [ "left" ] }
+		]
+	},
+	"stop": {
+		"name": "stop",
+		"operations": [
+			{ "name": "move", "args": [ "900", "500" ] },
+			{ "name": "click", "args": [ "left" ] }
+		]
+	},
+	"cutter-up": {
+		"name": "cutter-up",
+		"operations": [
+			{ "name": "move", "args": [ "900", "300" ] },
+			{ "name": "click", "args": [ "left" ] }
+		]
+	}
+}

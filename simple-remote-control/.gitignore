@@ -1,0 +1,22 @@
+# Application database
+database/
+
+# Cookie files
+youtube.com_cookies.txt
+
+# Download folder
+download/
+preview/
+download
+
+# Error dumps
+error-page-dump.dat
+
+# Java keystore
+keystore
+
+# Staff folders
+single-video/
+test-data/
+dumps/
+tmp/
