@@ -15,6 +15,8 @@ public class IndexHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
+        System.out.println("Returning index page");
+
         OutputStream out = exchange.getResponseBody();
         StringBuilder sb = new StringBuilder();
 
@@ -22,7 +24,12 @@ public class IndexHandler implements HttpHandler {
         sb.append("<html><head>");
 
         // Styles
-        sb.append("<style>button { margin: 5px; font-size: 50px; }</style>");
+        sb.append("<style>"
+                + "button { margin: 5px; font-size: 50px;"
+                + " color: white; background-color: black;"
+                + " border-style: solid; border-color: white; }"
+                + "body { color: white; background-color: black; }"
+                + "</style>");
 
         // Body
         sb.append("</head><body>");
