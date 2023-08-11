@@ -66,7 +66,6 @@ public class IndexHandler implements HttpHandler {
                 + "    return new Promise(resolve => setTimeout(resolve, ms));"
                 + "}"
                 + "</script>");
-        // TODO Auto-generated method stub
 
         // HTML End
         sb.append("</body></html>");

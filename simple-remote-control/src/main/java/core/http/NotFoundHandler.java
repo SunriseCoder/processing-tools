@@ -12,5 +12,6 @@ public class NotFoundHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         //System.out.println("Page not found: " + exchange.getRequestURI());
         exchange.sendResponseHeaders(404, 0);
+        exchange.getResponseBody().close();
     }
 }

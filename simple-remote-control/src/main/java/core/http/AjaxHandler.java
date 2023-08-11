@@ -26,5 +26,8 @@ public class AjaxHandler implements HttpHandler {
         for (Operation operation : command.getOperations()) {
             Robot.processOperation(operation);
         }
+
+        exchange.sendResponseHeaders(200, 0);
+        exchange.getResponseBody().close();
     }
 }
