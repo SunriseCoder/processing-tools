@@ -1,0 +1,9 @@
+{
+    "HddPath": "T:\\Test",
+    "HddTmpPath": "T:\\tmp",
+    "MinFreeSpace": 1000000000,
+    "DbSaveIntervalInSeconds": 0,
+    "MinFileSize": 1000000,
+    "MaxFileSize": 100000000000,
+    "MaxFolderDepth": 10
+}

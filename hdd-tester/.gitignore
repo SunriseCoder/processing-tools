@@ -1,0 +1,5 @@
+# Database of created files with sizes and checksums
+database.json
+
+# Log files
+*.log
