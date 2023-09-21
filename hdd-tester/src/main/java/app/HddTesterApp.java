@@ -2,6 +2,7 @@ package app;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.Security;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -14,6 +15,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import app.config.Configuration;
 import app.config.Configuration.Keys;
 import app.core.database.Database;
+import app.core.digest.XorProvider;
 import app.core.dto.fs.FileSystemFile;
 import app.core.file.FileChecker;
 import app.core.file.FileCreator;
@@ -28,6 +30,8 @@ public class HddTesterApp {
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
+
+        Security.addProvider(new XorProvider());
 
         // Checking Root Folder
         LOGGER.info("Checking Test Folder...");
@@ -113,6 +117,7 @@ public class HddTesterApp {
             FileSystemFile fileMetadata = entry.getValue();
             if (fileMetadata.isChecked()) {
                 LOGGER.info("File \"" + file.getAbsolutePath() + "\" has been checked already, skipping...");
+                checker.addSkippedSize(fileMetadata.getSize());
                 continue;
             }
             checker.checkFile(file, fileMetadata);

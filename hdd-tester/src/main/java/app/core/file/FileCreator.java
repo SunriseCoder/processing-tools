@@ -138,7 +138,8 @@ public class FileCreator {
 
     private Map<String, MessageDigest> createDigests() throws NoSuchAlgorithmException {
         Map<String, MessageDigest> digests = new HashMap<>();
-        addMessageDigest("MD5", digests);
+        addMessageDigest("XOR", digests);
+        //addMessageDigest("MD5", digests);
         //addMessageDigest("SHA-256", digests);
         //addMessageDigest("SHA-512", digests);
         return digests;

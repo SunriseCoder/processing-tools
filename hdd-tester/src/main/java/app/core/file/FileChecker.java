@@ -154,6 +154,10 @@ public class FileChecker {
         System.out.println();
     }
 
+    public void addSkippedSize(long size) {
+        allFilesCheckedSize += size;
+    }
+
     public long getNumberOfErrors() {
         return numberOfErrors;
     }
