@@ -1,4 +1,4 @@
-package app.core.digest;
+package digest;
 
 import java.security.MessageDigest;
 import java.util.Arrays;

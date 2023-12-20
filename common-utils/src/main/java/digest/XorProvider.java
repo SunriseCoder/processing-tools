@@ -1,4 +1,4 @@
-package app.core.digest;
+package digest;
 
 import java.security.Provider;
 
@@ -7,6 +7,6 @@ public class XorProvider extends Provider {
 
     public XorProvider() {
         super("XOR", 1.0, "XOR Security Provider v1.0");
-        put("MessageDigest.XOR", "app.core.digest.XorMessageDigest");
+        put("MessageDigest.XOR", XorMessageDigest.class.getName());
     }
 }

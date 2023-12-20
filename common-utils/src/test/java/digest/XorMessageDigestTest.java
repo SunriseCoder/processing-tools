@@ -1,4 +1,4 @@
-package app.core.digest;
+package digest;
 
 import static org.junit.Assert.assertArrayEquals;
 
