@@ -72,7 +72,7 @@
                                     <mainClass>app.SnapshotApplierApp</mainClass>
                                 </manifest>
                             </archive>
-                            <finalName>${project.artifactId}-snapshot-applier</finalName>
+                            <finalName>${project.artifactId}-${project.version}</finalName>
                         </configuration>
                         <phase>package</phase>
                         <goals>

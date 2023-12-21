@@ -42,17 +42,19 @@ public class SnapshotMakerApp {
         Security.addProvider(new XorProvider());
 
         try {
-            LOGGER.info("Loading Configuration...");
-            loadConfiguration();
+            //TODO Uncomment this to start real using of Configuration
+            //LOGGER.info("Loading Configuration...");
+            //loadConfiguration();
 
-            LOGGER.info("Loading File Database...");
-            loadFileDatabase();
+            //TODO Uncomment this to start real using of File Database
+            //LOGGER.info("Loading File Database...");
+            //loadFileDatabase();
 
             LOGGER.info("Checking input parameters...");
             String folderName = args.length > 0 ? args[0] : ".";
             Path folder = PathUtils.checkAndGetFolder(folderName).normalize();
 
-            LOGGER.info("Starting to make Snapshot...");
+            LOGGER.info("Starting to make Snapshot for folder: " + folder.toString());
             makeSnapshot(folder);
 
             LOGGER.info("Application finished successfully");
