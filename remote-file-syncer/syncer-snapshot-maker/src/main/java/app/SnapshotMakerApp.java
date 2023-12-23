@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -52,10 +53,10 @@ public class SnapshotMakerApp {
 
             LOGGER.info("Checking input parameters...");
             String folderName = args.length > 0 ? args[0] : ".";
-            Path folder = PathUtils.checkAndGetFolder(folderName).normalize();
+            Path snapshotFolder = PathUtils.checkAndGetFolder(folderName).normalize();
 
-            LOGGER.info("Starting to make Snapshot for folder: " + folder.toString());
-            makeSnapshot(folder);
+            LOGGER.info("Starting to make Snapshot for folder: " + snapshotFolder.toString());
+            makeSnapshot(snapshotFolder);
 
             LOGGER.info("Application finished successfully");
         } catch (Exception e) {
@@ -84,61 +85,81 @@ public class SnapshotMakerApp {
         }
     }
 
-    private static void makeSnapshot(Path folder) throws IOException, NoSuchAlgorithmException {
-        FolderSnapshot snapshot = loadOrCreateSnapshot(folder);
+    private static void makeSnapshot(Path snapshotFolder) throws IOException, NoSuchAlgorithmException {
+        FolderSnapshot snapshot = loadOrCreateSnapshot(snapshotFolder);
+
+        // Marking existing files in the Snapshot as they potentially does not exist on disk anymore
+        // Later all existing files will be whitelisted during Scan phase
+        for (RelativeFileMetadata fileMetadata : snapshot.getFilesMap().values()) {
+            fileMetadata.setExistsOnDiskNow(false);
+        }
 
         // Scan Files
         LOGGER.info("Scanning files for the snapshot...");
-        PathIterator iterator = new PathIterator(folder, true);
+        PathIterator iterator = new PathIterator(snapshotFolder, true);
         while (iterator.hasNext()) {
-            Path file = iterator.next();
-            LOGGER.debug("Found file: " + file.toString());
+            Path currentFile = iterator.next();
+            LOGGER.debug("Found file: " + currentFile.toString());
 
             // Do not adding the Snapshot File and Log File to the Snapshot
-            if (file.toString().endsWith("-snapshot.json") || file.toString().endsWith("snapshot-maker.log")) {
-                LOGGER.debug("Skipping file \"" + file.toString() + "\" because it is a file of this application");
+            if (currentFile.toString().endsWith("-snapshot.json") || currentFile.toString().endsWith("snapshot-maker.log")) {
+                LOGGER.debug("Skipping file \"" + currentFile.toString() + "\" because it is a file of this application");
                 continue;
             }
 
             // If File not in the Snapshot yet or the File is outdated, adding it into the Snapshot
-            RelativeFileMetadata newFileMetadata = new RelativeFileMetadata(file, folder);
+            RelativeFileMetadata newFileMetadata = new RelativeFileMetadata(currentFile, snapshotFolder);
+            newFileMetadata.setExistsOnDiskNow(true);
             RelativeFileMetadata existingFileMetadata = snapshot.getFileMetadata(newFileMetadata.getRelativePath());
             if (existingFileMetadata == null) {
                 LOGGER.debug("Adding as a new file to the Snapshot");
+                // Adding a new file to the Snapshot
                 snapshot.addFileMetadata(newFileMetadata);
             } else if(!existingFileMetadata.equalsByMetadata(newFileMetadata)) {
                 LOGGER.debug("File in the Snapshot is outdated, updating with a new FileMetadata");
+                // Overwriting old file metadata with the new (actual) one
                 snapshot.addFileMetadata(newFileMetadata);
             } else {
                 LOGGER.debug("File is already in the Snapshot and looks up-to-date");
+                // Marking the existing file that it still exists on the disk
+                existingFileMetadata.setExistsOnDiskNow(true);
             }
 
             LOGGER.debug("Saving snapshot if needed...");
             snapshot.saveIfNeeded();
         }
         LOGGER.info("File scanning is done");
-        LOGGER.debug("Saving snapshot...");
+
         snapshot.save();
 
         // Filtering Files to Compute Checksums
         LOGGER.info("Computing Checksums for the files for the snapshot...");
         List<RelativeFileMetadata> filesToComputeChecksums = new ArrayList<>();
         long totalFileSizeToComputeChecksums = 0;
-        for (RelativeFileMetadata fileMetadata : snapshot.getFilesMap().values()) {
-            if (!fileMetadata.hasChecksums(CHECKSUM_ALGORITHMS)) {
+        Iterator<RelativeFileMetadata> fileMetadataIterator = snapshot.getFilesMap().values().iterator();
+        while (fileMetadataIterator.hasNext()) {
+            RelativeFileMetadata fileMetadata = fileMetadataIterator.next();
+            // If a file was not whitelisted during folder scan, removing it from the Snapshot
+            if (!fileMetadata.isExistsOnDiskNow()) {
+                iterator.remove();
+            // If a file is on the disk, but checksums were not computed yet, adding it to the list to compute checksums
+            } else if (!fileMetadata.hasChecksums(CHECKSUM_ALGORITHMS)) {
                 filesToComputeChecksums.add(fileMetadata);
                 totalFileSizeToComputeChecksums += fileMetadata.getSize();
             }
         }
+
+        // Computing Checksums
         ChecksumComputer checksumComputer = new ChecksumComputer(CHECKSUM_ALGORITHMS);
         checksumComputer.setAllFilesTotalSize(totalFileSizeToComputeChecksums);
         checksumComputer.reset();
         for (RelativeFileMetadata fileMetadata : filesToComputeChecksums) {
-            checksumComputer.computeChecksums(fileMetadata);
+            checksumComputer.computeChecksums(snapshotFolder, fileMetadata);
             snapshot.saveIfNeeded();
         }
-        LOGGER.debug("Saving snapshot...");
+
         snapshot.save();
+
         LOGGER.info("Checksum computing is done, errors: " + checksumComputer.getNumberOfErrors());
     }
 

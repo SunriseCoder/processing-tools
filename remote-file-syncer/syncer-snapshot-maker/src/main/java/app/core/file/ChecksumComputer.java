@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -57,12 +58,12 @@ public class ChecksumComputer {
         this.allFilesCheckedSize = allFilesCheckedSize;
     }
 
-    public void computeChecksums(RelativeFileMetadata fileMetadata) throws IOException {
+    public void computeChecksums(Path startFolder, RelativeFileMetadata fileMetadata) throws IOException {
         LOGGER.info("Computing Checksums for file: " + fileMetadata.getRelativePath()
             + " (" + FormattingUtils.humanReadableSize(fileMetadata.getSize()) + "b)...");
 
         // Checking actual file size
-        File file = new File(fileMetadata.getRelativePath());
+        File file = new File(startFolder.toFile(), fileMetadata.getRelativePath());
         long sizeOfFileInSnapshot = fileMetadata.getSize();
         long sizeOfRealFile = file.length();
         if (sizeOfRealFile != sizeOfFileInSnapshot) {

@@ -34,6 +34,9 @@ public class RelativeFileMetadata {
     @JsonDeserialize(using = FileTimeJsonDeserializer.class)
     private FileTime lastModifiedTime;
 
+    @JsonIgnore
+    private boolean existsOnDiskNow;
+
     public RelativeFileMetadata() {
         checksums = new HashMap<>();
     }
@@ -68,6 +71,14 @@ public class RelativeFileMetadata {
     @JsonIgnore
     public FileTime getLastModified() {
         return lastModifiedTime;
+    }
+
+    public boolean isExistsOnDiskNow() {
+        return existsOnDiskNow;
+    }
+
+    public void setExistsOnDiskNow(boolean existsOnDiskNow) {
+        this.existsOnDiskNow = existsOnDiskNow;
     }
 
     // TODO Revise

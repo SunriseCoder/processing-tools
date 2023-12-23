@@ -64,6 +64,7 @@ public class FolderSnapshot {
 
     public void save() throws IOException {
         try {
+            LOGGER.debug("Saving Snapshot " + getName() + " to " + saveFile.toString());
             JSONUtils.saveToDisk(this, saveFile);
             LOGGER.debug("Snapshot " + getName() + " has been saved successfully to " + saveFile.toString());
         } catch (IOException e) {
