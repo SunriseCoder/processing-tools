@@ -24,10 +24,7 @@ public class RelativeFileMetadata {
 
     private String name;
     private String relativePath;
-
     private long size;
-    // TODO Implement: "xor", "md5", "sha1", "sha256", "sha512" (Revise, maybe not all of them)
-    // TODO Move list of Checksum Algorithms to Configuration file and call it via Configuration
     private Map<String, String> checksums;
 
     @JsonSerialize(using = FileTimeJsonSerializer.class)

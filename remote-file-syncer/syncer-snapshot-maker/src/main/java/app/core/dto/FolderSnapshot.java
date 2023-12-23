@@ -15,8 +15,8 @@ import utils.JSONUtils;
 public class FolderSnapshot {
     private static final Logger LOGGER = LogManager.getLogger(FolderSnapshot.class);
 
-    // TODO Move to Configuration, retrieve by passing Configuration to the class constructor
-    private static final int MINIMAL_SAVE_INTERVAL = 5 * 60 * 1000;
+    @JsonIgnore
+    private Configuration configuration;
 
     private String name;
     private Map<String, RelativeFileMetadata> files;
@@ -28,6 +28,10 @@ public class FolderSnapshot {
 
     public FolderSnapshot() {
         files = new HashMap<>();
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
     }
 
     public String getName() {
@@ -56,9 +60,8 @@ public class FolderSnapshot {
 
     public void saveIfNeeded() throws IOException {
         long now = System.currentTimeMillis();
-        if (now - lastSaveTime > MINIMAL_SAVE_INTERVAL) {
+        if (now - lastSaveTime > configuration.getSnapshotSaveMinimalIntervalInMS()) {
             save();
-            lastSaveTime = System.currentTimeMillis();
         }
     }
 
@@ -66,6 +69,7 @@ public class FolderSnapshot {
         try {
             LOGGER.debug("Saving Snapshot " + getName() + " to " + saveFile.toString());
             JSONUtils.saveToDisk(this, saveFile);
+            lastSaveTime = System.currentTimeMillis();
             LOGGER.debug("Snapshot " + getName() + " has been saved successfully to " + saveFile.toString());
         } catch (IOException e) {
             LOGGER.error("Error due to save snapshot " + getName() + " to " + saveFile.toString(), e);

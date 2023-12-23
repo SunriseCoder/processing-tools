@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -29,9 +30,6 @@ public class SnapshotMakerApp {
     private static final String CONFIGURATION_FILENAME = "configuration.json";
     private static final String FILE_DATABASE_FILENAME = "file-database.json";
 
-    // TODO Replace with parameters from Configuration
-    private static final String[] CHECKSUM_ALGORITHMS = { "XOR", "MD5", "SHA-1", "SHA-256", "SHA-512" };
-
     private static final Logger LOGGER = LogManager.getLogger(SnapshotMakerApp.class);
 
     private static Configuration configuration;
@@ -43,9 +41,8 @@ public class SnapshotMakerApp {
         Security.addProvider(new XorProvider());
 
         try {
-            //TODO Uncomment this to start real using of Configuration
-            //LOGGER.info("Loading Configuration...");
-            //loadConfiguration();
+            LOGGER.info("Loading Configuration...");
+            loadConfiguration();
 
             //TODO Uncomment this to start real using of File Database
             //LOGGER.info("Loading File Database...");
@@ -66,7 +63,8 @@ public class SnapshotMakerApp {
     }
 
     private static void loadConfiguration() throws IOException {
-        File configFile = new File(CONFIGURATION_FILENAME);
+        String applicationHomePath = System.getProperty("app.home");
+        File configFile = new File(applicationHomePath, CONFIGURATION_FILENAME);
         if (configFile.exists()) {
             TypeReference<Configuration> typeReference = new TypeReference<Configuration>() {};
             configuration = JSONUtils.loadFromDisk(configFile, typeReference);
@@ -76,7 +74,8 @@ public class SnapshotMakerApp {
     }
 
     private static void loadFileDatabase() throws IOException {
-        File fileDatabaseFile = new File(FILE_DATABASE_FILENAME);
+        String applicationHomePath = System.getProperty("app.home");
+        File fileDatabaseFile = new File(applicationHomePath, FILE_DATABASE_FILENAME);
         if (fileDatabaseFile.exists()) {
             TypeReference<FileDatabase> typeReference = new TypeReference<FileDatabase>() {};
             fileDatabase = JSONUtils.loadFromDisk(fileDatabaseFile, typeReference);
@@ -133,7 +132,9 @@ public class SnapshotMakerApp {
         snapshot.save();
 
         // Filtering Files to Compute Checksums
-        LOGGER.info("Computing Checksums for the files for the snapshot...");
+        LOGGER.info("Computing Checksums "
+                + Arrays.toString(configuration.getChecksumAlgorithms())
+                + " for the files for the snapshot...");
         List<RelativeFileMetadata> filesToComputeChecksums = new ArrayList<>();
         long totalFileSizeToComputeChecksums = 0;
         Iterator<RelativeFileMetadata> fileMetadataIterator = snapshot.getFilesMap().values().iterator();
@@ -143,14 +144,14 @@ public class SnapshotMakerApp {
             if (!fileMetadata.isExistsOnDiskNow()) {
                 iterator.remove();
             // If a file is on the disk, but checksums were not computed yet, adding it to the list to compute checksums
-            } else if (!fileMetadata.hasChecksums(CHECKSUM_ALGORITHMS)) {
+            } else if (!fileMetadata.hasChecksums(configuration.getChecksumAlgorithms())) {
                 filesToComputeChecksums.add(fileMetadata);
                 totalFileSizeToComputeChecksums += fileMetadata.getSize();
             }
         }
 
         // Computing Checksums
-        ChecksumComputer checksumComputer = new ChecksumComputer(CHECKSUM_ALGORITHMS);
+        ChecksumComputer checksumComputer = new ChecksumComputer(configuration.getChecksumAlgorithms());
         checksumComputer.setAllFilesTotalSize(totalFileSizeToComputeChecksums);
         checksumComputer.reset();
         for (RelativeFileMetadata fileMetadata : filesToComputeChecksums) {
@@ -165,7 +166,7 @@ public class SnapshotMakerApp {
 
     private static FolderSnapshot loadOrCreateSnapshot(Path folder) throws IOException {
         String snapshotName = folder.getFileName().toString();
-        String snapshotFilename = folder.toString() + File.separator + snapshotName + "-snapshot.json";
+        String snapshotFilename = snapshotName + "-snapshot.json";
         File snapshotFile = new File(snapshotFilename);
         FolderSnapshot snapshot;
         if (snapshotFile.exists()) {
@@ -176,6 +177,7 @@ public class SnapshotMakerApp {
         } else {
             LOGGER.info("Creating new snapshot: " + snapshotName);
             snapshot = new FolderSnapshot();
+            snapshot.setConfiguration(configuration);
             snapshot.setName(snapshotName);
         }
         snapshot.setSaveFile(snapshotFile);
