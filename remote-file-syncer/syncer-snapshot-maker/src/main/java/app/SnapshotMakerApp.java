@@ -101,7 +101,10 @@ public class SnapshotMakerApp {
             LOGGER.debug("Found file: " + currentFile.toString());
 
             // Do not adding the Snapshot File and Log File to the Snapshot
-            if (currentFile.toString().endsWith("-snapshot.json") || currentFile.toString().endsWith("snapshot-maker.log")) {
+            if (currentFile.toString().endsWith("-snapshot.json")
+                    || currentFile.toString().endsWith("snapshot-maker.log")
+                    || currentFile.toString().matches(".*syncer\\-snapshot\\-maker\\-v[0-9]{3}\\.bat$")
+                    ) {
                 LOGGER.debug("Skipping file \"" + currentFile.toString() + "\" because it is a file of this application");
                 continue;
             }
