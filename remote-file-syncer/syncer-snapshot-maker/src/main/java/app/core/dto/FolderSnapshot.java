@@ -2,8 +2,8 @@ package app.core.dto;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +27,7 @@ public class FolderSnapshot {
     private long lastSaveTime;
 
     public FolderSnapshot() {
-        files = new HashMap<>();
+        files = new TreeMap<>();
     }
 
     public void setConfiguration(Configuration configuration) {
@@ -42,6 +42,7 @@ public class FolderSnapshot {
         this.name = name;
     }
 
+    @JsonIgnore
     public Map<String, RelativeFileMetadata> getFilesMap() {
         return files;
     }

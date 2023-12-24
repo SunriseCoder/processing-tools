@@ -173,6 +173,7 @@ public class SnapshotMakerApp {
             LOGGER.info("Loading existing snapshot \"" + snapshotName + "\" from " + snapshotFilename);
             TypeReference<FolderSnapshot> typeReference = new TypeReference<FolderSnapshot>() {};
             snapshot = JSONUtils.loadFromDisk(snapshotFile, typeReference);
+            snapshot.setConfiguration(configuration);
             LOGGER.info("Snapshot has been loaded successfully");
         } else {
             LOGGER.info("Creating new snapshot: " + snapshotName);
