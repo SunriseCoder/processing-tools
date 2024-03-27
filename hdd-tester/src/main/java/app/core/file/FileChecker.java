@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import app.core.dto.fs.FileSystemFile;
-import utils.FormattingUtils;
+import app.utils.FormattingUtils;
 
 public class FileChecker {
     private static final Logger LOGGER = LogManager.getLogger(FileChecker.class);

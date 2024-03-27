@@ -7,10 +7,10 @@ import java.util.List;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import app.progress.SimpleProgressPrinter;
+import app.utils.MathUtils;
 import audio.api.FrameOutputStream;
 import audio.wav.WaveInputStream;
-import progress.ProgressPrinter;
-import utils.MathUtils;
 
 public class VolumeAdjuster {
     private static final int MIN_VALUE = -32768;
@@ -20,10 +20,10 @@ public class VolumeAdjuster {
     private int inputChannel;
     private FrameOutputStream outputStream;
     private int outputChannel;
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
 
     public VolumeAdjuster(File inputFile, int inputChannel,
-            FrameOutputStream outputStream, int outputChannel, ProgressPrinter progressPrinter) {
+            FrameOutputStream outputStream, int outputChannel, SimpleProgressPrinter progressPrinter) {
         this.inputFile = inputFile;
         this.inputChannel = inputChannel;
         this.outputStream = outputStream;

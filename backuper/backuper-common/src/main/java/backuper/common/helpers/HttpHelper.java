@@ -18,7 +18,7 @@ import org.apache.hc.core5.http.nio.AsyncServerRequestHandler.ResponseTrigger;
 import org.apache.hc.core5.http.nio.support.AsyncResponseBuilder;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
-import utils.FormattingUtils;
+import app.utils.FormattingUtils;
 
 public class HttpHelper {
 

@@ -1,0 +1,96 @@
+<html>
+	<head>
+		<style>
+			table, th, td {
+				border: 1px solid;
+				border-collapse: collapse;
+				margin-top: 10px;
+				padding: 5px;
+			}
+
+			#searchResultsTable {
+				//width: 100%;
+			}
+		</style>
+		<script>
+			var fileDatabase;
+			function load() {
+				fetch('./file-database.json')
+					.then(response => {
+						document.getElementById("labelRecordsNumber").innerHTML = 'Fetching...';
+						response.json()
+							.then(json => {
+								fileDatabase = json;
+								document.getElementById("labelRecordsNumber").innerHTML =
+										'Records: ' + Object.keys(fileDatabase.files).length
+										+ ', Updated: ' + fileDatabase.lastUpdated;
+								document.getElementById("searchButton").disabled = false;
+							});
+					});
+			}
+			function checkStartSearch() {
+				if(event.keyCode == 13) {
+					search();
+				}
+			}
+			function search() {
+				var fileNameFilter = document.getElementById("inputFileName").value;
+				var fileSizeFilter = document.getElementById("inputFileSize").value;
+				var recordsLimit = document.getElementById("inputRecordsLimit").value;
+
+				const filteredItems = [];
+				for (const [key, value] of Object.entries(fileDatabase.files)) {
+					//var matches = fileNameFilter.length == 0 && fileSizeFilter.length == 0;
+					var matches = true;
+					if (fileNameFilter.length > 0) {
+						matches &= value.absolutePath.includes(fileNameFilter);
+					}
+					if (fileSizeFilter.length > 0) {
+						matches &= value.size == fileSizeFilter;
+					}
+
+					if (matches) {
+						filteredItems.push(value);
+					}
+
+					if (filteredItems.length >= recordsLimit) {
+						break;
+					}
+				}
+
+				var table = document.getElementById("searchResultsTable");
+				table.tBodies[0].innerHTML = "";
+
+				var counter = 1;
+				for (const item of filteredItems) {
+					table.tBodies[0].innerHTML +=
+					  '<tr>'
+						+ '<td>' + counter++ + '</td>'
+						+ '<td>' + item.name + '</td>'
+						+ '<td>' + item.size + '</td>'
+						+ '<td>' + item.lastModifiedTime + '</td>'
+						+ '<td>' + item.absolutePath.substring(0, item.absolutePath.length - item.name.length) + '</td>'
+					+ '</tr>';
+				}
+			}
+		</script>
+	</head>
+	<body onload="load();">
+		<label id="labelRecordsNumber">Loading...</label><br />
+		file name: <input id="inputFileName" onkeydown="checkStartSearch();" />
+		file size: <input id="inputFileSize" onkeydown="checkStartSearch();" />
+		records limit:  <input id="inputRecordsLimit" value="20" onkeydown="checkStartSearch();" />
+		<button id="searchButton" disabled="true" onclick="search();">Search</button>
+
+		<table id="searchResultsTable">
+			<thead>
+				<th>Row</th>
+				<th>File name</th>
+				<th>File size</th>
+				<th>Last modified</th>
+				<th>Folder</th>
+			</thead>
+			<tbody></tbody>
+		</table>
+	</body>
+</html>

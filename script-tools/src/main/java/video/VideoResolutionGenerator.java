@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import utils.JSONUtils;
+import app.utils.JSONUtils;
 
 public class VideoResolutionGenerator {
     // CA_Intro_1080x1920-60fps.mp4

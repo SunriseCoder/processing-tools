@@ -3,13 +3,13 @@ package process.processing.render;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import app.utils.FileUtils;
 import dto.TaskParameters;
 import multithreading.AbstractTask;
 import processing.images.binarization.ImageBinarization;
 import processing.images.filters.BinarizationFilter;
 import processing.images.filters.ImageFilter;
 import processing.images.resize.ImageResize;
-import utils.FileUtils;
 
 public class RenderTask extends AbstractTask {
     public static final String SMOOTH_FILTER_CLASS = "smoothFilterClass";

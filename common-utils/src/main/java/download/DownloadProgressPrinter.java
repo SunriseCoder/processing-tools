@@ -1,7 +1,7 @@
 package download;
 
-import utils.FormattingUtils;
-import utils.MathUtils;
+import app.utils.FormattingUtils;
+import app.utils.MathUtils;
 
 public class DownloadProgressPrinter implements SimpleProgressListener {
     private long updateProgressInterval;

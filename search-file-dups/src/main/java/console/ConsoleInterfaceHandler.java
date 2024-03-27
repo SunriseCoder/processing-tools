@@ -27,13 +27,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 
+import app.progress.SimpleProgressPrinter;
+import app.utils.FileUtils;
+import app.utils.FormattingUtils;
+import app.utils.JSONUtils;
 import core.dto.Database;
 import core.dto.FileMetadata;
 import core.file.FolderScanner;
-import progress.ProgressPrinter;
-import utils.FileUtils;
-import utils.FormattingUtils;
-import utils.JSONUtils;
 
 public class ConsoleInterfaceHandler {
     private static final String DATABASE_FOLDER = "database";
@@ -208,7 +208,7 @@ public class ConsoleInterfaceHandler {
         List<Exception> exceptions = new ArrayList<>();
         long totalProcessedFileSize = 0;
         long totalFileSize = foundFiles.values().stream().mapToLong(f -> f.getSize()).sum();
-        ProgressPrinter progressPrinter = new ProgressPrinter();
+        SimpleProgressPrinter progressPrinter = new SimpleProgressPrinter();
         MessageDigest messageDigest = MessageDigest.getInstance("SHA-512");
         int fileCounter = 1, filesTotal = foundFiles.size();
         iterator = foundFiles.values().iterator();

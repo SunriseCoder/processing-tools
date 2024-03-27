@@ -7,6 +7,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import app.context.ApplicationContext;
 import app.context.ApplicationParameters;
+import app.utils.FileUtils;
+import app.utils.GeometryUtils;
+import app.utils.JSONUtils;
 import dto.Edge;
 import dto.EdgeEndpoint;
 import dto.Graph;
@@ -25,9 +28,6 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
-import utils.FileUtils;
-import utils.GeometryUtils;
-import utils.JSONUtils;
 
 public class GraphForm {
     private static final int VERTEX_WIDTH = 100;

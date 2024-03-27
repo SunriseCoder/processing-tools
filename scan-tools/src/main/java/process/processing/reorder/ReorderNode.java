@@ -3,6 +3,8 @@ package process.processing.reorder;
 import java.io.File;
 import java.io.IOException;
 
+import app.utils.FileUtils;
+import app.utils.NumberUtils;
 import filters.FilenameFilterImages;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -16,8 +18,6 @@ import process.processing.AbstractNode;
 import processing.images.reordering.AbstractReorderer;
 import processing.images.reordering.Reordering4Pages1PerScanFromMiddle;
 import processing.images.reordering.Reordering4Pages2PerScanFromBeginning;
-import utils.FileUtils;
-import utils.NumberUtils;
 
 public class ReorderNode extends AbstractNode {
     private ApplicationContext applicationContext;

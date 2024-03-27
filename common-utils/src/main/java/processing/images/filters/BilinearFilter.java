@@ -1,8 +1,8 @@
 package processing.images.filters;
 
-import structures.RGB;
-import utils.ColorUtils;
-import utils.MathUtils;
+import app.structures.RGB;
+import app.utils.ColorUtils;
+import app.utils.MathUtils;
 
 public class BilinearFilter extends AbstractImageFilter {
 

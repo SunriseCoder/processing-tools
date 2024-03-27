@@ -11,6 +11,8 @@ import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import app.progress.SimpleProgressPrinter;
+import app.utils.FileUtils;
 import audio.api.FrameInputStream;
 import audio.api.FrameOutputStream;
 import audio.api.FrameStreamProcessor;
@@ -19,8 +21,6 @@ import audio.wav.WaveOutputStream;
 import process.dto.ChannelOperation;
 import process.tools.adjust.FrameStreamAdjuster2;
 import process.utils.AudioFormatHelper;
-import progress.ProgressPrinter;
-import utils.FileUtils;
 
 public class FileScanner {
     private File inputFile;
@@ -87,7 +87,7 @@ public class FileScanner {
         FrameInputStream inputStream = WaveInputStream.create(inputFile);
         long framesCount = inputStream.getFramesCount();
 
-        ProgressPrinter progressPrinter = new ProgressPrinter();
+        SimpleProgressPrinter progressPrinter = new SimpleProgressPrinter();
         progressPrinter.setTotal(framesCount);
 
         long processedFramesTotal = 0;
@@ -140,7 +140,7 @@ public class FileScanner {
                 processor = new FrameStreamCopier(inputStream, outputStream, outputChannel);
             }
             processor.setPortionSize(chunkSize);
-            ProgressPrinter progressPrinter = new ProgressPrinter();
+            SimpleProgressPrinter progressPrinter = new SimpleProgressPrinter();
             processor.setProgressPrinter(progressPrinter);
             processor.prepareOperation();
             processors.add(processor);

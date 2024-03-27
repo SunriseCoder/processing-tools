@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import app.utils.FileUtils;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -17,7 +18,6 @@ import process.context.ApplicationParameters;
 import process.filelist.FileListNode;
 import process.markup.ImageViewer;
 import process.processing.ProcessingNode;
-import utils.FileUtils;
 
 public class ScanProcessorApp extends Application {
     private static final String APPLICATION_CONTEXT_CONFIG_FILENAME = "scan-processor-config.json";

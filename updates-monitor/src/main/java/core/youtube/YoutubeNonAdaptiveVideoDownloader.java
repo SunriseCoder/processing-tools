@@ -3,12 +3,12 @@ package core.youtube;
 import java.io.File;
 import java.io.PrintWriter;
 
+import app.utils.FileUtils;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;
 import util.DownloadUtils;
 import util.YoutubeDLUtils;
-import utils.FileUtils;
 
 public class YoutubeNonAdaptiveVideoDownloader extends AbstractYoutubeFileDownloader {
 

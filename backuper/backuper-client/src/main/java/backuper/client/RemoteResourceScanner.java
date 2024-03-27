@@ -14,12 +14,12 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.utils.JSONUtils;
 import backuper.client.config.RemoteResource;
 import backuper.common.dto.FileMetadata;
 import backuper.common.dto.FileMetadataRemote;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
-import utils.JSONUtils;
 
 public class RemoteResourceScanner {
     private static final Pattern RESOURCE_PATTERN = Pattern.compile(

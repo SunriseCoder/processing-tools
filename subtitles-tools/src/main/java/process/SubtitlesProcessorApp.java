@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import app.utils.FileUtils;
+import app.utils.StringUtils;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -25,8 +27,6 @@ import process.dto.SubtitleTimeDTO;
 import process.player.AudioPlayer;
 import process.player.AudioPlayerSelection;
 import process.subtitles.SubtitlesForm;
-import utils.FileUtils;
-import utils.StringUtils;
 
 public class SubtitlesProcessorApp extends Application {
     private static final String APPLICATION_CONTEXT_CONFIG_FILENAME = "subtitles-processor-config.json";

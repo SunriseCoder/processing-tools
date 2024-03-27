@@ -15,9 +15,9 @@ import org.apache.hc.core5.http.nio.entity.BasicAsyncEntityConsumer;
 import org.apache.hc.core5.http.nio.support.BasicRequestConsumer;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
+import app.utils.FormattingUtils;
 import backuper.common.helpers.HttpHelper;
 import backuper.server.FileServer;
-import utils.FormattingUtils;
 
 public class BenchmarkRequestHandler implements AsyncServerRequestHandler<Message<HttpRequest, byte[]>> {
     private FileServer fileServer;

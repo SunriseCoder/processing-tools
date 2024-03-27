@@ -3,6 +3,7 @@ package process;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Component;
 
+import app.utils.FileUtils;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -13,7 +14,6 @@ import javafx.stage.Stage;
 import process.context.ApplicationContext;
 import process.forms.ContentTreeForm;
 import process.forms.EditorForm;
-import utils.FileUtils;
 
 @Component
 public class BookProcessorApp extends Application {

@@ -9,8 +9,8 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import app.utils.JSONUtils;
 import util.PageParsing;
-import utils.JSONUtils;
 
 public class PageParseScriptSections {
 

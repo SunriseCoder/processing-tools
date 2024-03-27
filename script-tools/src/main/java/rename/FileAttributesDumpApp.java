@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import utils.JSONUtils;
+import app.utils.JSONUtils;
 
 public class FileAttributesDumpApp {
     private static Map<String, Map<String, Object>> fileAttributes = new LinkedHashMap<>();

@@ -3,9 +3,9 @@ package process.processing.orientation;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import app.utils.FileUtils;
 import multithreading.AbstractTask;
 import processing.images.rotation.AbstractOrientationRotate;
-import utils.FileUtils;
 
 public class OrientationTask extends AbstractTask {
     private Class<? extends AbstractOrientationRotate> rotationMethodClass;

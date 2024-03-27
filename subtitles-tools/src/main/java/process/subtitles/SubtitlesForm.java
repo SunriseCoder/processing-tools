@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import app.utils.FileUtils;
+import app.utils.PrimitiveUtils;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -37,8 +39,6 @@ import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
 import process.dto.SubtitleDTO;
 import process.dto.SubtitleTimeDTO;
-import utils.FileUtils;
-import utils.PrimitiveUtils;
 import wrappers.IntWrapper;
 import wrappers.LongWrapper;
 

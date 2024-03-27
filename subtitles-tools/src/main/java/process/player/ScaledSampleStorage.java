@@ -6,8 +6,8 @@ import java.util.Map;
 
 import javax.sound.sampled.AudioFormat;
 
+import app.utils.MathUtils;
 import audio.api.FrameInputStream;
-import utils.MathUtils;
 import wrappers.IntArrayWrapper;
 
 class ScaledSampleStorage {

@@ -2,6 +2,7 @@ package process.processing.merge;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -11,7 +12,6 @@ import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.GridPane;
 import process.context.ApplicationContext;
 import process.processing.AbstractNode;
-import utils.FileUtils;
 
 public class MergeNode extends AbstractNode {
     private ApplicationContext applicationContext;

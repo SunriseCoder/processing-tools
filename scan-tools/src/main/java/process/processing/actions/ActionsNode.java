@@ -2,6 +2,8 @@ package process.processing.actions;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
+import app.utils.ThreadUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -9,8 +11,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
 import process.context.ApplicationContext;
 import process.context.ApplicationEvents;
-import utils.FileUtils;
-import utils.ThreadUtils;
 
 public class ActionsNode {
     private ApplicationContext applicationContext;

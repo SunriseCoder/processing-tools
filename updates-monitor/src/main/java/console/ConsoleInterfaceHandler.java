@@ -18,6 +18,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 
+import app.utils.FileUtils;
+import app.utils.JSONUtils;
+import app.utils.MathUtils;
+import app.utils.ThreadUtils;
 import core.dto.Database;
 import core.dto.VideoPreview;
 import core.dto.youtube.YoutubeChannel;
@@ -31,10 +35,6 @@ import core.youtube.YoutubePlaylistHandler.Result;
 import core.youtube.YoutubeVideoHandler;
 import function.LambdaCommand;
 import util.FFMPEGUtils;
-import utils.FileUtils;
-import utils.JSONUtils;
-import utils.MathUtils;
-import utils.ThreadUtils;
 
 public class ConsoleInterfaceHandler {
     private static final String DATABASE_FOLDER = "database";

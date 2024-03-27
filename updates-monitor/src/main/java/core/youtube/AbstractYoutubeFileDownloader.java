@@ -11,14 +11,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import app.utils.MathUtils;
+import app.utils.ThreadUtils;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
 import core.dto.youtube.YoutubeVideo;
 import download.DownloadProgressPrinter;
 import download.DownloadTask;
 import download.DownloadTask.Result;
-import utils.MathUtils;
-import utils.ThreadUtils;
 
 public abstract class AbstractYoutubeFileDownloader {
     protected static final int MAX_YOUTUBE_DOWNLOAD_THREADS = 100;

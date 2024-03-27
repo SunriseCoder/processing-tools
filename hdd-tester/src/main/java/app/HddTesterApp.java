@@ -18,11 +18,11 @@ import app.core.database.Database;
 import app.core.dto.fs.FileSystemFile;
 import app.core.file.FileChecker;
 import app.core.file.FileCreator;
-import digest.XorProvider;
-import utils.ConsoleUtils;
-import utils.ConsoleUtils.Option;
-import utils.FileUtils;
-import utils.JSONUtils;
+import app.digest.XorProvider;
+import app.utils.ConsoleUtils;
+import app.utils.ConsoleUtils.Option;
+import app.utils.FileUtils;
+import app.utils.JSONUtils;
 
 public class HddTesterApp {
     private static final Logger LOGGER = LogManager.getLogger(HddTesterApp.class);
@@ -39,7 +39,7 @@ public class HddTesterApp {
         if (!physicalRootFolder.exists()) {
             physicalRootFolder.mkdirs();
         } else if (!physicalRootFolder.isDirectory()) {
-            System.out.println("Root folder \"" + physicalRootFolder.getAbsolutePath() + "\" is not a directory, exiting...");
+            LOGGER.error("Root folder \"" + physicalRootFolder.getAbsolutePath() + "\" is not a directory, exiting...");
             System.exit(-1);
         }
 
@@ -49,7 +49,7 @@ public class HddTesterApp {
         if (!physicalTmpFolder.exists()) {
             physicalTmpFolder.mkdirs();
         } else if (!physicalTmpFolder.isDirectory()) {
-            System.out.println("Temporary folder \"" + physicalTmpFolder.getAbsolutePath() + "\" is not a directory, exiting...");
+            LOGGER.error("Temporary folder \"" + physicalTmpFolder.getAbsolutePath() + "\" is not a directory, exiting...");
             System.exit(-1);
         }
         FileUtils.cleanupFolder(physicalTmpFolder);
@@ -71,7 +71,7 @@ public class HddTesterApp {
                 // TODO Implement
                 database = JSONUtils.loadFromDisk(databaseFile, new TypeReference<Database>() {});
                 database.linkFiles();
-                database.checkRealFilesOnHdd(physicalRootFolder);
+                database.checkExistingOfRealFilesOnHdd(physicalRootFolder);
                 LOGGER.info("Database has been loaded successfully...");
             } else if (input == optionNew) {
                 // Nothing to do here, new Database is already created

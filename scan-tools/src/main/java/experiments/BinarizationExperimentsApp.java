@@ -5,6 +5,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import app.utils.FileUtils;
 import dto.FileListEntry;
 import javafx.application.Application;
 import javafx.embed.swing.SwingFXUtils;
@@ -27,7 +28,6 @@ import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
 import process.filelist.FileListNode;
 import processing.images.filters.BinarizationFilter;
-import utils.FileUtils;
 
 public class BinarizationExperimentsApp extends Application {
     private static final String APPLICATION_CONTEXT_CONFIG_FILENAME = "binarization-experiments-config.json";

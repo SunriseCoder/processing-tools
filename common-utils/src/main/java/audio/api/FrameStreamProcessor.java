@@ -4,11 +4,11 @@ import java.io.IOException;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import progress.ProgressPrinter;
+import app.progress.SimpleProgressPrinter;
 
 public interface FrameStreamProcessor {
     void setPortionSize(int chunkSize);
-    void setProgressPrinter(ProgressPrinter progressPrinter);
+    void setProgressPrinter(SimpleProgressPrinter progressPrinter);
 
     void prepareOperation() throws IOException, UnsupportedAudioFileException;
     void process() throws IOException, UnsupportedAudioFileException;

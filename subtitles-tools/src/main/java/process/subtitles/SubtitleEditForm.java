@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import app.utils.FileUtils;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -14,7 +15,6 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import process.dto.SubtitleDTO;
-import utils.FileUtils;
 
 public class SubtitleEditForm extends Stage {
     private Pattern subtitleTimePattern;

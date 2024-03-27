@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import app.utils.FileUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -13,7 +14,6 @@ import process.context.ApplicationContext;
 import process.forms.editor.EditForm;
 import process.forms.editor.ParseForm;
 import process.forms.editor.ViewForm;
-import utils.FileUtils;
 
 @Component
 public class EditorForm {

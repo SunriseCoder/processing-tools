@@ -8,7 +8,7 @@ import org.jboss.com.sun.net.httpserver.HttpHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import utils.JSONUtils;
+import app.utils.JSONUtils;
 
 public class HttpServerAjaxListHandler implements HttpHandler {
 

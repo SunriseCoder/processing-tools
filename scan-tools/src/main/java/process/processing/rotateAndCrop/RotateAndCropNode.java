@@ -2,6 +2,7 @@ package process.processing.rotateAndCrop;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -13,7 +14,6 @@ import process.context.ApplicationContext;
 import process.handlers.SmoothFilters;
 import process.processing.AbstractNode;
 import processing.images.filters.AbstractImageFilter;
-import utils.FileUtils;
 
 public class RotateAndCropNode extends AbstractNode {
     private ApplicationContext applicationContext;

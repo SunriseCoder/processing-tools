@@ -6,10 +6,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import app.utils.FileUtils;
 import dto.TaskParameters;
 import filters.FilenameFilterImages;
 import multithreading.AbstractManagerTask;
-import utils.FileUtils;
 
 public class RenderManagerTask extends AbstractManagerTask {
     private TaskParameters taskParameters;

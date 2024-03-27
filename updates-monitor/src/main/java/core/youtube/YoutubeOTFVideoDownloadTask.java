@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.concurrent.Callable;
 
+import app.utils.FileUtils;
 import core.dto.Configuration;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
@@ -13,7 +14,6 @@ import util.DownloadUtils;
 import util.DownloadUtils.Response;
 import util.FFMPEGUtils;
 import util.YoutubeDLUtils;
-import utils.FileUtils;
 
 public class YoutubeOTFVideoDownloadTask extends AbstractYoutubeFileDownloader implements Callable<YoutubeResult> {
     private YoutubeVideo video;

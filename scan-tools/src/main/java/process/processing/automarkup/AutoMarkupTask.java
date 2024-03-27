@@ -5,12 +5,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.structures.RGB;
+import app.utils.ColorUtils;
+import app.utils.MathUtils;
 import dto.IntPoint;
 import dto.Point;
 import multithreading.AbstractTask;
-import structures.RGB;
-import utils.ColorUtils;
-import utils.MathUtils;
 
 public class AutoMarkupTask extends AbstractTask {
     private File sourceFile;

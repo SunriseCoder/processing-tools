@@ -1,4 +1,0 @@
-{
-    "checksumAlgorithms" : [ "XOR", "MD5", "SHA-1", "SHA-256", "SHA-512" ],
-    "snapshotSaveMinimalIntervalInMS" : 300000
-}

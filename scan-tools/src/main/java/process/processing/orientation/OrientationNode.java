@@ -2,6 +2,7 @@ package process.processing.orientation;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -14,7 +15,6 @@ import processing.images.rotation.AbstractOrientationRotate;
 import processing.images.rotation.RotationAll90DegreesClockWise;
 import processing.images.rotation.RotationAll90DegreesCounterClockWise;
 import processing.images.rotation.RotationOdd180Degrees;
-import utils.FileUtils;
 
 public class OrientationNode extends AbstractNode {
     private ApplicationContext applicationContext;

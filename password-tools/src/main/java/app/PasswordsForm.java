@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import app.context.ApplicationContext;
 import app.context.ApplicationParameters;
+import app.utils.FileUtils;
+import app.utils.JSONUtils;
 import dto.CredentialEntry;
 import javafx.beans.Observable;
 import javafx.event.Event;
@@ -20,8 +22,6 @@ import javafx.scene.control.TreeTableView;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.control.cell.TreeItemPropertyValueFactory;
 import javafx.scene.input.KeyEvent;
-import utils.FileUtils;
-import utils.JSONUtils;
 
 public class PasswordsForm {
     private ApplicationContext applicationContext;

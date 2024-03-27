@@ -6,7 +6,8 @@ import java.awt.Color;
 
 import org.junit.Test;
 
-import structures.RGB;
+import app.structures.RGB;
+import app.utils.ColorUtils;
 
 public class ColorUtilsTest {
 

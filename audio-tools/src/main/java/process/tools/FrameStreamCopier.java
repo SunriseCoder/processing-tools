@@ -4,10 +4,10 @@ import java.io.IOException;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import app.progress.SimpleProgressPrinter;
 import audio.api.FrameInputStream;
 import audio.api.FrameOutputStream;
 import audio.api.FrameStreamProcessor;
-import progress.ProgressPrinter;
 
 public class FrameStreamCopier implements FrameStreamProcessor {
     private FrameInputStream inputStream;
@@ -16,7 +16,7 @@ public class FrameStreamCopier implements FrameStreamProcessor {
 
     // Staff variables
     private int[] frameBuffer;
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
     private long totalFramesRead;
 
     public FrameStreamCopier(FrameInputStream inputStream, FrameOutputStream outputStream, int outputChannel) {
@@ -31,7 +31,7 @@ public class FrameStreamCopier implements FrameStreamProcessor {
     }
 
     @Override
-    public void setProgressPrinter(ProgressPrinter progressPrinter) {
+    public void setProgressPrinter(SimpleProgressPrinter progressPrinter) {
         this.progressPrinter = progressPrinter;
     }
 

@@ -14,10 +14,10 @@
         <module>backuper</module>
         <module>book-tools</module>
         <module>debug-proxy</module>
+        <module>file-tools</module>
         <module>graph-tools</module>
         <module>hdd-tester</module>
         <module>password-tools</module>
-        <module>remote-file-syncer</module>
         <module>scan-tools</module>
         <module>search-file-dups</module>
         <module>simple-remote-control</module>

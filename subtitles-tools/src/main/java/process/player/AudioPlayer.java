@@ -3,6 +3,8 @@ package process.player;
 import java.io.File;
 import java.io.IOException;
 
+import app.utils.FileUtils;
+import app.utils.MathUtils;
 import audio.wav.WaveInputStream;
 import components.containers.CanvasPane;
 import javafx.beans.Observable;
@@ -28,8 +30,6 @@ import javafx.util.Duration;
 import process.context.ApplicationContext;
 import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
-import utils.FileUtils;
-import utils.MathUtils;
 
 public class AudioPlayer {
     private static final int MOVE_BY_ARROW_DISTANCE = 15;

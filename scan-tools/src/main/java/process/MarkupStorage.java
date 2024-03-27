@@ -10,9 +10,9 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.utils.JSONUtils;
 import dto.Point;
 import process.context.ApplicationContext;
-import utils.JSONUtils;
 
 public class MarkupStorage {
     private static final String MARKUP_STORAGE_FILENAME = "markups.json";

@@ -13,6 +13,9 @@ import java.util.stream.Stream;
 
 import org.apache.hc.core5.http.HttpException;
 
+import app.utils.FileUtils;
+import app.utils.FormattingUtils;
+import app.utils.MapUtils;
 import backuper.client.config.BackupTask;
 import backuper.client.config.Configuration;
 import backuper.client.operations.CopyLocalFileOperation;
@@ -24,9 +27,6 @@ import backuper.client.operations.Operation;
 import backuper.common.LocalFolderScanner;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.PrintHelper;
-import utils.FileUtils;
-import utils.FormattingUtils;
-import utils.MapUtils;
 
 public class Backuper {
     private Configuration config;

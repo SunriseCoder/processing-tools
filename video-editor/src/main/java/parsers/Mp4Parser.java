@@ -6,8 +6,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.utils.PrimitiveUtils;
 import parsers.dto.Mp4Chunk;
-import utils.PrimitiveUtils;
 
 public class Mp4Parser {
     private static final int CHUNK_HEADER_SIZE = 8;

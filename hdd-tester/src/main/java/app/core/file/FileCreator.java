@@ -18,8 +18,8 @@ import org.apache.logging.log4j.Logger;
 import app.config.Configuration;
 import app.config.Configuration.Keys;
 import app.core.dto.fs.FileSystemFile;
-import utils.FileUtils;
-import utils.FormattingUtils;
+import app.utils.FileUtils;
+import app.utils.FormattingUtils;
 
 public class FileCreator {
     private static final Logger LOGGER = LogManager.getLogger(FileCreator.class.getName());
@@ -136,6 +136,7 @@ public class FileCreator {
         System.out.println();
     }
 
+    // TODO Revise - either remove this method if not really used or make it take digest list from Configuration
     private Map<String, MessageDigest> createDigests() throws NoSuchAlgorithmException {
         Map<String, MessageDigest> digests = new HashMap<>();
         addMessageDigest("XOR", digests);

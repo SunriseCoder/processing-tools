@@ -16,11 +16,11 @@ import org.apache.hc.core5.util.TimeValue;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.utils.JSONUtils;
 import backuper.server.config.Configuration;
 import backuper.server.handlers.BenchmarkRequestHandler;
 import backuper.server.handlers.FileDataRequestHandler;
 import backuper.server.handlers.FileListRequestHandler;
-import utils.JSONUtils;
 
 public class BackuperServerApp {
 

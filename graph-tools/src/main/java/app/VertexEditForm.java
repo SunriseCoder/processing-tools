@@ -2,6 +2,7 @@ package app;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import dto.Vertex;
 import javafx.fxml.FXML;
 import javafx.scene.Parent;
@@ -10,7 +11,6 @@ import javafx.scene.control.TextArea;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import utils.FileUtils;
 
 public class VertexEditForm extends Stage {
     @FXML

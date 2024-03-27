@@ -14,13 +14,13 @@ import org.apache.hc.core5.http.HttpException;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
+import app.utils.FormattingUtils;
+import app.utils.MathUtils;
+import app.utils.ThreadUtils;
 import backuper.client.config.CopySettings;
 import backuper.client.config.RemoteResource;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
-import utils.FormattingUtils;
-import utils.MathUtils;
-import utils.ThreadUtils;
 import wrappers.ThreadSafeBooleanWrapper;
 
 public class BenchmarkRemote {

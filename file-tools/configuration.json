@@ -1,0 +1,22 @@
+{
+    "checksumAlgorithms": [ "XOR", "MD5" ],
+    "fileCopyChunkSize": 1048576,
+
+    "fileSources": [
+        { "path": "d:\\Users", "readOnly": false },
+        { "path": "/mount/Prod", "readOnly": true }
+    ],
+
+    "folderSortRules": [
+        { "source": "To-Backup", "destination": "d:\\Backups", "comment": "File backups",
+            "includeParentFolder": true, "addCurrentDateToDestinationFolderName": true },
+        { "source": "To-Process", "destination": "d:\\To-Process", "comment": "File processing queue",
+             "includeParentFolder": true, "addCurrentDateToDestinationFolderName": false }
+    ],
+
+    "fileDatabaseMinimalSaveIntervalInMS": 300000,
+    "snapshotMinimalSaveIntervalInMS": 300000,
+
+    "progressPrinterDotDataSize": 67108864,
+    "progressPrinterDotsPerLine": 100
+}

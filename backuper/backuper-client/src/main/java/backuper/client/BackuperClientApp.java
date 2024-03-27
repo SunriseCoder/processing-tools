@@ -7,11 +7,11 @@ import org.apache.hc.core5.http.HttpException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.utils.JSONUtils;
 import backuper.client.config.BackupTask;
 import backuper.client.config.Configuration;
 import backuper.client.config.CopySettings;
 import backuper.client.config.RemoteResource;
-import utils.JSONUtils;
 
 public class BackuperClientApp {
     private static final String CONFIG_FILE = "config.json";

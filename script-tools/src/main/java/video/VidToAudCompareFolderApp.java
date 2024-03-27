@@ -5,9 +5,9 @@ import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.utils.FileUtils;
 import filters.FilenameFilterVideos;
 import process.ProcessRunnerToFile;
-import utils.FileUtils;
 
 public class VidToAudCompareFolderApp {
 

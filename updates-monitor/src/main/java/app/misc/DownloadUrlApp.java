@@ -3,9 +3,9 @@ package app.misc;
 import java.io.IOException;
 import java.util.Scanner;
 
+import app.utils.FileUtils;
 import util.DownloadUtils;
 import util.DownloadUtils.Response;
-import utils.FileUtils;
 
 public class DownloadUrlApp {
 

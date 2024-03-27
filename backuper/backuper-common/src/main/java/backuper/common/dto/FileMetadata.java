@@ -2,6 +2,7 @@ package backuper.common.dto;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -31,7 +32,7 @@ public class FileMetadata {
         absolutePath = path;
         relativePath = startPath.relativize(path);
 
-        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         size = attributes.size();
 
         creationTime = attributes.creationTime();

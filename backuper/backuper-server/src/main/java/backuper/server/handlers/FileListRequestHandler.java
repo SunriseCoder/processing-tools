@@ -15,11 +15,11 @@ import org.apache.hc.core5.http.nio.entity.BasicAsyncEntityConsumer;
 import org.apache.hc.core5.http.nio.support.BasicRequestConsumer;
 import org.apache.hc.core5.http.protocol.HttpContext;
 
+import app.utils.FormattingUtils;
+import app.utils.JSONUtils;
 import backuper.common.dto.FileMetadataRemote;
 import backuper.common.helpers.HttpHelper;
 import backuper.server.FileServer;
-import utils.FormattingUtils;
-import utils.JSONUtils;
 
 public class FileListRequestHandler implements AsyncServerRequestHandler<Message<HttpRequest, byte[]>> {
     private FileServer fileServer;

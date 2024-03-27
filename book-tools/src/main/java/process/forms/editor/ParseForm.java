@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import app.utils.FileUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -21,7 +22,6 @@ import process.entities.BookElementEntity;
 import process.parser.BookElementSplitter;
 import process.parser.RawBookParser;
 import process.services.BookElementService;
-import utils.FileUtils;
 
 @Component
 public class ParseForm {

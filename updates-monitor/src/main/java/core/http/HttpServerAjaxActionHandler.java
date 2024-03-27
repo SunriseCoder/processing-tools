@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.jboss.com.sun.net.httpserver.HttpExchange;
 import org.jboss.com.sun.net.httpserver.HttpHandler;
 
-import utils.HttpUtils;
+import app.utils.HttpUtils;
 
 public class HttpServerAjaxActionHandler implements HttpHandler {
 

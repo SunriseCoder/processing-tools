@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.List;
 
+import app.utils.FileUtils;
 import dto.Point;
 import multithreading.AbstractTask;
 import processing.images.crop.AbstractImageCropper;
@@ -11,7 +12,6 @@ import processing.images.crop.SimpleImageCropper;
 import processing.images.filters.AbstractImageFilter;
 import processing.images.rotate.AbstractImageRotator;
 import processing.images.rotate.MarkupImageRotator;
-import utils.FileUtils;
 
 public class RotateAndCropTask extends AbstractTask {
     private Class<? extends AbstractImageFilter> smoothFilterClass;

@@ -5,12 +5,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Scanner;
 
+import app.utils.JSONUtils;
 import core.dto.youtube.YoutubeChannel;
 import core.dto.youtube.YoutubePlaylist;
 import core.dto.youtube.YoutubeVideo;
 import core.youtube.YoutubeChannelHandler;
 import core.youtube.YoutubeChannelHandler.Result;
-import utils.JSONUtils;
 
 public class YoutubeChannelCheckUpdatesApp {
     public static void main(String[] args) throws IOException {

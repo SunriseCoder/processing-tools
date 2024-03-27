@@ -2,6 +2,8 @@ package process.processing;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
+import app.utils.ThreadUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -17,8 +19,6 @@ import process.processing.render.RenderNode;
 import process.processing.reorder.ReorderNode;
 import process.processing.rotateAndCrop.RotateAndCropNode;
 import process.processing.split.SplitNode;
-import utils.FileUtils;
-import utils.ThreadUtils;
 
 public class ProcessingNode {
     private ApplicationContext applicationContext;

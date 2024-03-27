@@ -7,10 +7,10 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import app.utils.FileUtils;
 import core.dto.youtube.YoutubeChannel;
 import core.dto.youtube.YoutubePlaylist;
 import core.dto.youtube.YoutubeVideo;
-import utils.FileUtils;
 
 public class Database {
     private Map<String, YoutubeChannel> youtubeChannels;

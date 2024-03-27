@@ -5,9 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import app.utils.MathUtils;
 import dto.Point;
 import processing.images.filters.ImageFilter;
-import utils.MathUtils;
 
 public class MarkupImageRotator extends AbstractImageRotator {
     private ImageFilter smoothFilter;

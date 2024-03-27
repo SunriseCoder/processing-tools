@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.utils.FileUtils;
+import app.utils.MathUtils;
 import audio.wav.WaveInputStream;
 import components.containers.CanvasPane;
 import javafx.beans.Observable;
@@ -32,8 +34,6 @@ import process.context.ApplicationContext;
 import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
 import process.dto.Candle;
-import utils.FileUtils;
-import utils.MathUtils;
 
 public class AudioPlayer {
     private static final int MOVE_BY_ARROW_DISTANCE = 15;

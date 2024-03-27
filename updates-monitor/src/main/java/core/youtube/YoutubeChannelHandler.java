@@ -17,6 +17,8 @@ import org.jsoup.select.Elements;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import app.utils.JSONUtils;
+import app.utils.ThreadUtils;
 import core.dto.Configuration;
 import core.dto.youtube.YoutubeChannel;
 import core.dto.youtube.YoutubePlaylist;
@@ -24,8 +26,6 @@ import core.dto.youtube.YoutubeVideo;
 import util.DownloadUtils;
 import util.DownloadUtils.Response;
 import util.PageParsing;
-import utils.JSONUtils;
-import utils.ThreadUtils;
 
 public class YoutubeChannelHandler {
     private static final Pattern CHANNEL_URL_PATTERN = Pattern.compile("^https?://www.youtube.com/channel/([0-9A-Za-z_-]+)/?.*$");

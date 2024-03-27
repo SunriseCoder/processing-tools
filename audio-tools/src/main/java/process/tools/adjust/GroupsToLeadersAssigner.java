@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import progress.ProgressPrinter;
+import app.progress.SimpleProgressPrinter;
 
 public class GroupsToLeadersAssigner {
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
 
-    public GroupsToLeadersAssigner(ProgressPrinter progressPrinter) {
+    public GroupsToLeadersAssigner(SimpleProgressPrinter progressPrinter) {
         this.progressPrinter = progressPrinter;
     }
 

@@ -6,6 +6,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 
+import app.utils.FileUtils;
 import filters.FilenameFilterImages;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -18,7 +19,6 @@ import process.context.ApplicationContext;
 import process.processing.AbstractNode;
 import processing.images.split.AbstractSplitter;
 import processing.images.split.Split2PagesOn1ImageHorizontally;
-import utils.FileUtils;
 
 public class SplitNode extends AbstractNode {
     private ApplicationContext applicationContext;

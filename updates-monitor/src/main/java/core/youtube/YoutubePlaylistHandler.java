@@ -12,13 +12,13 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import app.utils.JSONUtils;
 import core.dto.Configuration;
 import core.dto.youtube.YoutubePlaylist;
 import core.dto.youtube.YoutubeVideo;
 import util.DownloadUtils;
 import util.DownloadUtils.Response;
 import util.PageParsing;
-import utils.JSONUtils;
 
 public class YoutubePlaylistHandler {
     private static final Pattern PLAYLIST_URL_PATTERN = Pattern

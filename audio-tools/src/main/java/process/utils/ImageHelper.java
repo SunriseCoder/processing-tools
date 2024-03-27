@@ -12,7 +12,7 @@ import java.util.List;
 
 import javax.imageio.ImageIO;
 
-import utils.FileUtils;
+import app.utils.FileUtils;
 
 // TODO Move this class completely to common-utils module
 public class ImageHelper {

@@ -1,7 +1,7 @@
 package crop.filters;
 
+import static app.utils.ColorUtils.getRGB;
 import static org.junit.Assert.assertEquals;
-import static utils.ColorUtils.getRGB;
 
 import java.awt.image.BufferedImage;
 

@@ -7,18 +7,18 @@ import java.util.List;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import app.progress.SimpleProgressPrinter;
 import audio.wav.WaveInputStream;
-import progress.ProgressPrinter;
 
 public class GroupFinder {
     private File inputFile;
     private int inputChannel;
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
 
     private List<FrameGroup> positiveGroups;
     private List<FrameGroup> negativeGroups;
 
-    public GroupFinder(File inputFile, int inputChannel, ProgressPrinter progressPrinter) {
+    public GroupFinder(File inputFile, int inputChannel, SimpleProgressPrinter progressPrinter) {
         this.inputFile = inputFile;
         this.inputChannel = inputChannel;
         this.progressPrinter = progressPrinter;

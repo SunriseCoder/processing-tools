@@ -1,6 +1,7 @@
 package core.dto;
 
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -47,7 +48,7 @@ public class FileMetadata {
         absolutePath = path.toAbsolutePath().toString();
         relativePath = startPath.relativize(path).toString();
 
-        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
         size = attributes.size();
 
         creationTime = attributes.creationTime();

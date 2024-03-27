@@ -6,7 +6,7 @@ import java.io.RandomAccessFile;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
-import utils.PrimitiveUtils;
+import app.utils.PrimitiveUtils;
 
 public class WaveHeaderWriter {
     private static final int RIFF_TEXT_OFFSET = 0;

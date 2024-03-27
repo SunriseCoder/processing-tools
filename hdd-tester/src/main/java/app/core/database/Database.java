@@ -22,9 +22,9 @@ import app.core.dto.fs.FileSystemElement;
 import app.core.dto.fs.FileSystemFile;
 import app.core.dto.fs.FileSystemFolder;
 import app.core.file.FolderIterator;
-import utils.ConsoleUtils;
-import utils.ConsoleUtils.Option;
-import utils.JSONUtils;
+import app.utils.ConsoleUtils;
+import app.utils.JSONUtils;
+import app.utils.ConsoleUtils.Option;
 
 public class Database {
     private static final Logger LOGGER = LogManager.getLogger(HddTesterApp.class);
@@ -86,7 +86,7 @@ public class Database {
         }
     }
 
-    public void checkRealFilesOnHdd(File physicalRootFolder) {
+    public void checkExistingOfRealFilesOnHdd(File physicalRootFolder) {
         int errors = 0;
         for (Entry<String, FileSystemFile> entry : files.entrySet()) {
             String path = entry.getKey();

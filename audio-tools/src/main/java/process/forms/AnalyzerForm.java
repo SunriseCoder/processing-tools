@@ -2,6 +2,7 @@ package process.forms;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -10,7 +11,6 @@ import javafx.scene.control.SpinnerValueFactory;
 import process.context.ApplicationContext;
 import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
-import utils.FileUtils;
 
 public class AnalyzerForm {
     private ApplicationContext applicationContext;

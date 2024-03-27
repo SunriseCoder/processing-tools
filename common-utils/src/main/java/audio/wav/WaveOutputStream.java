@@ -9,8 +9,8 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 import adaptors.ByteBuffer;
 import adaptors.FrameBuffer;
+import app.utils.PrimitiveUtils;
 import audio.api.FrameOutputStream;
-import utils.PrimitiveUtils;
 
 public class WaveOutputStream implements FrameOutputStream {
     private static final int WRITE_BUFFER_SIZE = 1048576;

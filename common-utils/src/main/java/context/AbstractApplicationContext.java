@@ -9,13 +9,13 @@ import java.util.Set;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.structures.EventListener;
+import app.utils.JSONUtils;
 import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.stage.Stage;
-import structures.EventListener;
-import utils.JSONUtils;
 
 public abstract class AbstractApplicationContext <Parameter extends Enum<?>, Event extends Enum<?>> {
     private File configurationFile;

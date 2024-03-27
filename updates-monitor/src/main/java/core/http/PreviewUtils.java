@@ -7,8 +7,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.utils.JSONUtils;
 import core.dto.VideoPreview;
-import utils.JSONUtils;
 
 public class PreviewUtils {
 

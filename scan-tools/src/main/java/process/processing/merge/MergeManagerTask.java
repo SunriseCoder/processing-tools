@@ -6,10 +6,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Future;
 
+import app.utils.FileUtils;
+import app.utils.NumberUtils;
 import filters.FilenameFilterImages;
 import multithreading.AbstractManagerTask;
-import utils.FileUtils;
-import utils.NumberUtils;
 
 public class MergeManagerTask extends AbstractManagerTask {
     private int remainder;

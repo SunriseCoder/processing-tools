@@ -6,11 +6,11 @@ import java.util.List;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import app.progress.SimpleProgressPrinter;
+import app.utils.MathUtils;
 import audio.api.FrameOutputStream;
 import audio.api.FrameStreamProcessor;
 import audio.wav.WaveInputStream;
-import progress.ProgressPrinter;
-import utils.MathUtils;
 
 public class FrameStreamAdjuster2 implements FrameStreamProcessor {
     private static final int MAX_FACTOR = 10;
@@ -23,7 +23,7 @@ public class FrameStreamAdjuster2 implements FrameStreamProcessor {
     private int outputChannel;
     private int sampleRate;
 
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
 
     private List<FrameGroup> positiveGroups;
     private List<FrameGroup> positiveLeaderGroups;
@@ -42,7 +42,7 @@ public class FrameStreamAdjuster2 implements FrameStreamProcessor {
     }
 
     @Override
-    public void setProgressPrinter(ProgressPrinter progressPrinter) {
+    public void setProgressPrinter(SimpleProgressPrinter progressPrinter) {
         this.progressPrinter = progressPrinter;
     }
 

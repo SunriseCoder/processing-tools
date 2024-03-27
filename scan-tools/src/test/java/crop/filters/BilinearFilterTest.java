@@ -5,9 +5,9 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
+import app.structures.RGB;
+import app.utils.ColorUtils;
 import processing.images.filters.BilinearFilter;
-import structures.RGB;
-import utils.ColorUtils;
 
 public class BilinearFilterTest extends BaseImageFilterTest {
     @Before

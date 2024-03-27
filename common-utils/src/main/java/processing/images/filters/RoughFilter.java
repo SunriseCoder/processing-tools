@@ -1,6 +1,6 @@
 package processing.images.filters;
 
-import utils.MathUtils;
+import app.utils.MathUtils;
 
 public class RoughFilter extends AbstractImageFilter {
 

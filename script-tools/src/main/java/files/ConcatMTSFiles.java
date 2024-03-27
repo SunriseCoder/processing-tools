@@ -14,10 +14,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import app.progress.SimpleProgressPrinter;
+import app.utils.FileUtils;
 import filters.CustomFilenameFilter;
 import helpers.FilesHelper;
-import progress.ProgressPrinter;
-import utils.FileUtils;
 
 public class ConcatMTSFiles {
 
@@ -65,7 +65,7 @@ public class ConcatMTSFiles {
         }
 
         // Preparing progress printer
-        ProgressPrinter progressPrinter = new ProgressPrinter();
+        SimpleProgressPrinter progressPrinter = new SimpleProgressPrinter();
         progressPrinter.reset(totalFileSize);
 
         // Real data copy

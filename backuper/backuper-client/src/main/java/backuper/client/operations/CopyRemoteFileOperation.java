@@ -15,14 +15,14 @@ import java.util.List;
 import org.apache.hc.core5.http.NameValuePair;
 import org.apache.hc.core5.http.message.BasicNameValuePair;
 
+import app.utils.CloseUtils;
+import app.utils.ThreadUtils;
 import backuper.client.FileCopyStatus;
 import backuper.client.config.BackupTask;
 import backuper.common.dto.FileMetadata;
 import backuper.common.helpers.HttpHelper;
 import backuper.common.helpers.HttpHelper.Response;
 import backuper.logger.Logger;
-import utils.CloseUtils;
-import utils.ThreadUtils;
 
 public class CopyRemoteFileOperation {
     private BackupTask backupTask;

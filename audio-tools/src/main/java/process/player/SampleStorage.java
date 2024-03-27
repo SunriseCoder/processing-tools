@@ -6,9 +6,9 @@ import java.util.Map;
 
 import javax.sound.sampled.AudioFormat;
 
+import app.utils.MathUtils;
 import audio.api.FrameInputStream;
 import process.dto.Candle;
-import utils.MathUtils;
 
 class SampleStorage {
     private static final int MIN_SCALE_FOR_PERMANENT_MAPS = 32;

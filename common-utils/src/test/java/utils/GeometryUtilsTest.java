@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import app.utils.GeometryUtils;
 import dto.Point;
 
 public class GeometryUtilsTest {

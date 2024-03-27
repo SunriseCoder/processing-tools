@@ -3,17 +3,17 @@ package process.tools.adjust;
 import java.util.Iterator;
 import java.util.List;
 
-import progress.ProgressPrinter;
-import utils.MathUtils;
+import app.progress.SimpleProgressPrinter;
+import app.utils.MathUtils;
 
 public class LeaderHarmonizer {
     private static final double PROXIMITY_RANGE_BETWEEN_GROUPS_IN_SECONDS = 1;
     private static final int WEIGHT_OF_MINIMAL_FACTOR = 10;
 
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
     private int sampleRate;
 
-    public void setProgressPrinter(ProgressPrinter progressPrinter) {
+    public void setProgressPrinter(SimpleProgressPrinter progressPrinter) {
         this.progressPrinter = progressPrinter;
     }
 

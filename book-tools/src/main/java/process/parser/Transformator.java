@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import app.utils.FileUtils;
+import app.utils.StringUtils;
 import process.parser.dto.Action;
 import process.parser.dto.Chain;
 import process.parser.dto.Command;
@@ -17,8 +19,6 @@ import process.parser.dto.Variable;
 import process.parser.dto.html.HtmlElement;
 import process.parser.dto.html.TagElement;
 import process.parser.dto.html.TextElement;
-import utils.FileUtils;
-import utils.StringUtils;
 
 public class Transformator {
     private static final String LOG_FILENAME = "transform.log";

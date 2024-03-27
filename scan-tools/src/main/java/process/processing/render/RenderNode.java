@@ -2,6 +2,7 @@ package process.processing.render;
 
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import dto.TaskParameters;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -15,7 +16,6 @@ import javafx.scene.layout.GridPane;
 import process.context.ApplicationContext;
 import process.handlers.SmoothFilters;
 import process.processing.AbstractNode;
-import utils.FileUtils;
 
 public class RenderNode extends AbstractNode {
     private static final String DEFAULT_RESIZE_SOURCE_DPI = "600";

@@ -9,8 +9,8 @@ import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.UnsupportedAudioFileException;
 
 import adaptors.FrameBuffer;
+import app.utils.PrimitiveUtils;
 import audio.api.FrameInputStream;
-import utils.PrimitiveUtils;
 
 public class WaveInputStream implements FrameInputStream, AutoCloseable {
     private static final int PARSE_DATA_CHUNK_SIZE = 4096;

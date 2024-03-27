@@ -6,10 +6,10 @@ import java.util.Map;
 
 import javax.sound.sampled.UnsupportedAudioFileException;
 
+import app.progress.SimpleProgressPrinter;
 import audio.api.FrameInputStream;
 import audio.api.FrameOutputStream;
 import audio.api.FrameStreamProcessor;
-import progress.ProgressPrinter;
 
 public class FrameStreamAdjuster implements FrameStreamProcessor {
     private static final int SPEECH_NORMAL_MEANING = 4000;
@@ -24,7 +24,7 @@ public class FrameStreamAdjuster implements FrameStreamProcessor {
 
     private Map<Integer, Object> chunkMap;
     private int[] frameBuffer;
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
     private int totalFramesRead;
 
     private int decodingPosition;
@@ -46,7 +46,7 @@ public class FrameStreamAdjuster implements FrameStreamProcessor {
     }
 
     @Override
-    public void setProgressPrinter(ProgressPrinter progressPrinter) {
+    public void setProgressPrinter(SimpleProgressPrinter progressPrinter) {
         this.progressPrinter = progressPrinter;
     }
 

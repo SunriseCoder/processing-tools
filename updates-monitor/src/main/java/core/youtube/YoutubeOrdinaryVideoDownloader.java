@@ -10,6 +10,9 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import app.utils.FileUtils;
+import app.utils.JSONUtils;
+import app.utils.ThreadUtils;
 import core.dto.Configuration;
 import core.dto.youtube.YoutubeDownloadDetails;
 import core.dto.youtube.YoutubeResult;
@@ -17,9 +20,6 @@ import core.dto.youtube.YoutubeVideo;
 import util.DownloadUtils;
 import util.FFMPEGUtils;
 import util.PageParsing;
-import utils.FileUtils;
-import utils.JSONUtils;
-import utils.ThreadUtils;
 
 public class YoutubeOrdinaryVideoDownloader extends AbstractYoutubeFileDownloader {
 

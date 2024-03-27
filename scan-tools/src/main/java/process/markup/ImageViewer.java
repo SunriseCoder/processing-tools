@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import app.utils.FileUtils;
+import app.utils.MathUtils;
 import components.ExtCircle;
 import dto.FileListEntry;
 import dto.Point;
@@ -31,8 +33,6 @@ import javafx.scene.shape.Rectangle;
 import process.context.ApplicationContext;
 import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
-import utils.FileUtils;
-import utils.MathUtils;
 
 public class ImageViewer {
     private static final Color CIRCLE_COLOR_ACTIVE = Color.RED;
@@ -250,7 +250,7 @@ public class ImageViewer {
             double circleCenterX = circle.getCenterX();
             double circleCenterY = circle.getCenterY();
 
-            double currentRange = MathUtils.calculateDistance(x - circleCenterX, y - circleCenterY);
+            double currentRange = MathUtils.calculateHypotenuse(x - circleCenterX, y - circleCenterY);
             double visibleRadius = circle.getRadius() / scale;
 
             if (currentRange <= visibleRadius) {

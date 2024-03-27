@@ -4,11 +4,13 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import app.utils.MathUtils;
+
 public class MathUtilsTest {
 
     @Test
-    public void testCalculateDistance() {
-        assertEquals(5, MathUtils.calculateDistance(3, 4), 0.0001);
+    public void testCalculateHypotenuse() {
+        assertEquals(5, MathUtils.calculateHypotenuse(3, 4), 0.0001);
     }
 
     @Test

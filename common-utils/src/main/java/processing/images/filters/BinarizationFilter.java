@@ -2,7 +2,7 @@ package processing.images.filters;
 
 import java.awt.Color;
 
-import utils.ColorUtils;
+import app.utils.ColorUtils;
 
 public class BinarizationFilter extends AbstractImageFilter {
     private double colorThreshold = 85 * 5 * 1000;

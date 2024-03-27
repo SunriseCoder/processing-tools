@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import app.utils.FileUtils;
 import dto.FileListEntry;
 import filters.FilenameFilterImages;
 import javafx.collections.FXCollections;
@@ -24,7 +25,6 @@ import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
 import storages.IconStorage;
 import storages.IconStorage.Icons;
-import utils.FileUtils;
 
 public class FileListNode {
     private ApplicationContext applicationContext;

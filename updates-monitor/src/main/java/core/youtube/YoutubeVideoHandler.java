@@ -15,6 +15,9 @@ import org.jsoup.nodes.Document;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import app.utils.FileUtils;
+import app.utils.JSONUtils;
+import app.utils.ThreadUtils;
 import core.dto.Configuration;
 import core.dto.youtube.YoutubeAudioFormat;
 import core.dto.youtube.YoutubeDownloadDetails;
@@ -25,9 +28,6 @@ import core.dto.youtube.YoutubeVideoFormatTypes;
 import function.LambdaCommand;
 import util.DownloadUtils;
 import util.PageParsing;
-import utils.FileUtils;
-import utils.JSONUtils;
-import utils.ThreadUtils;
 
 public class YoutubeVideoHandler {
     private static final int YOUTUBE_OTF_MAX_DOWNLOAD_THREADS = 10;

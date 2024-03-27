@@ -3,9 +3,9 @@ package process.processing.merge;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
+import app.utils.FileUtils;
 import multithreading.AbstractTask;
 import processing.images.merge.ImageMerge;
-import utils.FileUtils;
 
 public class MergeTask extends AbstractTask {
     private File sourceFile1;

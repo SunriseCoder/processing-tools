@@ -1,0 +1,4 @@
+# Application work data
+file-database.json
+*-snapshot.json
+*-snapshot.backup.json

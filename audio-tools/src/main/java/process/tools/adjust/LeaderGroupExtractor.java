@@ -3,7 +3,7 @@ package process.tools.adjust;
 import java.util.ArrayList;
 import java.util.List;
 
-import progress.ProgressPrinter;
+import app.progress.SimpleProgressPrinter;
 
 public class LeaderGroupExtractor {
     /**
@@ -16,9 +16,9 @@ public class LeaderGroupExtractor {
 
     private int sampleRate;
 
-    private ProgressPrinter progressPrinter;
+    private SimpleProgressPrinter progressPrinter;
 
-    public LeaderGroupExtractor(int sampleRate, ProgressPrinter progressPrinter) {
+    public LeaderGroupExtractor(int sampleRate, SimpleProgressPrinter progressPrinter) {
         this.sampleRate = sampleRate;
         this.progressPrinter = progressPrinter;
     }

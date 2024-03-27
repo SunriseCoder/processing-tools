@@ -6,8 +6,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
+import app.utils.JSONUtils;
 import core.dto.Command;
-import utils.JSONUtils;
 
 public class Configuration {
     private static Map<String, String> parameters;

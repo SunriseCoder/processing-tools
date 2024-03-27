@@ -3,6 +3,7 @@ package process;
 import java.io.File;
 import java.io.IOException;
 
+import app.utils.FileUtils;
 import javafx.application.Application;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -14,7 +15,6 @@ import process.context.ApplicationContext;
 import process.context.ApplicationEvents;
 import process.context.ApplicationParameters;
 import process.player.AudioPlayer;
-import utils.FileUtils;
 
 public class AnalyzerApp extends Application {
     private static final String APPLICATION_CONTEXT_CONFIG_FILENAME = "subtitles-processor-config.json";

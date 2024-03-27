@@ -3,7 +3,7 @@ package processing.images.merge;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 
-import utils.ImageUtils;
+import app.utils.ImageUtils;
 
 public class ImageMerge {
     private Color defaultColor = Color.WHITE;

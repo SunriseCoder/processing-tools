@@ -5,10 +5,10 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
+import app.utils.ColorUtils;
+import app.utils.ImageUtils;
 import processing.images.filters.BilinearFilter;
 import processing.images.resize.ImageResize;
-import utils.ColorUtils;
-import utils.ImageUtils;
 
 public class FitImageApp {
 
