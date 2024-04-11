@@ -75,7 +75,7 @@ public class DeleteFileOperation implements FileOperation {
 
     @Override
     public String toString() {
-        String fileSizeString = "(" + fileSize + " = " + FormattingUtils.humanReadableSize(fileSize) + "b)";
+        String fileSizeString = "(" + fileSize + " = " + FormattingUtils.humanReadableSizeBi(fileSize) + "b)";
         return FormattingUtils.alignLongStringsByRightSide(3,
                 "DELETE_FILE", target.toString(), fileSizeString,
                 "!!!", reason, "");

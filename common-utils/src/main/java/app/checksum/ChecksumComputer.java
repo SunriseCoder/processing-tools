@@ -111,9 +111,9 @@ public class ChecksumComputer {
             fileCheckingDuration = fileCheckingDuration == 0 ? 1 : fileCheckingDuration; // Preventing divide by zero
             long speed = 1000 * fileSize / fileCheckingDuration;
             String message = "File: " + file.getAbsolutePath() + " is OK "
-                    + "(" + FormattingUtils.humanReadableSize(fileSize) + "b),"
+                    + "(" + FormattingUtils.humanReadableSizeBi(fileSize) + "b),"
                     + " took: " + FormattingUtils.humanReadableTimeMS(fileCheckingDuration) + ","
-                    + " avg speed: " + FormattingUtils.humanReadableSize(speed) + "b/s";
+                    + " avg speed: " + FormattingUtils.humanReadableSizeBi(speed) + "b/s";
             LOGGER.info(message);
         }
 
@@ -136,12 +136,12 @@ public class ChecksumComputer {
         System.out.print("   ");
 
         long speed = 1000 * lineBytesChecked / currentLineTime;
-        String formattedSpeed = FormattingUtils.humanReadableSize(speed);
+        String formattedSpeed = FormattingUtils.humanReadableSizeBi(speed);
         System.out.print("Read speed: " + formattedSpeed + "b/s");
 
         long remainingToCheck = allFilesSize - allFilesProgress;
         if (remainingToCheck > 0 && speed > 0) {
-            String formattedRemainingToFill = FormattingUtils.humanReadableSize(remainingToCheck);
+            String formattedRemainingToFill = FormattingUtils.humanReadableSizeBi(remainingToCheck);
             System.out.print(", Remaining: " + formattedRemainingToFill + "b");
             long remainingTime = remainingToCheck / speed;
             String formattedRemainingTime = FormattingUtils.humanReadableTimeS(remainingTime);

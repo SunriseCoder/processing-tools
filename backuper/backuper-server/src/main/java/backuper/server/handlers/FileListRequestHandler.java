@@ -71,6 +71,6 @@ public class FileListRequestHandler implements AsyncServerRequestHandler<Message
         json += "\n";
         HttpHelper.sendHttpResponse(200, json, ContentType.APPLICATION_JSON, responseTrigger, context);
 
-        System.out.println("FileList - " + resourceName + " - " + fileList.size() + " file(s) - " + FormattingUtils.humanReadableSize(json.length()) + "b");
+        System.out.println("FileList - " + resourceName + " - " + fileList.size() + " file(s) - " + FormattingUtils.humanReadableSizeBi(json.length()) + "b");
     }
 }

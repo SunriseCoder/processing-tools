@@ -15,18 +15,20 @@
 		<script>
 			var fileDatabase;
 			function load() {
-				fetch('./file-database.json')
+				fetch('file-database.json')
 					.then(response => {
-						document.getElementById("labelRecordsNumber").innerHTML = 'Fetching...';
+						document.getElementById("labelStatus").innerHTML = 'Fetching...';
 						response.json()
 							.then(json => {
 								fileDatabase = json;
-								document.getElementById("labelRecordsNumber").innerHTML =
+								document.getElementById("labelStatus").innerHTML =
 										'Records: ' + Object.keys(fileDatabase.files).length
 										+ ', Updated: ' + fileDatabase.lastUpdated;
 								document.getElementById("searchButton").disabled = false;
-							});
-					});
+							}).catch(error => {
+								document.getElementById("labelStatus").innerHTML = 'Parsing error: ' + error;
+					}).catch(error => {
+						document.getElementById("labelStatus").innerHTML = 'Loading error: ' + error;
 			}
 			function checkStartSearch() {
 				if(event.keyCode == 13) {
@@ -76,7 +78,7 @@
 		</script>
 	</head>
 	<body onload="load();">
-		<label id="labelRecordsNumber">Loading...</label><br />
+		<label id="labelStatus">Loading...</label><br />
 		file name: <input id="inputFileName" onkeydown="checkStartSearch();" />
 		file size: <input id="inputFileSize" onkeydown="checkStartSearch();" />
 		records limit:  <input id="inputRecordsLimit" value="20" onkeydown="checkStartSearch();" />

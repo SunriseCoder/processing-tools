@@ -59,7 +59,7 @@ public class DottedProgressPrinter extends ProgressPrinter {
 
     @Override
     public void startNewFile(String fileName, long fileSize) {
-        LOGGER.info("Starting: " + fileName + " (" + FormattingUtils.humanReadableSize(fileSize) + "b)...");
+        LOGGER.info("Starting: " + fileName + " (" + FormattingUtils.humanReadableSizeBi(fileSize) + "b)...");
 
         long now = System.currentTimeMillis();
 
@@ -129,19 +129,19 @@ public class DottedProgressPrinter extends ProgressPrinter {
         System.out.print("   ");
 
         // File:
-        String formattedCurrentFileProgress = FormattingUtils.humanReadableSize(currentFileProgress);
-        String formattedCurrentFileSize = FormattingUtils.humanReadableSize(currentFileSize);
+        String formattedCurrentFileProgress = FormattingUtils.humanReadableSizeBi(currentFileProgress);
+        String formattedCurrentFileSize = FormattingUtils.humanReadableSizeBi(currentFileSize);
         System.out.print("File: " + formattedCurrentFileProgress + "b of " + formattedCurrentFileSize + "b");
 
         // Speed:
         long currentLineSpeed = 1000 * currentLineProgress / currentLineTime;
-        String formattedCurrentLineSpeed = FormattingUtils.humanReadableSize(currentLineSpeed);
+        String formattedCurrentLineSpeed = FormattingUtils.humanReadableSizeBi(currentLineSpeed);
         System.out.print(", Speed: " + formattedCurrentLineSpeed + "b/s");
 
         // Remaining:
         long allFilesRemainingData = allFilesSize - allFilesProgress;
         if (allFilesRemainingData > 0 && currentLineSpeed > 0) {
-            String formattedAllFilesRemainingData = FormattingUtils.humanReadableSize(allFilesRemainingData);
+            String formattedAllFilesRemainingData = FormattingUtils.humanReadableSizeBi(allFilesRemainingData);
             System.out.print(", Remaining: " + formattedAllFilesRemainingData + "b");
             long allFilesRemainingTime = allFilesRemainingData / currentLineSpeed;
             String formattedAllFilesRemainingTime = FormattingUtils.humanReadableTimeS(allFilesRemainingTime);
@@ -158,13 +158,13 @@ public class DottedProgressPrinter extends ProgressPrinter {
         // FileName, Took time
         StringBuilder fileStatistics = new StringBuilder();
         fileStatistics.append("Done: ").append(currentFileName)
-                .append(" (").append(FormattingUtils.humanReadableSize(currentFileSize)).append("b), ")
+                .append(" (").append(FormattingUtils.humanReadableSizeBi(currentFileSize)).append("b), ")
                 .append("took: ").append(FormattingUtils.humanReadableTimeMS(currentFileTime));
 
         // Average Speed
         if (currentFileTime > 0) {
             long currentFileSpeed = 1000 * currentFileSize / currentFileTime;
-            fileStatistics.append(", avg speed: ").append(FormattingUtils.humanReadableSize(currentFileSpeed)).append("b/s");
+            fileStatistics.append(", avg speed: ").append(FormattingUtils.humanReadableSizeBi(currentFileSpeed)).append("b/s");
         }
 
         LOGGER.info(fileStatistics.toString());

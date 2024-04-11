@@ -1,24 +1,46 @@
-package utils;
+package app.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import org.junit.Test;
+import java.util.Locale;
 
-import app.utils.FormattingUtils;
+import org.junit.Test;
 
 public class FormattingUtilsTest {
 
     @Test
-    public void testHumanReadableSize() {
-        assertEquals("0", FormattingUtils.humanReadableSize(0L));
-        assertEquals("100", FormattingUtils.humanReadableSize(100L));
-        assertEquals("4,0k", FormattingUtils.humanReadableSize(4L * 1024));
-        assertEquals("4,1k", FormattingUtils.humanReadableSize(4L * 1024 + 105));
-        assertEquals("4,0M", FormattingUtils.humanReadableSize(4L * 1024 * 1024));
-        assertEquals("40M", FormattingUtils.humanReadableSize(40L * 1024 * 1024));
-        assertEquals("4,0G", FormattingUtils.humanReadableSize(4L * 1024 * 1024 * 1024));
-        assertEquals("4,0T", FormattingUtils.humanReadableSize(4L * 1024 * 1024 * 1024 * 1024));
+    public void testHumanReadableSizeBi() {
+        Locale defaultLocale = Locale.getDefault(Locale.Category.FORMAT);
+        Locale.setDefault(Locale.Category.FORMAT, Locale.US);
+
+        assertEquals("0", FormattingUtils.humanReadableSizeBi(0L));
+        assertEquals("100", FormattingUtils.humanReadableSizeBi(100L));
+        assertEquals("4.0ki", FormattingUtils.humanReadableSizeBi(4L * 1024));
+        assertEquals("4.1ki", FormattingUtils.humanReadableSizeBi(4L * 1024 + 105));
+        assertEquals("4.0Mi", FormattingUtils.humanReadableSizeBi(4L * 1024 * 1024));
+        assertEquals("40Mi", FormattingUtils.humanReadableSizeBi(40L * 1024 * 1024));
+        assertEquals("4.0Gi", FormattingUtils.humanReadableSizeBi(4L * 1024 * 1024 * 1024));
+        assertEquals("4.0Ti", FormattingUtils.humanReadableSizeBi(4L * 1024 * 1024 * 1024 * 1024));
+
+        Locale.setDefault(Locale.Category.FORMAT, defaultLocale);
+    }
+
+    @Test
+    public void testHumanReadableSizeSi() {
+        Locale defaultLocale = Locale.getDefault(Locale.Category.FORMAT);
+        Locale.setDefault(Locale.Category.FORMAT, Locale.US);
+
+        assertEquals("0", FormattingUtils.humanReadableSizeSi(0L));
+        assertEquals("100", FormattingUtils.humanReadableSizeSi(100L));
+        assertEquals("4.0k", FormattingUtils.humanReadableSizeSi(4L * 1000));
+        assertEquals("4.1k", FormattingUtils.humanReadableSizeSi(4L * 1000 + 105));
+        assertEquals("4.0M", FormattingUtils.humanReadableSizeSi(4L * 1000 * 1000));
+        assertEquals("40M", FormattingUtils.humanReadableSizeSi(40L * 1000 * 1000));
+        assertEquals("4.0G", FormattingUtils.humanReadableSizeSi(4L * 1000 * 1000 * 1000));
+        assertEquals("4.0T", FormattingUtils.humanReadableSizeSi(4L * 1000 * 1000 * 1000 * 1000));
+
+        Locale.setDefault(Locale.Category.FORMAT, defaultLocale);
     }
 
     @Test

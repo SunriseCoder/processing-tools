@@ -8,12 +8,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import app.json.JsonSaveable;
 
-public class FolderSnapshot extends JsonSaveable {
+// TODO Implement Pattern Observer
+public class Snapshot extends JsonSaveable {
     @JsonProperty
     private String name;
-    private Map<String, RelativeFileMetadata> files;
+    private Map<String, SnapshotFile> files;
 
-    public FolderSnapshot() {
+    public Snapshot() {
         files = new TreeMap<>();
     }
 
@@ -28,28 +29,29 @@ public class FolderSnapshot extends JsonSaveable {
     }
 
     @JsonIgnore
-    public Map<String, RelativeFileMetadata> getFilesMap() {
+    public Map<String, SnapshotFile> getFilesMap() {
         return files;
     }
 
     @JsonIgnore
-    public RelativeFileMetadata getFileMetadata(String relativePath) {
+    public SnapshotFile getFileMetadata(String relativePath) {
         return files.get(relativePath);
     }
 
-    public void addFileMetadata(RelativeFileMetadata fileMetadata) {
+    public void addFileMetadata(SnapshotFile fileMetadata) {
+        fileMetadata.addChangedListener(this);
         files.put(fileMetadata.getRelativePath(), fileMetadata);
         setChanged();
     }
 
     //TODO Rewrite - let FolderSnapshot have all necessary files - ChecksumComputer with ProgressPrinter (if needed)
     //      and compute all checksums and set them inside this class in order to prevent violation of Demetra's Law
-    public void addChecksums(RelativeFileMetadata fileMetadata, Map<String, String> checksums) {
+    public void addChecksums(SnapshotFile fileMetadata, Map<String, String> checksums) {
         fileMetadata.addAllChecksums(checksums);
         setChanged();
     }
 
-    public void setFileContentReadError(RelativeFileMetadata fileMetadata, String errorMessage) {
+    public void setFileContentReadError(SnapshotFile fileMetadata, String errorMessage) {
         fileMetadata.setReadContentError(errorMessage);
         setChanged();
     }

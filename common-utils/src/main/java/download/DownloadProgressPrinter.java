@@ -57,12 +57,12 @@ public class DownloadProgressPrinter implements SimpleProgressListener {
         }
         // Formatting progress message
         StringBuilder message = new StringBuilder();
-        message.append(FormattingUtils.humanReadableSize(dataCompletedTotal));
+        message.append(FormattingUtils.humanReadableSizeBi(dataCompletedTotal));
         message.append("b of ");
-        message.append(FormattingUtils.humanReadableSize(fileSize)).append("b (");
+        message.append(FormattingUtils.humanReadableSizeBi(fileSize)).append("b (");
         message.append(dataCompletedTotal * 100 / fileSize).append("%), ");
-        message.append(FormattingUtils.humanReadableSize(momentumSpeed)).append("b/s");
-        message.append(", avg: ").append(FormattingUtils.humanReadableSize(averageSpeed)).append("b/s");
+        message.append(FormattingUtils.humanReadableSizeBi(momentumSpeed)).append("b/s");
+        message.append(", avg: ").append(FormattingUtils.humanReadableSizeBi(averageSpeed)).append("b/s");
         message.append(", passed: ").append(FormattingUtils.humanReadableTimeS(timeSinceStart / 1000));
         message.append(", remain: ").append(FormattingUtils.humanReadableTimeS(remainingTime / 1000));
 

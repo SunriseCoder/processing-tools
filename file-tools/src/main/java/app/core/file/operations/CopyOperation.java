@@ -85,7 +85,7 @@ public class CopyOperation implements FileOperation {
 
     @Override
     public String toString() {
-        String fileSizeString = "(" + fileSize + " = " + FormattingUtils.humanReadableSize(fileSize) + "b)";
+        String fileSizeString = "(" + fileSize + " = " + FormattingUtils.humanReadableSizeBi(fileSize) + "b)";
         return FormattingUtils.alignLongStringsByRightSide(3,
                 "COPY", source.toString(), fileSizeString,
                 "->", destination.toString(), "");

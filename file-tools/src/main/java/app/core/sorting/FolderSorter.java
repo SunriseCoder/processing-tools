@@ -106,7 +106,7 @@ public class FolderSorter {
         totalCopySize = folderOperationsList.stream()
                 .mapToLong(o -> o.getCopyDataSize())
                 .sum();
-        sb.append("Total Copy Size: ").append(FormattingUtils.humanReadableSize(totalCopySize)).append("b\n");
+        sb.append("Total Copy Size: ").append(FormattingUtils.humanReadableSizeBi(totalCopySize)).append("b\n");
 
         sb.append("Do you confirm the operations (yes/no)? ");
         LOGGER.info("User Confirmation text:\n" + sb.toString());

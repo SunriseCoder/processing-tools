@@ -89,7 +89,7 @@ public class HttpHelper {
 
         StringBuilder sb = new StringBuilder();
         sb.append("Sending response: ").append(responseCode).append(" ");
-        sb.append(FormattingUtils.humanReadableSize(data.length)).append("b (").append(data.length).append(" bytes)");
+        sb.append(FormattingUtils.humanReadableSizeBi(data.length)).append("b (").append(data.length).append(" bytes)");
         System.out.println(sb.toString());
 
         responseTrigger.submitResponse(AsyncResponseBuilder.create(responseCode).setEntity(data, contentType).build(), context);

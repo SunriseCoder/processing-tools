@@ -8,14 +8,26 @@ import java.util.stream.Collectors;
 
 public class FormattingUtils {
 
-    public static String humanReadableSize(long size) {
-        if (size < 1024) {
+    public static String humanReadableSizeBi(long size) {
+        String result = humanReadableSize(size, 1024);
+        if (result.matches(".*[A-Za-z]")) {
+            result += "i";
+        }
+        return result;
+    }
+
+    public static String humanReadableSizeSi(long size) {
+        return humanReadableSize(size, 1000);
+    }
+
+    private static String humanReadableSize(long size, int base) {
+        if (size < base) {
             return String.valueOf(size);
         }
 
-        int log = (int) (Math.log(size) / Math.log(1024));
+        int log = (int) (Math.log(size) / Math.log(base));
         char letter = "kMGTPE".charAt(log - 1);
-        double mantis = size / Math.pow(1024, log);
+        double mantis = size / Math.pow(base, log);
         String result;
         if (mantis < 10) {
             result = String.format("%.1f%s", mantis, letter); // Like 5,8G

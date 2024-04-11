@@ -2,9 +2,9 @@ package app.core.comparator;
 
 import java.util.Comparator;
 
-import app.core.dto.AbsoluteFileMetadata;
+import app.core.dto.FileMetadata;
 
-public class ClosestToDestFolderComparator implements Comparator<AbsoluteFileMetadata> {
+public class ClosestToDestFolderComparator implements Comparator<FileMetadata> {
     private String destinationFolder;
 
     public ClosestToDestFolderComparator(String destinationFolder) {
@@ -12,7 +12,7 @@ public class ClosestToDestFolderComparator implements Comparator<AbsoluteFileMet
     }
 
     @Override
-    public int compare(AbsoluteFileMetadata o1, AbsoluteFileMetadata o2) {
+    public int compare(FileMetadata o1, FileMetadata o2) {
         // Sorting objects by their proximity to the destination folder
         int o1match = matchFirstSymbols(o1.getAbsolutePath(), destinationFolder);
         int o2match = matchFirstSymbols(o2.getAbsolutePath(), destinationFolder);

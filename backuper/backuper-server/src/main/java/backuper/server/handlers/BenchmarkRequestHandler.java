@@ -62,7 +62,7 @@ public class BenchmarkRequestHandler implements AsyncServerRequestHandler<Messag
 
         StringBuilder sb = new StringBuilder();
         sb.append("Request: ").append(fileServer.getUserByToken(params.get("token")).getLogin())
-                .append(": Benchmark: ").append(FormattingUtils.humanReadableSize(length)).append(" (")
+                .append(": Benchmark: ").append(FormattingUtils.humanReadableSizeBi(length)).append(" (")
                 .append(length).append(" bytes) ...");
         System.out.println(sb);
 

@@ -44,7 +44,7 @@ public class BenchmarkRemote {
         for (int p = 12; p <= 22; p++) {
             chunkSize = MathUtils.roundToInt(Math.pow(2, p));
 
-            System.out.print("Testing " + FormattingUtils.humanReadableSize(chunkSize) + "b: ");
+            System.out.print("Testing " + FormattingUtils.humanReadableSizeBi(chunkSize) + "b: ");
 
             long startTime;
             boolean success;
@@ -64,7 +64,7 @@ public class BenchmarkRemote {
             long averateTime = MathUtils.roundToLong((double) (endTime - startTime) / 10);
             System.out.println(" done, average time is: " + FormattingUtils.humanReadableTimeMS(averateTime));
             if (averateTime > 5000) {
-                System.out.println("This is a good value, using Chunk Size: " + FormattingUtils.humanReadableSize(chunkSize));
+                System.out.println("This is a good value, using Chunk Size: " + FormattingUtils.humanReadableSizeBi(chunkSize));
                 break;
             }
         }
@@ -101,7 +101,7 @@ public class BenchmarkRemote {
     private static long performMultithreadingBenchmark(RemoteResource remoteResource, int threadCount, int copyChunkSize) {
         StringBuilder sb = new StringBuilder();
         sb.append("Starting 1+ minute test using ").append(threadCount).append(" Threads and Chunk Size ")
-                .append(FormattingUtils.humanReadableSize(copyChunkSize)).append("b ...");
+                .append(FormattingUtils.humanReadableSizeBi(copyChunkSize)).append("b ...");
         System.out.println(sb);
         long speed = 0;
 
@@ -155,7 +155,7 @@ public class BenchmarkRemote {
                 long now = System.currentTimeMillis();
                 long duration = now - fileCopyStatus.getCurrentFileStartTime();
                 speed = MathUtils.roundToLong((double) fileCopyStatus.getAllFilesCopiedSize() * 1000 /  duration);
-                System.out.println(" Successful. The speed is " + FormattingUtils.humanReadableSize(speed) + "b/s");
+                System.out.println(" Successful. The speed is " + FormattingUtils.humanReadableSizeBi(speed) + "b/s");
                 break;
             } else {
                 System.out.println(" Failed due to data transfer errors");

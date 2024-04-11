@@ -11,11 +11,11 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import app.core.dto.AbsoluteFileMetadata;
 import app.core.dto.FileDatabase;
-import app.core.dto.FolderSnapshot;
-import app.core.dto.RelativeFileMetadata;
-import app.core.dto.RelativeFileMetadata.Status;
+import app.core.dto.FileMetadata;
+import app.core.dto.Snapshot;
+import app.core.dto.SnapshotFile;
+import app.core.dto.SnapshotFile.Status;
 import app.files.PathIterator;
 import app.structures.Pair;
 import app.utils.FormattingUtils;
@@ -28,17 +28,17 @@ public class SnapshotChecker {
     private File snapshotFile;
     private Path destinationFolder;
 
-    private FolderSnapshot snapshot;
+    private Snapshot snapshot;
     private FileDatabase fileDatabase;
 
-    private List<RelativeFileMetadata> errorFilesInSnapshot;
-    private List<RelativeFileMetadata> notFoundFiles;
-    private List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> fileSizeMismatchFiles;
-    private List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> checksumMismatchFiles;
-    private List<RelativeFileMetadata> correctFiles;
-    private List<AbsoluteFileMetadata> filesNotInSnapshot;
+    private List<SnapshotFile> errorFilesInSnapshot;
+    private List<SnapshotFile> notFoundFiles;
+    private List<Pair<SnapshotFile, FileMetadata>> fileSizeMismatchFiles;
+    private List<Pair<SnapshotFile, FileMetadata>> checksumMismatchFiles;
+    private List<SnapshotFile> correctFiles;
+    private List<FileMetadata> filesNotInSnapshot;
     /** If a file on a disk, but in the Snapshot the Status is NOT Ok - we can't determine whether the file is Ok or Not */
-    private List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> filesExistButInSnapshotIsNotOk;
+    private List<Pair<SnapshotFile, FileMetadata>> filesExistButInSnapshotIsNotOk;
     private List<Path> emptyFolders;
 
     public SnapshotChecker() {
@@ -66,7 +66,7 @@ public class SnapshotChecker {
 
     public void loadSnapshot() throws IOException {
         LOGGER.info("Loading existing snapshot from file: " + snapshotFile.getAbsolutePath());
-        TypeReference<FolderSnapshot> typeReference = new TypeReference<FolderSnapshot>() {};
+        TypeReference<Snapshot> typeReference = new TypeReference<Snapshot>() {};
         snapshot = JSONUtils.loadFromDisk(snapshotFile, typeReference);
         LOGGER.info("Snapshot has been loaded successfully");
     }
@@ -80,7 +80,7 @@ public class SnapshotChecker {
     }
 
     private void checkFilesInSnapshot() throws IOException {
-        for (RelativeFileMetadata fileInSnapshot : snapshot.getFilesMap().values()) {
+        for (SnapshotFile fileInSnapshot : snapshot.getFilesMap().values()) {
             LOGGER.info("Checking the file: " + fileInSnapshot.getRelativePath());
 
             if (fileInSnapshot.getStatus() != Status.Ok) {
@@ -95,7 +95,7 @@ public class SnapshotChecker {
             fileDatabase.updateEntryFromDisk(destinationFilePath, true);
 
             // Checking that destination file exists on the disk
-            AbsoluteFileMetadata destinationFileMetadata = fileDatabase.getFileMetadataByAbsolutePath(destinationFilePath.toString());
+            FileMetadata destinationFileMetadata = fileDatabase.getFileMetadataByAbsolutePath(destinationFilePath.toString());
             if (destinationFileMetadata == null) {
                 notFoundFiles.add(fileInSnapshot);
                 LOGGER.error("File not found - In Snapshot: " + fileInSnapshot.getRelativePath() + ", destination file: " + destinationFilePath);
@@ -128,12 +128,12 @@ public class SnapshotChecker {
             Path currentFilePath = pathIterator.next();
             Path pathInSnapshot = destinationFolder.relativize(currentFilePath);
 
-            RelativeFileMetadata fileInSnapshot = snapshot.getFilesMap().get(pathInSnapshot.toString());
+            SnapshotFile fileInSnapshot = snapshot.getFilesMap().get(pathInSnapshot.toString());
             if (fileInSnapshot == null) {
-                AbsoluteFileMetadata fileMetadata = new AbsoluteFileMetadata(currentFilePath);
+                FileMetadata fileMetadata = new FileMetadata(currentFilePath);
                 filesNotInSnapshot.add(fileMetadata);
             } else if (fileInSnapshot.getStatus() != Status.Ok) {
-                AbsoluteFileMetadata fileMetadata = new AbsoluteFileMetadata(currentFilePath);
+                FileMetadata fileMetadata = new FileMetadata(currentFilePath);
                 filesExistButInSnapshotIsNotOk.add(new Pair<>(fileInSnapshot, fileMetadata));
             }
         }
@@ -152,14 +152,14 @@ public class SnapshotChecker {
         correctFiles.stream().forEach(f -> {
             sb.append(f.getRelativePath())
                     .append(" (").append(f.getSize()).append(" - ")
-                    .append(FormattingUtils.humanReadableSize(f.getSize())).append("b)\n");
+                    .append(FormattingUtils.humanReadableSizeBi(f.getSize())).append("b)\n");
         });
 
         sb.append("\tNot found files:\n");
         notFoundFiles.stream().forEach(f -> {
             sb.append(f.getRelativePath())
                     .append(" (").append(f.getSize()).append(" - ")
-                    .append(FormattingUtils.humanReadableSize(f.getSize())).append("b)\n");
+                    .append(FormattingUtils.humanReadableSizeBi(f.getSize())).append("b)\n");
         });
 
         List<String> tableData = new ArrayList<>();
@@ -168,10 +168,10 @@ public class SnapshotChecker {
             tableData.clear();
             tableData.add("Snapshot: ");
             tableData.add(p.getKey().getRelativePath());
-            tableData.add(" (" + p.getKey().getSize() + " - " + FormattingUtils.humanReadableSize(p.getKey().getSize()) + "b)");
+            tableData.add(" (" + p.getKey().getSize() + " - " + FormattingUtils.humanReadableSizeBi(p.getKey().getSize()) + "b)");
             tableData.add("Disk: ");
             tableData.add(p.getValue().getAbsolutePath());
-            tableData.add(" (" + p.getValue().getSize() + " - " + FormattingUtils.humanReadableSize(p.getValue().getSize()) + "b)");
+            tableData.add(" (" + p.getValue().getSize() + " - " + FormattingUtils.humanReadableSizeBi(p.getValue().getSize()) + "b)");
             sb.append(FormattingUtils.alignLongStringsByRightSide(3, tableData));
 
         });
@@ -181,13 +181,13 @@ public class SnapshotChecker {
             tableData.clear();
             tableData.add("Snapshot: ");
             tableData.add(p.getKey().getRelativePath());
-            tableData.add(" (" + p.getKey().getSize() + " - " + FormattingUtils.humanReadableSize(p.getKey().getSize()) + "b)");
+            tableData.add(" (" + p.getKey().getSize() + " - " + FormattingUtils.humanReadableSizeBi(p.getKey().getSize()) + "b)");
             tableData.add("Disk: ");
             tableData.add(p.getValue().getAbsolutePath());
-            tableData.add(" (" + p.getValue().getSize() + " - " + FormattingUtils.humanReadableSize(p.getValue().getSize()) + "b)");
+            tableData.add(" (" + p.getValue().getSize() + " - " + FormattingUtils.humanReadableSizeBi(p.getValue().getSize()) + "b)");
             sb.append(FormattingUtils.alignLongStringsByRightSide(3, tableData));
             tableData.clear();
-            p.getKey().getChecksums().entrySet().forEach(e -> {
+            p.getKey().getChecksums().entryRSet().forEach(e -> {
                 tableData.add("        Checksum Snapshot " + e.getKey());
                 tableData.add(e.getValue());
                 tableData.add("Checksum Disk " + e.getKey());
@@ -195,7 +195,7 @@ public class SnapshotChecker {
                         ? p.getValue().getChecksums().get(e.getKey()) : "null";
                 tableData.add(diskChecksumValue);
             });
-            p.getValue().getChecksums().entrySet().forEach(e -> {
+            p.getValue().getChecksums().entryRSet().forEach(e -> {
                 // Dumping only the entries which were not dumped by the previous loop
                 if (!p.getKey().getChecksums().containsKey(e.getKey())) {
                     tableData.add("Checksum Disk " + e.getKey());
@@ -209,7 +209,7 @@ public class SnapshotChecker {
         filesNotInSnapshot.stream().forEach(p -> {
             sb.append(p.getAbsolutePath())
                     .append(" (").append(p.getSize()).append(" - ")
-                    .append(FormattingUtils.humanReadableSize(p.getSize())).append("b)\n");
+                    .append(FormattingUtils.humanReadableSizeBi(p.getSize())).append("b)\n");
         });
 
         sb.append("\tExisting Files which are In the Snapshot, but in Snapshot their Status is NOT Ok:\n");
@@ -217,10 +217,10 @@ public class SnapshotChecker {
             tableData.clear();
             tableData.add("Snapshot: ");
             tableData.add(p.getKey().getRelativePath());
-            tableData.add(" (" + p.getKey().getSize() + " - " + FormattingUtils.humanReadableSize(p.getKey().getSize()) + "b)");
+            tableData.add(" (" + p.getKey().getSize() + " - " + FormattingUtils.humanReadableSizeBi(p.getKey().getSize()) + "b)");
             tableData.add("Disk: ");
             tableData.add(p.getValue().getAbsolutePath());
-            tableData.add(" (" + p.getValue().getSize() + " - " + FormattingUtils.humanReadableSize(p.getValue().getSize()) + "b)");
+            tableData.add(" (" + p.getValue().getSize() + " - " + FormattingUtils.humanReadableSizeBi(p.getValue().getSize()) + "b)");
             sb.append(FormattingUtils.alignLongStringsByRightSide(3, tableData));
         });
 
@@ -234,14 +234,14 @@ public class SnapshotChecker {
         long completionSizeMin = correctFilesSize;
         long completionSizeMax = correctFilesSize + fileSizeMismatchFilesSizeAsOnDisk;
         sb.append("Completion: ")
-                .append(FormattingUtils.humanReadableSize(completionSizeMin)).append("b (")
+                .append(FormattingUtils.humanReadableSizeBi(completionSizeMin)).append("b (")
                         .append(FormattingUtils.percentage(completionSizeMin, allFilesInSnapshotSize, 2)).append(")");
         if (completionSizeMin != completionSizeMax) {
-            sb.append(" - ").append(FormattingUtils.humanReadableSize(completionSizeMax)).append("b (")
+            sb.append(" - ").append(FormattingUtils.humanReadableSizeBi(completionSizeMax)).append("b (")
                     .append(FormattingUtils.percentage(completionSizeMax, allFilesInSnapshotSize, 2)).append(")");
         }
         if (completionSizeMin < allFilesInSnapshotSize) {
-            sb.append(" of ").append(FormattingUtils.humanReadableSize(allFilesInSnapshotSize)).append("b");
+            sb.append(" of ").append(FormattingUtils.humanReadableSizeBi(allFilesInSnapshotSize)).append("b");
         }
 
         // Error Statuses in Snapshot File
@@ -249,7 +249,7 @@ public class SnapshotChecker {
             sb.append("\n\t!!! WARNING !!! The following Files in Snapshot are NOT Ok:\n");
             errorFilesInSnapshot.forEach(f -> {
                 sb.append(f.getRelativePath())
-                        .append(" - (").append(f.getSize()).append(" - ").append(FormattingUtils.humanReadableSize(f.getSize()))
+                        .append(" - (").append(f.getSize()).append(" - ").append(FormattingUtils.humanReadableSizeBi(f.getSize()))
                         .append("b) - ").append(f.getStatus().name()).append(": ").append(String.join(", ", f.getStatusMessages()));
             });
         }

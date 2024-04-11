@@ -215,8 +215,8 @@ public class ConsoleInterfaceHandler {
         while (iterator.hasNext()) {
             FileMetadata fileMetadata = iterator.next();
             System.out.println(fileCounter + " of " + filesTotal + ", "
-                    + FormattingUtils.humanReadableSize(totalProcessedFileSize)
-                    + " of " + FormattingUtils.humanReadableSize(totalFileSize) + ": "
+                    + FormattingUtils.humanReadableSizeBi(totalProcessedFileSize)
+                    + " of " + FormattingUtils.humanReadableSizeBi(totalFileSize) + ": "
                     + fileMetadata.getRelativePath());
             messageDigest.reset();
             progressPrinter.reset(fileMetadata.getSize());

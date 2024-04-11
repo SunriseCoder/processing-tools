@@ -28,4 +28,12 @@ public class ImageUtils {
         boolean result = ImageIO.write(image, formatName , outputFile);
         return result;
     }
+
+    public static BufferedImage createEmptyImageSameSizeAndType(BufferedImage sourceImage) {
+        int width = sourceImage.getWidth();
+        int height = sourceImage.getHeight();
+        int type = sourceImage.getType();
+        BufferedImage result = new BufferedImage(width, height, type);
+        return result;
+    }
 }

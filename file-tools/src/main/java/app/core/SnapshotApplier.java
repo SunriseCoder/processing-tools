@@ -21,12 +21,13 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import app.checksum.ChecksumComputer;
+import app.collection.RMap;
 import app.core.comparator.ClosestToDestFolderComparator;
-import app.core.dto.AbsoluteFileMetadata;
 import app.core.dto.Configuration;
 import app.core.dto.FileDatabase;
-import app.core.dto.FolderSnapshot;
-import app.core.dto.RelativeFileMetadata;
+import app.core.dto.FileMetadata;
+import app.core.dto.Snapshot;
+import app.core.dto.SnapshotFile;
 import app.core.file.operations.CopyOperation;
 import app.core.file.operations.DeleteFileOperation;
 import app.core.file.operations.FileOperation;
@@ -48,23 +49,23 @@ public class SnapshotApplier {
     private File snapshotFile;
     private Path destinationFolder;
 
-    private FolderSnapshot snapshot;
+    private Snapshot snapshot;
     private FileDatabase fileDatabase;
 
-    private Map<Long, List<RelativeFileMetadata>> snapshotFilesMapBySize;
-    private Map<Long, List<AbsoluteFileMetadata>> filesInFileDatabaseMapBySize;
-    private List<AbsoluteFileMetadata> filesToComputeChecksums;
+    private Map<Long, List<SnapshotFile>> snapshotFilesMapBySize;
+    private Map<Long, List<FileMetadata>> filesInFileDatabaseMapBySize;
+    private List<FileMetadata> filesToComputeChecksums;
 
-    private List<RelativeFileMetadata> snapshotFilesWithoutCandidates;
+    private List<SnapshotFile> snapshotFilesWithoutCandidates;
 
     private List<FileOperation> fileOperations;
 
     private long totalCopySize;
 
-    private List<RelativeFileMetadata> missingFiles;
-    private List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> filesNotMatchedByMetadata;
-    private List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> filesNotMatchedByChecksum;
-    private List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> redundantFilesInDestinationFolder;
+    private List<SnapshotFile> missingFiles;
+    private List<Pair<SnapshotFile, FileMetadata>> filesNotMatchedByMetadata;
+    private List<Pair<SnapshotFile, FileMetadata>> filesNotMatchedByChecksum;
+    private List<Pair<SnapshotFile, FileMetadata>> redundantFilesInDestinationFolder;
 
     public SnapshotApplier() {
         filesToComputeChecksums = new ArrayList<>();
@@ -94,7 +95,7 @@ public class SnapshotApplier {
 
     public void loadSnapshot() throws IOException {
         LOGGER.info("Loading existing snapshot from file: " + snapshotFile.getAbsolutePath());
-        TypeReference<FolderSnapshot> typeReference = new TypeReference<FolderSnapshot>() {};
+        TypeReference<Snapshot> typeReference = new TypeReference<Snapshot>() {};
         snapshot = JSONUtils.loadFromDisk(snapshotFile, typeReference);
         LOGGER.info("Snapshot has been loaded successfully");
     }
@@ -104,9 +105,9 @@ public class SnapshotApplier {
 
         // Creating Map Snapshot Files by Size
         snapshotFilesMapBySize = new HashMap<>();
-        for (RelativeFileMetadata fileMetadata : snapshot.getFilesMap().values()) {
+        for (SnapshotFile fileMetadata : snapshot.getFilesMap().values()) {
             long fileSize = fileMetadata.getSize();
-            List<RelativeFileMetadata> fileList = snapshotFilesMapBySize.get(fileSize);
+            List<SnapshotFile> fileList = snapshotFilesMapBySize.get(fileSize);
             if (fileList == null) {
                 fileList = new ArrayList<>();
                 snapshotFilesMapBySize.put(fileSize, fileList);
@@ -116,9 +117,9 @@ public class SnapshotApplier {
 
         // Creating Map FileDatabase Files by Size
         filesInFileDatabaseMapBySize = new HashMap<>();
-        for (AbsoluteFileMetadata fileMetadata : fileDatabase.getFiles().values()) {
+        for (FileMetadata fileMetadata : fileDatabase.getFiles().values()) {
             long fileSize = fileMetadata.getSize();
-            List<AbsoluteFileMetadata> fileList = filesInFileDatabaseMapBySize.get(fileSize);
+            List<FileMetadata> fileList = filesInFileDatabaseMapBySize.get(fileSize);
             if (fileList == null) {
                 fileList = new ArrayList<>();
                 filesInFileDatabaseMapBySize.put(fileSize, fileList);
@@ -127,17 +128,17 @@ public class SnapshotApplier {
         }
 
         // Adding FileMetadata from Disks to the List to Compute Checksums Where FileSize matches the FileSize of the Files in the Snapshot
-        for (Entry<Long, List<RelativeFileMetadata>> entry : snapshotFilesMapBySize.entrySet()) {
-            List<AbsoluteFileMetadata> filesWithParticularSize = filesInFileDatabaseMapBySize.get(entry.getKey());
+        for (Entry<Long, List<SnapshotFile>> entry : snapshotFilesMapBySize.entrySet()) {
+            List<FileMetadata> filesWithParticularSize = filesInFileDatabaseMapBySize.get(entry.getKey());
             if (filesWithParticularSize != null && !filesWithParticularSize.isEmpty()) {
                 filesToComputeChecksums.addAll(filesWithParticularSize);
             }
         }
 
         // Removing FileMetadata which already have Checksums computed
-        Iterator<AbsoluteFileMetadata> iterator = filesToComputeChecksums.iterator();
+        Iterator<FileMetadata> iterator = filesToComputeChecksums.iterator();
         while (iterator.hasNext()) {
-            AbsoluteFileMetadata fileMetadata = iterator.next();
+            FileMetadata fileMetadata = iterator.next();
             List<String> checksumAlgorithms = configuration.getChecksumAlgorithms();
             if (fileMetadata.hasChecksums(checksumAlgorithms)) {
                 iterator.remove();
@@ -154,7 +155,7 @@ public class SnapshotApplier {
         checksumComputer.setAllFilesSize(totalFileSizeToComputeChecksums);
         checksumComputer.reset();
 
-        for (AbsoluteFileMetadata fileMetadata : filesToComputeChecksums) {
+        for (FileMetadata fileMetadata : filesToComputeChecksums) {
             File file = new File(fileMetadata.getAbsolutePath());
             Map<String, String> checksums = checksumComputer.computeChecksums(file);
             fileMetadata.addChecksums(checksums);
@@ -167,10 +168,10 @@ public class SnapshotApplier {
     public void findFilesByChecksums() throws IOException {
         LOGGER.info("Searching Files by Checksums...");
         // Comparator to find best suitable candidates by sorting a candidate List
-        Comparator<AbsoluteFileMetadata> candidateComparator = new ClosestToDestFolderComparator(destinationFolder.toString());
+        Comparator<FileMetadata> candidateComparator = new ClosestToDestFolderComparator(destinationFolder.toString());
 
         // Taking a group of Files from Snapshot with the same FileSize, Loop over All Snapshot Files
-        for (Entry<Long, List<RelativeFileMetadata>> snapshotFilesEntry : snapshotFilesMapBySize.entrySet()) {
+        for (Entry<Long, List<SnapshotFile>> snapshotFilesEntry : snapshotFilesMapBySize.entrySet()) {
             // If there is no suitable candidates on the disks for the particular FileSize, adding to NotFound and continue the loop
             if (!filesInFileDatabaseMapBySize.containsKey(snapshotFilesEntry.getKey())) {
                 snapshotFilesWithoutCandidates.addAll(snapshotFilesEntry.getValue());
@@ -178,25 +179,25 @@ public class SnapshotApplier {
             }
 
             // Splitting the Group of Snapshot Files with the same FileSize into the group(s) by Checksums
-            List<RelativeFileMetadata> snapshotFilesWithSameSize = new ArrayList<>(snapshotFilesEntry.getValue());
+            List<SnapshotFile> snapshotFilesWithSameSize = new ArrayList<>(snapshotFilesEntry.getValue());
             // List<Pair<Checksums, List<SnapshotFile>>>
-            List<Pair<Map<String, String>, List<RelativeFileMetadata>>> snapshotFilesByChecksums
+            List<Pair<RMap<String, String>, List<SnapshotFile>>> snapshotFilesByChecksums
                     = splitSnapshotFilesBySizeIntoFilesByChecksum(snapshotFilesWithSameSize);
 
             // Splitting the Group of FilesOnDisks with the same FileSize into the group(s) by Checksums
-            List<AbsoluteFileMetadata> filesOnDisksWithSameSize = new ArrayList<>(filesInFileDatabaseMapBySize.get(snapshotFilesEntry.getKey()));
+            List<FileMetadata> filesOnDisksWithSameSize = new ArrayList<>(filesInFileDatabaseMapBySize.get(snapshotFilesEntry.getKey()));
             // List<Pair<Checksums, List<FileOnDisk>>>
-            List<Pair<Map<String, String>, List<AbsoluteFileMetadata>>> filesOnDisksByChecksums
+            List<Pair<RMap<String, String>, List<FileMetadata>>> filesOnDisksByChecksums
                     = splitFilesOnDisksBySizeIntoFilesByChecksum(filesOnDisksWithSameSize);
 
             // Loop over SnapshotFilesGroups with the same Checksums
-            for (Pair<Map<String, String>, List<RelativeFileMetadata>> snapshotFilesWithSameChecksumsEntry : snapshotFilesByChecksums) {
+            for (Pair<RMap<String, String>, List<SnapshotFile>> snapshotFilesWithSameChecksumsEntry : snapshotFilesByChecksums) {
                 // Checksums Map to find a FilesOnDisksGroup
-                Map<String, String> checksums = snapshotFilesWithSameChecksumsEntry.getKey();
+                RMap<String, String> checksums = snapshotFilesWithSameChecksumsEntry.getKey();
                 // List of the Files with the same Checksums
-                List<RelativeFileMetadata> snapshotFilesWithSameChecksumsList = snapshotFilesWithSameChecksumsEntry.getValue();
+                List<SnapshotFile> snapshotFilesWithSameChecksumsList = snapshotFilesWithSameChecksumsEntry.getValue();
                 // FilesOnDisksGroup that matches the Checksums or null if there is no matching group
-                List<AbsoluteFileMetadata> filesOnDisksWithSameChecksums = findFilesOnDisksGroupByChecksum(filesOnDisksByChecksums, checksums);
+                List<FileMetadata> filesOnDisksWithSameChecksums = findFilesOnDisksGroupByChecksum(filesOnDisksByChecksums, checksums);
                 // If there is no matching group -> adding Snapshot Files to FilesWithoutCandidates and continue the loop
                 if (filesOnDisksWithSameChecksums == null) {
                     snapshotFilesWithoutCandidates.addAll(snapshotFilesWithSameChecksumsList);
@@ -205,21 +206,21 @@ public class SnapshotApplier {
 
                 // Otherwise looking for the best candidate for each Snapshot File
 
-                List<AbsoluteFileMetadata> movableFiles = filesOnDisksWithSameChecksums.stream()
+                List<FileMetadata> movableFiles = filesOnDisksWithSameChecksums.stream()
                         .filter(f -> !f.isReadOnly()).collect(Collectors.toList());
                 movableFiles.sort(candidateComparator);
 
-                List<AbsoluteFileMetadata> nonMovableFiles = filesOnDisksWithSameChecksums.stream()
+                List<FileMetadata> nonMovableFiles = filesOnDisksWithSameChecksums.stream()
                         .filter(f -> f.isReadOnly()).collect(Collectors.toList());
                 nonMovableFiles.sort(candidateComparator);
 
                 if (movableFiles.size() >= snapshotFilesWithSameChecksumsList.size()) {
                     // If we have enough Movable Files -> Adding Move Operations for all Snapshot Files and then Delete Operations for Remnant FilesOnDisks
-                    Iterator<RelativeFileMetadata> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
-                    Iterator<AbsoluteFileMetadata> movableFilesIterator = movableFiles.iterator();
+                    Iterator<SnapshotFile> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
+                    Iterator<FileMetadata> movableFilesIterator = movableFiles.iterator();
                     while (snapshotFilesIterator.hasNext()) {
-                        RelativeFileMetadata snapshotFileMetadata = snapshotFilesIterator.next();
-                        AbsoluteFileMetadata movableFileMetadata = movableFilesIterator.next();
+                        SnapshotFile snapshotFileMetadata = snapshotFilesIterator.next();
+                        FileMetadata movableFileMetadata = movableFilesIterator.next();
                         Path sourcePath = Paths.get(movableFileMetadata.getAbsolutePath());
                         Path destinationPath = destinationFolder.resolve(snapshotFileMetadata.getRelativePath());
                         FileOperation fileOperation = new MoveFileOperation(sourcePath, destinationPath);
@@ -227,7 +228,7 @@ public class SnapshotApplier {
                         fileOperations.add(fileOperation);
                     }
                     while (movableFilesIterator.hasNext()) {
-                        AbsoluteFileMetadata movableFileMetadata = movableFilesIterator.next();
+                        FileMetadata movableFileMetadata = movableFilesIterator.next();
                         Path targetPath = Paths.get(movableFileMetadata.getAbsolutePath());
                         FileOperation fileOperation = new DeleteFileOperation(targetPath, "Too many similar moveable files");
                         fileOperations.add(fileOperation);
@@ -236,10 +237,10 @@ public class SnapshotApplier {
                     // Lack of Movable Files
                     if (nonMovableFiles.isEmpty()) {
                         // Lack of Movable Files and there is no Non-Movable Files -> Copy Operations until enough Movable Files, then Move Operations
-                        Iterator<RelativeFileMetadata> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
-                        Iterator<AbsoluteFileMetadata> movableFilesIterator = movableFiles.iterator();
-                        RelativeFileMetadata snapshotFileMetadata = snapshotFilesIterator.next();
-                        AbsoluteFileMetadata movableFileMetadata = movableFilesIterator.next();
+                        Iterator<SnapshotFile> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
+                        Iterator<FileMetadata> movableFilesIterator = movableFiles.iterator();
+                        SnapshotFile snapshotFileMetadata = snapshotFilesIterator.next();
+                        FileMetadata movableFileMetadata = movableFilesIterator.next();
                         // Copy Operations
                         int lackOfMovableFiles = snapshotFilesWithSameChecksumsList.size() - movableFiles.size();
                         for (int i = 0; i < lackOfMovableFiles; i++) {
@@ -268,12 +269,12 @@ public class SnapshotApplier {
                         }
                     } else {
                         // Lack of Movable Files and there is(are) Movable File(s) -> Move Operations for all Movable Files and Copy for the first non-movable
-                        Iterator<RelativeFileMetadata> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
-                        Iterator<AbsoluteFileMetadata> movableFilesIterator = movableFiles.iterator();
+                        Iterator<SnapshotFile> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
+                        Iterator<FileMetadata> movableFilesIterator = movableFiles.iterator();
                         // Move all Movable Files first
                         while (movableFilesIterator.hasNext()) {
-                            RelativeFileMetadata snapshotFileMetadata = snapshotFilesIterator.next();
-                            AbsoluteFileMetadata movableFileMetadata = movableFilesIterator.next();
+                            SnapshotFile snapshotFileMetadata = snapshotFilesIterator.next();
+                            FileMetadata movableFileMetadata = movableFilesIterator.next();
                             Path sourcePath = Paths.get(movableFileMetadata.getAbsolutePath());
                             Path destinationPath = destinationFolder.resolve(snapshotFileMetadata.getRelativePath());
                             FileOperation fileOperation = new MoveFileOperation(sourcePath, destinationPath);
@@ -281,9 +282,9 @@ public class SnapshotApplier {
                             fileOperations.add(fileOperation);
                         }
                         // Then Copy the First Non-Movable File
-                        AbsoluteFileMetadata nonMovableFileMetadata = nonMovableFiles.get(0);
+                        FileMetadata nonMovableFileMetadata = nonMovableFiles.get(0);
                         while (snapshotFilesIterator.hasNext()) {
-                            RelativeFileMetadata snapshotFileMetadata = snapshotFilesIterator.next();
+                            SnapshotFile snapshotFileMetadata = snapshotFilesIterator.next();
                             Path sourcePath = Paths.get(nonMovableFileMetadata.getAbsolutePath());
                             Path destinationPath = destinationFolder.resolve(snapshotFileMetadata.getRelativePath());
                             FileOperation fileOperation = new CopyOperation(sourcePath, destinationPath);
@@ -293,10 +294,10 @@ public class SnapshotApplier {
                     }
                 } else {
                     // There is No Movable Files at all, but there is(are) NonMovable File(s) -> Copy Operations for the first non-movable file
-                    Iterator<RelativeFileMetadata> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
-                    AbsoluteFileMetadata nonMovableFileMetadata = nonMovableFiles.get(0);
+                    Iterator<SnapshotFile> snapshotFilesIterator = snapshotFilesWithSameChecksumsList.iterator();
+                    FileMetadata nonMovableFileMetadata = nonMovableFiles.get(0);
                     while (snapshotFilesIterator.hasNext()) {
-                        RelativeFileMetadata snapshotFileMetadata = snapshotFilesIterator.next();
+                        SnapshotFile snapshotFileMetadata = snapshotFilesIterator.next();
                         Path sourcePath = Paths.get(nonMovableFileMetadata.getAbsolutePath());
                         Path destinationPath = destinationFolder.resolve(snapshotFileMetadata.getRelativePath());
                         FileOperation fileOperation = new CopyOperation(sourcePath, destinationPath);
@@ -308,27 +309,27 @@ public class SnapshotApplier {
         }
     }
 
-    private List<Pair<Map<String, String>, List<RelativeFileMetadata>>> splitSnapshotFilesBySizeIntoFilesByChecksum(
-            List<RelativeFileMetadata> snapshotFilesWithSameSize) {
-        List<Pair<Map<String, String>, List<RelativeFileMetadata>>> snapshotFilesByChecksums = new ArrayList<>();
+    private List<Pair<RMap<String, String>, List<SnapshotFile>>> splitSnapshotFilesBySizeIntoFilesByChecksum(
+            List<SnapshotFile> snapshotFilesWithSameSize) {
+        List<Pair<RMap<String, String>, List<SnapshotFile>>> snapshotFilesByChecksums = new ArrayList<>();
 
         while (snapshotFilesWithSameSize.size() > 0) {
             // Iterator to remove files which have matches in order to split files into the groups
-            Iterator<RelativeFileMetadata> iterator = snapshotFilesWithSameSize.iterator();
+            Iterator<SnapshotFile> iterator = snapshotFilesWithSameSize.iterator();
             // First FileMetadata to make a group
-            RelativeFileMetadata snapshotFileMetadata = iterator.next();
+            SnapshotFile snapshotFileMetadata = iterator.next();
             iterator.remove();
             // List where FileMetadata with the same Checksums will be added
-            List<RelativeFileMetadata> snapshotFilesWithSameChecksum = new ArrayList<>();
+            List<SnapshotFile> snapshotFilesWithSameChecksum = new ArrayList<>();
             snapshotFilesWithSameChecksum.add(snapshotFileMetadata);
             // A Structure like Pair<Checksums, List<SnapshotFiles>>
-            Pair<Map<String, String>, List<RelativeFileMetadata>> snapshotFilesChecksumEntry
+            Pair<RMap<String, String>, List<SnapshotFile>> snapshotFilesChecksumEntry
                     = new Pair<>(snapshotFileMetadata.getChecksums(), snapshotFilesWithSameChecksum);
             snapshotFilesByChecksums.add(snapshotFilesChecksumEntry);
 
             // Looking for the Files with same Checksums among the Files with same FileSize
             while (iterator.hasNext()) {
-                RelativeFileMetadata candidate = iterator.next();
+                SnapshotFile candidate = iterator.next();
                 if (candidate.equalsByChecksum(snapshotFileMetadata)) {
                     snapshotFilesWithSameChecksum.add(candidate);
                     iterator.remove();
@@ -338,27 +339,27 @@ public class SnapshotApplier {
         return snapshotFilesByChecksums;
     }
 
-    private List<Pair<Map<String, String>, List<AbsoluteFileMetadata>>> splitFilesOnDisksBySizeIntoFilesByChecksum(
-            List<AbsoluteFileMetadata> filesOnDisksWithSameSize) {
-        List<Pair<Map<String, String>, List<AbsoluteFileMetadata>>> filesOnDisksByChecksums = new ArrayList<>();
+    private List<Pair<RMap<String, String>, List<FileMetadata>>> splitFilesOnDisksBySizeIntoFilesByChecksum(
+            List<FileMetadata> filesOnDisksWithSameSize) {
+        List<Pair<RMap<String, String>, List<FileMetadata>>> filesOnDisksByChecksums = new ArrayList<>();
 
         while (filesOnDisksWithSameSize.size() > 0) {
             // Iterator to remove files which have matches in order to split files into the groups
-            Iterator<AbsoluteFileMetadata> iterator = filesOnDisksWithSameSize.iterator();
+            Iterator<FileMetadata> iterator = filesOnDisksWithSameSize.iterator();
             // First FileMetadata to make a group
-            AbsoluteFileMetadata fileOnDiskMetadata = iterator.next();
+            FileMetadata fileOnDiskMetadata = iterator.next();
             iterator.remove();
             // List where FileMetadata with the same Checksums will be added
-            List<AbsoluteFileMetadata> filesOnDisksWithSameChecksum = new ArrayList<>();
+            List<FileMetadata> filesOnDisksWithSameChecksum = new ArrayList<>();
             filesOnDisksWithSameChecksum.add(fileOnDiskMetadata);
             // A Structure like Pair<Checksums, List<FileOnDisk>>
-            Pair<Map<String, String>, List<AbsoluteFileMetadata>> filesOnDisksChecksumEntry
+            Pair<RMap<String, String>, List<FileMetadata>> filesOnDisksChecksumEntry
                     = new Pair<>(fileOnDiskMetadata.getChecksums(), filesOnDisksWithSameChecksum);
             filesOnDisksByChecksums.add(filesOnDisksChecksumEntry);
 
             // Looking for the Files with same Checksums among the Files with same FileSize
             while (iterator.hasNext()) {
-                AbsoluteFileMetadata candidate = iterator.next();
+                FileMetadata candidate = iterator.next();
                 if (candidate.equalsByChecksum(fileOnDiskMetadata)) {
                     filesOnDisksWithSameChecksum.add(candidate);
                     iterator.remove();
@@ -368,9 +369,9 @@ public class SnapshotApplier {
         return filesOnDisksByChecksums;
     }
 
-    private List<AbsoluteFileMetadata> findFilesOnDisksGroupByChecksum(
-            List<Pair<Map<String, String>, List<AbsoluteFileMetadata>>> filesOnDisksByChecksums, Map<String, String> checksums) {
-        for (Pair<Map<String, String>, List<AbsoluteFileMetadata>> filesOnDisksEntry : filesOnDisksByChecksums) {
+    private List<FileMetadata> findFilesOnDisksGroupByChecksum(
+            List<Pair<RMap<String, String>, List<FileMetadata>>> filesOnDisksByChecksums, RMap<String, String> checksums) {
+        for (Pair<RMap<String, String>, List<FileMetadata>> filesOnDisksEntry : filesOnDisksByChecksums) {
             if (filesOnDisksEntry.getValue().get(0).equalsByChecksum(checksums)) {
                 return filesOnDisksEntry.getValue();
             }
@@ -388,7 +389,7 @@ public class SnapshotApplier {
         Level logLevel = snapshotFilesWithoutCandidates.isEmpty() ? Level.INFO : Level.ERROR;
         LOGGER.log(logLevel, "The following files were NOT found: "
                 + snapshotFilesWithoutCandidates.size() + " file(s), "
-                + " total size: " + FormattingUtils.humanReadableSize(filesNotFoundTotalSize)
+                + " total size: " + FormattingUtils.humanReadableSizeBi(filesNotFoundTotalSize)
                 + "\n" + filesNotFoundAsString);
     }
 
@@ -417,19 +418,19 @@ public class SnapshotApplier {
         totalCopySize = fileOperations.stream()
                 .mapToLong(o -> o.getCopyDataSize())
                 .sum();
-        sb.append("Total Real Data Copy Size: ").append(FormattingUtils.humanReadableSize(totalCopySize)).append("\n");
+        sb.append("Total Real Data Copy Size: ").append(FormattingUtils.humanReadableSizeBi(totalCopySize)).append("\n");
 
         long totalMoveSize = fileOperations.stream()
                 .filter(o -> (o instanceof MoveFileOperation))
                 .mapToLong(o -> o.getFileSize())
                 .sum();
-        sb.append("Total Move Size: ").append(FormattingUtils.humanReadableSize(totalMoveSize)).append("\n");
+        sb.append("Total Move Size: ").append(FormattingUtils.humanReadableSizeBi(totalMoveSize)).append("\n");
 
         long totalDeleteSize = fileOperations.stream()
                 .filter(o -> (o instanceof DeleteFileOperation))
                 .mapToLong(o -> o.getFileSize())
                 .sum();
-        sb.append("Total Delete Size: ").append(FormattingUtils.humanReadableSize(totalDeleteSize)).append("\n");
+        sb.append("Total Delete Size: ").append(FormattingUtils.humanReadableSizeBi(totalDeleteSize)).append("\n");
 
         sb.append("Do you confirm the operations (yes/no)? ");
         LOGGER.info("User Confirmation text:\n" + sb.toString());
@@ -471,10 +472,10 @@ public class SnapshotApplier {
         List<String> checksumAlgorithms = configuration.getChecksumAlgorithms();
 
         // Checking Snapshot against Destination Folder to be sure that all files has been delivered
-        for (RelativeFileMetadata fileInSnapshot : snapshot.getFilesMap().values()) {
+        for (SnapshotFile fileInSnapshot : snapshot.getFilesMap().values()) {
             Path absoluteFilePath = destinationFolder.resolve(fileInSnapshot.getRelativePath());
             fileDatabase.updateEntryFromDisk(absoluteFilePath, false);
-            AbsoluteFileMetadata fileInFileDatabase = fileDatabase.getFileMetadataByAbsolutePath(absoluteFilePath.toString());
+            FileMetadata fileInFileDatabase = fileDatabase.getFileMetadataByAbsolutePath(absoluteFilePath.toString());
             if (fileInFileDatabase == null) {
                 missingFiles.add(fileInSnapshot);
                 continue;
@@ -499,16 +500,16 @@ public class SnapshotApplier {
                 .sum();
         checksumComputer.setAllFilesSize(computeChecksumSize);
         // Computing Checksums
-        for (AbsoluteFileMetadata fileMetadata : filesToComputeChecksums) {
+        for (FileMetadata fileMetadata : filesToComputeChecksums) {
             File file = new File(fileMetadata.getAbsolutePath());
             Map<String, String> checksums = checksumComputer.computeChecksums(file);
             fileMetadata.addChecksums(checksums);
         }
 
         // Comparing Checksums
-        for (RelativeFileMetadata fileInSnapshot : snapshot.getFilesMap().values()) {
+        for (SnapshotFile fileInSnapshot : snapshot.getFilesMap().values()) {
             Path absoluteFilePath = destinationFolder.resolve(fileInSnapshot.getRelativePath());
-            AbsoluteFileMetadata fileInFileDatabase = fileDatabase.getFileMetadataByAbsolutePath(absoluteFilePath.toString());
+            FileMetadata fileInFileDatabase = fileDatabase.getFileMetadataByAbsolutePath(absoluteFilePath.toString());
             if (!fileInSnapshot.equalsByChecksum(fileInFileDatabase)) {
                 filesNotMatchedByChecksum.add(new Pair<>(fileInSnapshot, fileInFileDatabase));
                 continue;
@@ -521,7 +522,7 @@ public class SnapshotApplier {
             Path fileOnDisk = destinationFolderIterator.next();
             Path fileOnDiskRelativePath = destinationFolder.relativize(fileOnDisk);
             if (!snapshot.getFilesMap().containsKey(fileOnDiskRelativePath.toString())) {
-                AbsoluteFileMetadata fileMetadata = new AbsoluteFileMetadata(fileOnDisk);
+                FileMetadata fileMetadata = new FileMetadata(fileOnDisk);
                 redundantFilesInDestinationFolder.add(new Pair<>(null, fileMetadata));
             }
         }
@@ -534,7 +535,7 @@ public class SnapshotApplier {
         cleanupDestinationFolder("ChecksumMismatch", filesNotMatchedByChecksum);
     }
 
-    private void cleanupDestinationFolder(String errorType, List<Pair<RelativeFileMetadata, AbsoluteFileMetadata>> files) throws IOException {
+    private void cleanupDestinationFolder(String errorType, List<Pair<SnapshotFile, FileMetadata>> files) throws IOException {
         if (files.isEmpty()) {
             return;
         }
@@ -544,8 +545,8 @@ public class SnapshotApplier {
                 .sum();
 
         StringBuilder fileListStringBuilder = new StringBuilder();
-        for (Pair<RelativeFileMetadata, AbsoluteFileMetadata> pair : files) {
-            AbsoluteFileMetadata absoluteFileMetadata = pair.getValue();
+        for (Pair<SnapshotFile, FileMetadata> pair : files) {
+            FileMetadata absoluteFileMetadata = pair.getValue();
             Path fileAbsolutePath = Paths.get(absoluteFileMetadata.getAbsolutePath());
             Path fileRelativePath = destinationFolder.relativize(fileAbsolutePath);
             fileListStringBuilder.append("\t" + fileRelativePath.toString() + ":\n");
@@ -557,7 +558,7 @@ public class SnapshotApplier {
         confirmationMessage.append("Destination Folder Cleanup, found " + errorType + " file(s):\n");
         confirmationMessage.append(fileListStringBuilder);
         confirmationMessage.append("Total File Size to Delete: ")
-                .append(FormattingUtils.humanReadableSize(totalFileSizeToDelete)).append("b\n");
+                .append(FormattingUtils.humanReadableSizeBi(totalFileSizeToDelete)).append("b\n");
         confirmationMessage.append("Actually, this should never happen, so investigation of this situation is recommended.").append("\n");
         confirmationMessage.append("Would you like to DELETE these files (yes/no)? ");
 
@@ -567,8 +568,8 @@ public class SnapshotApplier {
             return;
         }
 
-        for (Pair<RelativeFileMetadata, AbsoluteFileMetadata> pair : files) {
-            AbsoluteFileMetadata absoluteFileMetadata = pair.getValue();
+        for (Pair<SnapshotFile, FileMetadata> pair : files) {
+            FileMetadata absoluteFileMetadata = pair.getValue();
             Path fileAbsolutePath = Paths.get(absoluteFileMetadata.getAbsolutePath());
             LOGGER.info("Deleting " + errorType + " file: " + fileAbsolutePath.toString());
             PathUtils.deleteFile(fileAbsolutePath);

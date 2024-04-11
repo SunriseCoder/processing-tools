@@ -15,11 +15,12 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import app.pattern.listener.ChangedListener;
 import app.utils.FileUtils;
 import app.utils.JSONUtils;
 import app.utils.PathUtils;
 
-public abstract class JsonSaveable {
+public abstract class JsonSaveable implements ChangedListener {
     private static final Logger LOGGER = LogManager.getLogger(JsonSaveable.class);
 
     @JsonIgnore
@@ -61,6 +62,11 @@ public abstract class JsonSaveable {
 
     public void setMinimalSaveIntervalInMS(long minimalSaveIntervalInMS) {
         this.minimalSaveIntervalInMS = minimalSaveIntervalInMS;
+    }
+
+    @Override
+    public void fireChanged() {
+        setChanged();
     }
 
     public void setChanged() {

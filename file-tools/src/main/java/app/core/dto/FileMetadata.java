@@ -5,7 +5,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,65 +18,71 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import app.collection.RMap;
+import app.collection.RMapEntry;
+import app.collection.wrap.RMapWrap;
 import app.json.serial.FileTimeJsonDeserializer;
 import app.json.serial.FileTimeJsonSerializer;
 
-public class RelativeFileMetadata {
-    private static final Logger LOGGER = LogManager.getLogger(RelativeFileMetadata.class);
+// TODO Implement Listener Pattern
+public class FileMetadata {
+    private static final Logger LOGGER = LogManager.getLogger(FileMetadata.class);
 
     private String name;
-    private String relativePath;
+    private String absolutePath;
     private long size;
-    private Map<String, String> checksums;
 
     @JsonSerialize(using = FileTimeJsonSerializer.class)
     @JsonDeserialize(using = FileTimeJsonDeserializer.class)
     private FileTime lastModifiedTime;
 
+    private Map<String, String> checksums;
+
+    // TODO Try to remove this field
     @JsonIgnore
     private boolean existsOnDiskNow;
+    // TODO Try to remove this field
+    @JsonIgnore
+    private boolean readOnly;
 
-    private Status status;
-    private List<String> statusMessages;
+    // TODO Remove this field, replace with Listener pattern
+    @JsonIgnore
+    private FileDatabase fileDatabase;
 
-    public RelativeFileMetadata() {
+    public FileMetadata() {
         checksums = new HashMap<>();
-        statusMessages = new ArrayList<>();
     }
 
-    public RelativeFileMetadata(Path path, Path startPath) {
+    public FileMetadata(Path path) throws IOException {
         this();
+        name = path.getFileName().toString();
+        absolutePath = path.toAbsolutePath().toString();
 
-        try {
-            name = path.getFileName().toString();
-            relativePath = startPath.relativize(path).toString();
+        // TODO Use NoFollowLinks in readAttributes or better to move to PathUtils
+        BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
+        size = attributes.size();
 
-            BasicFileAttributes attributes = Files.readAttributes(path, BasicFileAttributes.class);
-            size = attributes.size();
-
-            lastModifiedTime = attributes.lastModifiedTime();
-            status = Status.Ok;
-        } catch (IOException e) {
-            statusMessages.add(e.getMessage() + ": " + path.toString());
-            status = Status.ReadMetadataError;
-            LOGGER.error("Error due to create " + getClass().getName() + ": " + path.toString(), e);
-        }
+        lastModifiedTime = attributes.lastModifiedTime();
     }
 
     public String getName() {
         return name;
     }
 
-    public String getRelativePath() {
-        return relativePath;
+    public String getAbsolutePath() {
+        return absolutePath;
     }
 
     public long getSize() {
         return size;
     }
 
-    public Map<String, String> getChecksums() {
-        return checksums;
+    public FileTime getLastModifiedTime() {
+        return lastModifiedTime;
+    }
+
+    public RMap<String, String> getChecksums() {
+        return new RMapWrap<>(checksums);
     }
 
     @JsonIgnore
@@ -93,8 +98,72 @@ public class RelativeFileMetadata {
         this.existsOnDiskNow = existsOnDiskNow;
     }
 
-    // TODO Revise all the equalsXXX methods
-    public boolean equalsByMetadata(RelativeFileMetadata other) {
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+    }
+
+    public void setFileDatabase(FileDatabase fileDatabase) {
+        this.fileDatabase = fileDatabase;
+    }
+
+    // TODO Move equalsByXXX Methods to Util class
+    public boolean equalsByChecksum(FileMetadata other) {
+        if (other == null) {
+            LOGGER.trace("equalsByChecksum of " + this + " against " + other + " is false due to other == null");
+            return false;
+        }
+
+        boolean result = equalsByChecksum(other.getChecksums());
+        return result;
+    }
+
+    public boolean equalsByChecksum(SnapshotFile other) {
+        if (other == null) {
+            LOGGER.trace("equalsByChecksum of " + this + " against " + other + " is false due to other == null");
+            return false;
+        }
+
+        boolean result = equalsByChecksum(other.getChecksums());
+        return result;
+    }
+
+    public boolean equalsByChecksum(RMap<String, String> otherChecksums) {
+        if ((checksums == null || checksums.isEmpty()) && (otherChecksums == null || otherChecksums.isEmpty())) {
+            LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums
+                    + " is false due to (this or other).checksums == (null or isEmpty)");
+            return false;
+        }
+
+        for (Entry<String, String> thisChecksumEntry : checksums.entrySet()) {
+            if (thisChecksumEntry.getValue() == null || thisChecksumEntry.getValue().isEmpty()
+                    || !thisChecksumEntry.getValue().equals(otherChecksums.get(thisChecksumEntry.getKey()))) {
+                LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums
+                        + " is false due to this.checksums[" + thisChecksumEntry.getKey() + "].value is null or empty"
+                        + " or not equals to others.checksums[" + thisChecksumEntry.getKey() + "].value");
+                return false;
+            }
+        }
+
+        for (RMapEntry<String, String> otherChecksumEntry : otherChecksums.entryRSet()) {
+            if (otherChecksumEntry.getValue() == null || otherChecksumEntry.getValue().isEmpty()
+                    || !otherChecksumEntry.getValue().equals(checksums.get(otherChecksumEntry.getKey()))) {
+                LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums
+                        + " is false due to other.checksums[" + otherChecksumEntry.getKey() + "].value is null or empty"
+                        + " or not equals to this.checksums[" + otherChecksumEntry.getKey() + "].value");
+                return false;
+            }
+        }
+
+        LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums + " is true");
+        return true;
+    }
+
+    // TODO Review where this method is used and revise, maybe some of those methods should NOT use it
+    public boolean equalsByMetadata(FileMetadata other) {
         boolean result = other != null && size == other.size && lastModifiedTime.equals(other.lastModifiedTime);
         if (!result && LOGGER.getLevel().isMoreSpecificThan(Level.TRACE)) {
             StringBuilder sb = new StringBuilder();
@@ -106,78 +175,14 @@ public class RelativeFileMetadata {
         return result;
     }
 
-    public boolean equalsByMetadata(AbsoluteFileMetadata other) {
-        boolean result = other != null && size == other.getSize() && lastModifiedTime.equals(other.getLastModifiedTime());
-        if (!result && LOGGER.getLevel().isMoreSpecificThan(Level.TRACE)) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Method equalsByMetadata considered following objects are non-equals: ")
-                    .append("This: " + this)
-                    .append("Other: " + (other == null ? "null" : other));
-            LOGGER.trace(sb.toString());
-        }
-        return result;
-    }
-
-    public boolean equalsByChecksum(RelativeFileMetadata other) {
-        if (other == null) {
-            LOGGER.trace("equalsByChecksum of " + this + " against " + other + " is false due to other == null");
-            return false;
-        }
-
-        boolean result = equalsByChecksum(other.getChecksums());
-        return result;
-    }
-
-    public boolean equalsByChecksum(AbsoluteFileMetadata other) {
-        if (other == null) {
-            LOGGER.trace("equalsByChecksum of " + this + " against " + other + " is false due to other == null");
-            return false;
-        }
-
-        boolean result = equalsByChecksum(other.getChecksums());
-        return result;
-    }
-
-    private boolean equalsByChecksum(Map<String, String> otherChecksums) {
-        // Checking that Both Checksums are not Empty
-        if ((checksums == null || checksums.isEmpty()) && (otherChecksums == null || otherChecksums.isEmpty())) {
-            LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums
-                    + " is false due to (this or other).checksums == (null or isEmpty)");
-            return false;
-        }
-
-        // Loop over this.checksums against other.checksums
-        for (Entry<String, String> thisChecksumEntry : checksums.entrySet()) {
-            if (thisChecksumEntry.getValue() == null || thisChecksumEntry.getValue().isEmpty()
-                    || !thisChecksumEntry.getValue().equals(otherChecksums.get(thisChecksumEntry.getKey()))) {
-                LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums
-                        + " is false due to this.checksums[i].value is null or empty or not equals to others.checksums[i].value");
-                return false;
-            }
-        }
-
-        // Loop over other.checksums against this.checksums
-        for (Entry<String, String> otherChecksumEntry : otherChecksums.entrySet()) {
-            if (otherChecksumEntry.getValue() == null || otherChecksumEntry.getValue().isEmpty()
-                    || !otherChecksumEntry.getValue().equals(checksums.get(otherChecksumEntry.getKey()))) {
-                LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums
-                        + " is false due to other.checksums[i].value is null or empty or not equals to this.checksums[i].value");
-                return false;
-            }
-        }
-
-        LOGGER.trace("equalsByChecksum of " + checksums + " against " + otherChecksums + " is true");
-        return true;
-    }
-
     public String toStringShort() {
-        return "[relativePath=" + relativePath + ",size=" + size + ",lastModifiedTime=" + lastModifiedTime + "]";
+        return "[absolutePath=" + absolutePath + ",size=" + size + ",lastModifiedTime=" + lastModifiedTime + "]";
     }
 
     @Override
     public String toString() {
         return this.getClass().getName() + "[name=" + name
-                + ",relativePath=" + relativePath
+                + ",absolutePath=" + absolutePath
                 + ",size=" + size
                 + ",lastModifiedTime=" + lastModifiedTime
                 + ",checksums=" + checksums
@@ -195,27 +200,16 @@ public class RelativeFileMetadata {
     }
 
     public void addChecksum(String algorithm, String checksum) {
-        checksums.put(algorithm, checksum);
+        this.checksums.put(algorithm, checksum);
+        setChanged();
     }
 
-    public void addAllChecksums(Map<String, String> checksums) {
+    public void addChecksums(Map<String, String> checksums) {
         this.checksums.putAll(checksums);
+        setChanged();
     }
 
-    public Status getStatus() {
-        return status;
-    }
-
-    public List<String> getStatusMessages() {
-        return statusMessages;
-    }
-
-    public void setReadContentError(String errorMessage) {
-        statusMessages.add(errorMessage);
-        status = Status.ReadContentError;
-    }
-
-    public static enum Status {
-        Ok, ReadMetadataError, ReadContentError
+    private void setChanged() {
+        fileDatabase.setChanged();
     }
 }

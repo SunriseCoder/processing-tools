@@ -8,12 +8,12 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import app.core.dto.AbsoluteFileMetadata;
+import app.core.dto.FileMetadata;
 import app.core.dto.FileDatabase;
 import app.core.dto.FileFolder;
 import app.files.PathIterator;
 
-// TODO Merge this class into FileDatabase class
+// TODO Merge this class into FileDatabase class or where it is used...
 //      (look at the methods, possibly this mechanism is already implemented there)
 public class FileDatabaseUpdater {
     private static final Logger LOGGER = LogManager.getLogger(FileDatabaseUpdater.class);
@@ -41,7 +41,7 @@ public class FileDatabaseUpdater {
 
         // Marking existing files in the FileDatabase as they potentially does not exist on disk anymore
         // Later all existing files will be whitelisted during Scan phase
-        for (AbsoluteFileMetadata fileMetadata : fileDatabase.getFiles().values()) {
+        for (FileMetadata fileMetadata : fileDatabase.getFiles().values()) {
             fileMetadata.setExistsOnDiskNow(false);
         }
 

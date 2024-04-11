@@ -16,8 +16,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import app.checksum.ChecksumComputer;
 import app.core.dto.Configuration;
-import app.core.dto.FolderSnapshot;
-import app.core.dto.RelativeFileMetadata;
+import app.core.dto.Snapshot;
+import app.core.dto.SnapshotFile;
 import app.files.PathIterator;
 import app.utils.FormattingUtils;
 import app.utils.JSONUtils;
@@ -33,14 +33,14 @@ public class SnapshotMaker {
         this.configuration = configuration;
     }
 
-    public FolderSnapshot makeSnapshot(Path snapshotFolder) throws IOException, NoSuchAlgorithmException {
-        FolderSnapshot snapshot = loadOrCreateSnapshot(snapshotFolder);
+    public Snapshot makeSnapshot(Path snapshotFolder) throws IOException, NoSuchAlgorithmException {
+        Snapshot snapshot = loadOrCreateSnapshot(snapshotFolder);
         PathIterator iterator = scanFilesOnDisk(snapshotFolder, snapshot);
         computeChecksums(snapshotFolder, snapshot, iterator);
         return snapshot;
     }
 
-    private FolderSnapshot loadOrCreateSnapshot(Path folder) throws IOException {
+    private Snapshot loadOrCreateSnapshot(Path folder) throws IOException {
         String snapshotName = folder.getFileName().toString();
 
         String snapshotIncompleteFilename = snapshotName + "-INCOMPLETE-snapshot.json";
@@ -51,7 +51,7 @@ public class SnapshotMaker {
         File snapshotCompleteFile = new File(snapshotCompleteFilename).getAbsoluteFile();
         boolean completeFileExists = snapshotCompleteFile.exists();
 
-        FolderSnapshot snapshot;
+        Snapshot snapshot;
         if (completeFileExists) {
             // Load Existing Snapshot from Complete Snapshot File
             snapshot = loadSnapshot(snapshotName, snapshotCompleteFile);
@@ -65,7 +65,7 @@ public class SnapshotMaker {
         } else {
             // Create New Snapshot
             LOGGER.info("Creating new snapshot: " + snapshotName);
-            snapshot = new FolderSnapshot();
+            snapshot = new Snapshot();
             snapshot.setName(snapshotName);
         }
 
@@ -77,18 +77,18 @@ public class SnapshotMaker {
     }
 
     // TODO Move to FolderSnapshot class as a static method
-    private FolderSnapshot loadSnapshot(String snapshotName, File snapshotFile) throws IOException {
+    private Snapshot loadSnapshot(String snapshotName, File snapshotFile) throws IOException {
         LOGGER.info("Loading existing snapshot \"" + snapshotName + "\" from " + snapshotFile.getAbsolutePath());
-        TypeReference<FolderSnapshot> typeReference = new TypeReference<FolderSnapshot>() {};
-        FolderSnapshot snapshot = JSONUtils.loadFromDisk(snapshotFile, typeReference);
+        TypeReference<Snapshot> typeReference = new TypeReference<Snapshot>() {};
+        Snapshot snapshot = JSONUtils.loadFromDisk(snapshotFile, typeReference);
         LOGGER.info("Snapshot has been loaded successfully");
         return snapshot;
     }
 
-    private PathIterator scanFilesOnDisk(Path snapshotFolder, FolderSnapshot snapshot) throws IOException {
+    private PathIterator scanFilesOnDisk(Path snapshotFolder, Snapshot snapshot) throws IOException {
         // Marking existing files in the Snapshot as they potentially does not exist on disk anymore
         // Later all existing files will be whitelisted during Scan phase
-        for (RelativeFileMetadata fileMetadata : snapshot.getFilesMap().values()) {
+        for (SnapshotFile fileMetadata : snapshot.getFilesMap().values()) {
             fileMetadata.setExistsOnDiskNow(false);
         }
 
@@ -111,9 +111,9 @@ public class SnapshotMaker {
             }
 
             // If File not in the Snapshot yet or the File is outdated, adding it into the Snapshot
-            RelativeFileMetadata newFileMetadata = new RelativeFileMetadata(currentFile, snapshotFolder);
+            SnapshotFile newFileMetadata = new SnapshotFile(currentFile, snapshotFolder);
             newFileMetadata.setExistsOnDiskNow(true);
-            RelativeFileMetadata existingFileMetadata = snapshot.getFileMetadata(newFileMetadata.getRelativePath());
+            SnapshotFile existingFileMetadata = snapshot.getFileMetadata(newFileMetadata.getRelativePath());
             if (existingFileMetadata == null) {
                 LOGGER.debug("Adding as a new file to the Snapshot");
                 // Adding a new file to the Snapshot
@@ -134,18 +134,18 @@ public class SnapshotMaker {
         return iterator;
     }
 
-    private void computeChecksums(Path snapshotFolder, FolderSnapshot snapshot, PathIterator iterator) throws NoSuchAlgorithmException, IOException {
+    private void computeChecksums(Path snapshotFolder, Snapshot snapshot, PathIterator iterator) throws NoSuchAlgorithmException, IOException {
         // Filtering Files to Compute Checksums
         List<String> checksumAlgorithms = configuration.getChecksumAlgorithms();
 
         LOGGER.info("Computing Checksums "
                 + String.join(", ", checksumAlgorithms)
                 + " for the files for the snapshot...");
-        List<RelativeFileMetadata> filesToComputeChecksums = new ArrayList<>();
+        List<SnapshotFile> filesToComputeChecksums = new ArrayList<>();
         long totalFileSizeToComputeChecksums = 0;
-        Iterator<RelativeFileMetadata> fileMetadataIterator = snapshot.getFilesMap().values().iterator();
+        Iterator<SnapshotFile> fileMetadataIterator = snapshot.getFilesMap().values().iterator();
         while (fileMetadataIterator.hasNext()) {
-            RelativeFileMetadata fileMetadata = fileMetadataIterator.next();
+            SnapshotFile fileMetadata = fileMetadataIterator.next();
             // If a file was not whitelisted during folder scan, removing it from the Snapshot
             if (!fileMetadata.isExistsOnDiskNow()) {
                 iterator.remove();
@@ -160,14 +160,14 @@ public class SnapshotMaker {
         ChecksumComputer checksumComputer = new ChecksumComputer(checksumAlgorithms);
         checksumComputer.setAllFilesSize(totalFileSizeToComputeChecksums);
         checksumComputer.reset();
-        for (RelativeFileMetadata fileMetadata : filesToComputeChecksums) {
-            if (fileMetadata.getStatus() != RelativeFileMetadata.Status.Ok) {
+        for (SnapshotFile fileMetadata : filesToComputeChecksums) {
+            if (fileMetadata.getStatus() != SnapshotFile.Status.Ok) {
                 LOGGER.info("Status of FileMetadata is NOT Ok, skipping Checksum Computing for this file...");
                 continue;
             }
 
             LOGGER.info("Computing Checksums for file: " + fileMetadata.getRelativePath()
-                    + " (" + FormattingUtils.humanReadableSize(fileMetadata.getSize()) + "b)...");
+                    + " (" + FormattingUtils.humanReadableSizeBi(fileMetadata.getSize()) + "b)...");
 
             // Checking actual file size
             File file = new File(snapshotFolder.toFile(), fileMetadata.getRelativePath());

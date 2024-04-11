@@ -19,14 +19,18 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import app.checksum.ChecksumComputer;
+import app.collection.RMap;
+import app.collection.wrap.RMapWrap;
 import app.json.JsonSaveable;
 
+// TODO Implement pattern Listener
+// TODO Replace all Getters of Collections with ReadOnly Collections
 public class FileDatabase extends JsonSaveable {
     @JsonIgnore
     private static final Logger LOGGER = LogManager.getLogger(FileDatabase.class);
 
     @JsonProperty
-    private Map<String, AbsoluteFileMetadata> files;
+    private Map<String, FileMetadata> files;
 
     @JsonIgnore
     private ChecksumComputer checksumComputer;
@@ -38,20 +42,20 @@ public class FileDatabase extends JsonSaveable {
     }
 
     @JsonIgnore
-    public Map<String, AbsoluteFileMetadata> getFiles() {
+    public Map<String, FileMetadata> getFiles() {
         return files;
     }
 
-    public void addFileMetadata(AbsoluteFileMetadata fileMetadata) {
-        fileMetadata.setFileDatabase(this);
-        AbsoluteFileMetadata oldFileMetadata = files.put(fileMetadata.getAbsolutePath(), fileMetadata);
+    public void addFileMetadata(FileMetadata fileMetadata) {
+        fileMetadata.setFileDatabase(this); // TODO Remove this line after implementing Listener pattern
+        FileMetadata oldFileMetadata = files.put(fileMetadata.getAbsolutePath(), fileMetadata);
         if (oldFileMetadata != fileMetadata) {
             setChanged();
         }
     }
 
     @JsonIgnore
-    public AbsoluteFileMetadata getFileMetadataByAbsolutePath(String absolutePath) {
+    public FileMetadata getFileMetadataByAbsolutePath(String absolutePath) {
         return files.get(absolutePath);
     }
 
@@ -64,7 +68,7 @@ public class FileDatabase extends JsonSaveable {
     }
 
     public void computeChecksumsIfNotComputedYet(String fileAbsolutePath) throws IOException {
-        AbsoluteFileMetadata fileMetadata = files.get(fileAbsolutePath);
+        FileMetadata fileMetadata = files.get(fileAbsolutePath);
         File file = new File(fileAbsolutePath);
 
         // If Physical File doesn't exist or it is not a file - deleting Entry from the FileDatabase and return
@@ -79,14 +83,14 @@ public class FileDatabase extends JsonSaveable {
         if (fileMetadata != null && file.exists() && file.isFile()) {
             BasicFileAttributes attributes = Files.readAttributes(Paths.get(fileAbsolutePath), BasicFileAttributes.class);
             if (fileMetadata.getSize() != attributes.size() || !fileMetadata.getLastModified().equals(attributes.lastModifiedTime())) {
-                fileMetadata = new AbsoluteFileMetadata(Paths.get(fileAbsolutePath));
+                fileMetadata = new FileMetadata(Paths.get(fileAbsolutePath));
                 files.put(fileAbsolutePath, fileMetadata);
             }
         }
 
         // If file not in the FileDatabase yet, but exists on the disk and is a File, adding it to the FileDatabase
         if (fileMetadata == null && file.exists() && file.isFile()) {
-            fileMetadata = new AbsoluteFileMetadata(Paths.get(fileAbsolutePath));
+            fileMetadata = new FileMetadata(Paths.get(fileAbsolutePath));
             files.put(fileAbsolutePath, fileMetadata);
         }
 
@@ -100,12 +104,12 @@ public class FileDatabase extends JsonSaveable {
         }
     }
 
-    public void remove(AbsoluteFileMetadata absoluteFileMetadata) {
+    public void remove(FileMetadata absoluteFileMetadata) {
         remove(absoluteFileMetadata.getAbsolutePath());
     }
 
     public void remove(String absolutePath) {
-        AbsoluteFileMetadata oldValue = files.remove(absolutePath);
+        FileMetadata oldValue = files.remove(absolutePath);
         if (oldValue != null) {
             setChanged();
         }
@@ -119,14 +123,14 @@ public class FileDatabase extends JsonSaveable {
         }
 
         // Otherwise updating the record if needed
-        AbsoluteFileMetadata newFileMetadata = new AbsoluteFileMetadata(absolutePath);
+        FileMetadata newFileMetadata = new FileMetadata(absolutePath);
         newFileMetadata.setExistsOnDiskNow(true);
         newFileMetadata.setReadOnly(readOnly);
         updateEntryIfOutdated(newFileMetadata);
     }
 
-    public void updateEntryIfOutdated(AbsoluteFileMetadata newFileMetadata) {
-        AbsoluteFileMetadata existingFileMetadata = getFileMetadataByAbsolutePath(newFileMetadata.getAbsolutePath());
+    public void updateEntryIfOutdated(FileMetadata newFileMetadata) {
+        FileMetadata existingFileMetadata = getFileMetadataByAbsolutePath(newFileMetadata.getAbsolutePath());
         if (existingFileMetadata == null) {
             LOGGER.debug("Adding as a new file to the FileDatabase");
             // Adding a new file to the FileDatabase
@@ -150,10 +154,10 @@ public class FileDatabase extends JsonSaveable {
     public void removeEntriesForFilesDeletedFomDisk() throws IOException {
         LOGGER.info("Starting to Remove Old Deleted Files from the FileDatabase...");
 
-        Iterator<Entry<String, AbsoluteFileMetadata>> fileIterator = files.entrySet().iterator();
+        Iterator<Entry<String, FileMetadata>> fileIterator = files.entrySet().iterator();
         while (fileIterator.hasNext()) {
-            Entry<String, AbsoluteFileMetadata> fileMetadataEntry = fileIterator.next();
-            AbsoluteFileMetadata fileMetadata = fileMetadataEntry.getValue();
+            Entry<String, FileMetadata> fileMetadataEntry = fileIterator.next();
+            FileMetadata fileMetadata = fileMetadataEntry.getValue();
             if (!fileMetadata.isExistsOnDiskNow()) {
                 fileIterator.remove();
                 setChanged();

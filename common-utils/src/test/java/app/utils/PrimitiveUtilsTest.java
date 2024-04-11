@@ -1,10 +1,8 @@
-package utils;
+package app.utils;
 
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
-
-import app.utils.PrimitiveUtils;
 
 public class PrimitiveUtilsTest {
 

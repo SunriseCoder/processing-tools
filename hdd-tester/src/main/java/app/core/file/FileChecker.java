@@ -35,7 +35,7 @@ public class FileChecker {
 
     public void checkFile(File file, FileSystemFile fileMetadata) throws NoSuchAlgorithmException, IOException {
         LOGGER.info("Checking file: " + file.getAbsolutePath()
-                + "(" + FormattingUtils.humanReadableSize(fileMetadata.getSize()) + "b) ...");
+                + "(" + FormattingUtils.humanReadableSizeBi(fileMetadata.getSize()) + "b) ...");
 
         Map<String, MessageDigest> messageDigests = createDigests(fileMetadata);
 
@@ -102,9 +102,9 @@ public class FileChecker {
             long fileCheckingDuration = now - fileStartTime;
             long speed = 1000 * fileMetadata.getSize() / fileCheckingDuration;
             String message = "File: " + file.getAbsolutePath() + " is OK "
-                    + "(" + FormattingUtils.humanReadableSize(fileMetadata.getSize()) + "b),"
+                    + "(" + FormattingUtils.humanReadableSizeBi(fileMetadata.getSize()) + "b),"
                     + " took: " + FormattingUtils.humanReadableTimeMS(fileCheckingDuration) + ","
-                    + " avg speed: " + FormattingUtils.humanReadableSize(speed) + "b/s";
+                    + " avg speed: " + FormattingUtils.humanReadableSizeBi(speed) + "b/s";
             LOGGER.info(message);
         }
     }
@@ -139,12 +139,12 @@ public class FileChecker {
         System.out.print("   ");
 
         long speed = 1000 * lineBytesChecked / currentLineTime;
-        String formattedSpeed = FormattingUtils.humanReadableSize(speed);
+        String formattedSpeed = FormattingUtils.humanReadableSizeBi(speed);
         System.out.print("Read speed: " + formattedSpeed + "b/s");
 
         long remainingToCheck = allFilesTotalSize - allFilesCheckedSize;
         if (remainingToCheck > 0 && speed > 0) {
-            String formattedRemainingToFill = FormattingUtils.humanReadableSize(remainingToCheck);
+            String formattedRemainingToFill = FormattingUtils.humanReadableSizeBi(remainingToCheck);
             System.out.print(", Remaining: " + formattedRemainingToFill + "b");
             long remainingTime = remainingToCheck / speed;
             String formattedRemainingTime = FormattingUtils.humanReadableTimeS(remainingTime);

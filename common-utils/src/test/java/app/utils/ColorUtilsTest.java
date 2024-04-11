@@ -1,4 +1,4 @@
-package utils;
+package app.utils;
 
 import static org.junit.Assert.assertEquals;
 
@@ -7,7 +7,6 @@ import java.awt.Color;
 import org.junit.Test;
 
 import app.structures.RGB;
-import app.utils.ColorUtils;
 
 public class ColorUtilsTest {
 

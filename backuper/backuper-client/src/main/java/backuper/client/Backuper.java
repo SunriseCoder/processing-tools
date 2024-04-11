@@ -82,11 +82,11 @@ public class Backuper {
         // New Local Files
         Supplier<Stream<CopyLocalFileOperation>> newLocalFilesStream = () -> copyLocalFileOperations.stream().filter(o -> o.isNewFile());
         System.out.println("Copy new local files: " + newLocalFilesStream.get().count() +
-                " (" + FormattingUtils.humanReadableSize(newLocalFilesStream.get().mapToLong(o -> o.getFileSize()).sum()) + "b)");
+                " (" + FormattingUtils.humanReadableSizeBi(newLocalFilesStream.get().mapToLong(o -> o.getFileSize()).sum()) + "b)");
         // Changed Local Files
         Supplier<Stream<CopyLocalFileOperation>> changedLocalFilesStream = () -> copyLocalFileOperations.stream().filter(o -> !o.isNewFile());
         System.out.println("Copy changed local files: " + changedLocalFilesStream.get().count()
-                + " (" + FormattingUtils.humanReadableSize(changedLocalFilesStream.get().mapToLong(o -> o.getFileSize()).sum())
+                + " (" + FormattingUtils.humanReadableSizeBi(changedLocalFilesStream.get().mapToLong(o -> o.getFileSize()).sum())
                 + "b) <== Attention here if the size is too big!!!");
 
         // New Remote Files
@@ -95,14 +95,14 @@ public class Backuper {
                         .flatMap(v -> v.stream())
                         .filter(o -> o.isNewFile());
         System.out.println("Copy new remote files: " + newRemoteFilesStream.get().count() +
-                " (" + FormattingUtils.humanReadableSize(newRemoteFilesStream.get().mapToLong(o -> o.getFileSize()).sum()) + "b)");
+                " (" + FormattingUtils.humanReadableSizeBi(newRemoteFilesStream.get().mapToLong(o -> o.getFileSize()).sum()) + "b)");
         // Changed Remote Files
         Supplier<Stream<CopyRemoteFileOperation>> changedRemoteFilesStream =
                 () -> copyRemoteFileOperations.values().stream()
                         .flatMap(v -> v.stream())
                         .filter(o -> !o.isNewFile());
         System.out.println("Copy changed remote files: " + changedRemoteFilesStream.get().count()
-                + " (" + FormattingUtils.humanReadableSize(changedRemoteFilesStream.get().mapToLong(o -> o.getFileSize()).sum())
+                + " (" + FormattingUtils.humanReadableSizeBi(changedRemoteFilesStream.get().mapToLong(o -> o.getFileSize()).sum())
                 + "b) <== Attention here if the size is too big!!!");
 
         // Folders to delete
@@ -110,11 +110,11 @@ public class Backuper {
 
         // Files to delete
         System.out.println("Files to delete: " + deleteFileOperations.size()
-                + " (" + FormattingUtils.humanReadableSize(deleteFileOperations.stream().mapToLong(o -> o.getFileSize()).sum())
+                + " (" + FormattingUtils.humanReadableSizeBi(deleteFileOperations.stream().mapToLong(o -> o.getFileSize()).sum())
                 + "b) <== Attention here if the size is too big!!!");
 
         long copyFileSizeTotal = copyLocalFilesTotalSize + copyRemoteFilesTotalSize;
-        System.out.println("Total size to copy: " + FormattingUtils.humanReadableSize(copyFileSizeTotal) + "b");
+        System.out.println("Total size to copy: " + FormattingUtils.humanReadableSizeBi(copyFileSizeTotal) + "b");
 
         if (totalOperationsNumber == 0) {
             System.out.println("It seems that all of the files are up to date");

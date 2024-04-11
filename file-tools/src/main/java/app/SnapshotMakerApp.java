@@ -11,8 +11,8 @@ import org.apache.logging.log4j.Logger;
 
 import app.core.SnapshotMaker;
 import app.core.dto.Configuration;
-import app.core.dto.FolderSnapshot;
-import app.core.dto.RelativeFileMetadata;
+import app.core.dto.Snapshot;
+import app.core.dto.SnapshotFile;
 import app.digest.XorProvider;
 import app.utils.FormattingUtils;
 import app.utils.PathUtils;
@@ -30,7 +30,7 @@ public class SnapshotMakerApp {
         try {
             configuration = Configuration.load();
             Path snapshotFolder = getSnapshotFolder(args);
-            FolderSnapshot snapshot = makeSnapshot(snapshotFolder);
+            Snapshot snapshot = makeSnapshot(snapshotFolder);
             printSnapshotStatistics(snapshot);
 
             LOGGER.info("Application finished successfully");
@@ -47,27 +47,27 @@ public class SnapshotMakerApp {
         return snapshotFolder;
     }
 
-    private static FolderSnapshot makeSnapshot(Path snapshotFolder) throws IOException, NoSuchAlgorithmException {
+    private static Snapshot makeSnapshot(Path snapshotFolder) throws IOException, NoSuchAlgorithmException {
         LOGGER.info("Starting to make Snapshot for folder: " + snapshotFolder.toString());
         SnapshotMaker snapshotMaker = new SnapshotMaker(configuration);
-        FolderSnapshot snapshot = snapshotMaker.makeSnapshot(snapshotFolder);
+        Snapshot snapshot = snapshotMaker.makeSnapshot(snapshotFolder);
         snapshot.saveIfNeededComplete();
         return snapshot;
     }
 
-    private static void printSnapshotStatistics(FolderSnapshot snapshot) {
+    private static void printSnapshotStatistics(Snapshot snapshot) {
         StringBuilder message = new StringBuilder();
         message.append("Snapshot " + snapshot.getName() + " Statistics:\n");
 
         String filesStatistics = snapshot.getFilesMap().values().stream()
                 .map(m -> m.getRelativePath()
-                        + " (" + FormattingUtils.humanReadableSize(m.getSize()) + "b)")
+                        + " (" + FormattingUtils.humanReadableSizeBi(m.getSize()) + "b)")
                 .collect(Collectors.joining("\n"));
         message.append(filesStatistics);
 
         String filesWithErrorsStatistics = snapshot.getFilesMap().values().stream()
-                .filter(m -> m.getStatus() != RelativeFileMetadata.Status.Ok)
-                .map(m -> m.getRelativePath() + " (" + FormattingUtils.humanReadableSize(m.getSize()) + "b) "
+                .filter(m -> m.getStatus() != SnapshotFile.Status.Ok)
+                .map(m -> m.getRelativePath() + " (" + FormattingUtils.humanReadableSizeBi(m.getSize()) + "b) "
                         + String.join(", ", m.getStatusMessages()))
                 .collect(Collectors.joining("\n"));
         if (!filesWithErrorsStatistics.isEmpty()) {
@@ -78,7 +78,7 @@ public class SnapshotMakerApp {
                 .mapToLong(m -> m.getSize())
                 .sum();
         message.append("\nTotal File Size: " + allFilesSize
-                + " (" + FormattingUtils.humanReadableSize(allFilesSize) + "b)");
+                + " (" + FormattingUtils.humanReadableSizeBi(allFilesSize) + "b)");
         LOGGER.info(message.toString());
     }
 }

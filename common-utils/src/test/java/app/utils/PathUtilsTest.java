@@ -1,4 +1,4 @@
-package utils;
+package app.utils;
 
 import static org.junit.Assert.assertFalse;
 
@@ -11,8 +11,6 @@ import java.nio.file.Path;
 import java.util.Random;
 
 import org.junit.Test;
-
-import app.utils.PathUtils;
 
 public class PathUtilsTest {
 

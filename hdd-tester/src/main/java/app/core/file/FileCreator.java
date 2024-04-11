@@ -38,7 +38,7 @@ public class FileCreator {
         File tmpFile = FileUtils.createFile(tmpFolder.getAbsolutePath() + "/" + file.getName(), true);
         LOGGER.info("Creating file: " + absoluteFile.getAbsolutePath()
                 + " (" + tmpFile.getAbsolutePath() + ") -"
-                + " (" + FormattingUtils.humanReadableSize(file.getSize()) + "b) ...");
+                + " (" + FormattingUtils.humanReadableSizeBi(file.getSize()) + "b) ...");
 
         Map<String, MessageDigest> messageDigests = createDigests();
 
@@ -97,9 +97,9 @@ public class FileCreator {
         long fileCreatingDuration = now - fileStartTime;
         long speed = 1000 * file.getSize() / fileCreatingDuration;
         String message = "Created file: " + absoluteFile.getAbsolutePath()
-                + "(" + FormattingUtils.humanReadableSize(file.getSize()) + "b),"
+                + "(" + FormattingUtils.humanReadableSizeBi(file.getSize()) + "b),"
                 + " took: " + FormattingUtils.humanReadableTimeMS(fileCreatingDuration) + ","
-                + " avg speed: " + FormattingUtils.humanReadableSize(speed) + "b/s";
+                + " avg speed: " + FormattingUtils.humanReadableSizeBi(speed) + "b/s";
         LOGGER.info(message);
     }
 
@@ -119,14 +119,14 @@ public class FileCreator {
         System.out.print("   ");
 
         long speed = 1000 * lineBytesWritten / currentLineTime;
-        String formattedSpeed = FormattingUtils.humanReadableSize(speed);
+        String formattedSpeed = FormattingUtils.humanReadableSizeBi(speed);
         System.out.print("Write speed: " + formattedSpeed + "b/s");
 
         long minFreeSpace = Long.parseLong(Configuration.getValue(Keys.MinFreeSpace));
         long freeSpace = rootFolder.getFreeSpace();
         long remainingToFill = freeSpace - minFreeSpace;
         if (remainingToFill > 0) {
-            String formattedRemainingToFill = FormattingUtils.humanReadableSize(remainingToFill);
+            String formattedRemainingToFill = FormattingUtils.humanReadableSizeBi(remainingToFill);
             System.out.print(", Remaining: " + formattedRemainingToFill + "b");
             long remainingTime = remainingToFill / speed;
             String formattedRemainingTime = FormattingUtils.humanReadableTimeS(remainingTime);

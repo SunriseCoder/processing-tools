@@ -11,15 +11,15 @@ import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 
-import app.core.dto.FolderSnapshot;
-import app.core.dto.RelativeFileMetadata;
+import app.core.dto.Snapshot;
+import app.core.dto.SnapshotFile;
 import app.utils.FormattingUtils;
 import app.utils.JSONUtils;
 
 public class SnapshotDumpApp {
     private static final Logger LOGGER = LogManager.getLogger(SnapshotDumpApp.class);
 
-    private static FolderSnapshot snapshot;
+    private static Snapshot snapshot;
 
     public static void main(String[] args) throws IOException {
         processInputArguments(args);
@@ -36,7 +36,7 @@ public class SnapshotDumpApp {
 
         File snapshotFile = new File(args[0]);
         LOGGER.info("Loading existing snapshot from file: " + snapshotFile.getAbsolutePath());
-        TypeReference<FolderSnapshot> typeReference = new TypeReference<FolderSnapshot>() {};
+        TypeReference<Snapshot> typeReference = new TypeReference<Snapshot>() {};
         snapshot = JSONUtils.loadFromDisk(snapshotFile, typeReference);
         LOGGER.info("Snapshot has been loaded successfully");
     }
@@ -53,11 +53,11 @@ public class SnapshotDumpApp {
         sb.append("\tName: ").append(snapshot.getName()).append("\n");
         sb.append("\tLast updated: ").append(snapshot.getLastUpdated()).append("\n");
 
-        List<RelativeFileMetadata> files = new ArrayList<>(snapshot.getFilesMap().values());
+        List<SnapshotFile> files = new ArrayList<>(snapshot.getFilesMap().values());
         files.sort((a, b) -> a.getRelativePath().compareTo(b.getRelativePath()));
         files.stream().forEach(m -> {
             sb.append(m.getRelativePath()).append(" (")
-                    .append(FormattingUtils.humanReadableSize(m.getSize()))
+                    .append(FormattingUtils.humanReadableSizeBi(m.getSize()))
                     .append("b)\n");
         });
 
@@ -65,7 +65,7 @@ public class SnapshotDumpApp {
                 .mapToLong(m -> m.getSize())
                 .sum();
         sb.append("\tTotal File Size: " + allFilesSize
-                + " (" + FormattingUtils.humanReadableSize(allFilesSize) + "b)");
+                + " (" + FormattingUtils.humanReadableSizeBi(allFilesSize) + "b)");
 
         // TODO Show info when File Status is NOT Ok - amount, basic and details
 

@@ -64,4 +64,15 @@ public class ColorUtils {
         int blue = color & 0xFF;
         return blue;
     }
+
+    public static int getColorDelta(int color1, int color2) {
+        int result = 0;
+
+        // TODO Optimize maybe using bit-shifts and bit-and operations, test via benchmark
+        result += Math.abs(getRed(color1) - getRed(color2));
+        result += Math.abs(getGreen(color1) - getGreen(color2));
+        result += Math.abs(getBlue(color1) - getBlue(color2));
+
+        return result;
+    }
 }

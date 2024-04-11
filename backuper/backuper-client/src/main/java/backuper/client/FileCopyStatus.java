@@ -59,20 +59,20 @@ public class FileCopyStatus {
             // Current file
             double currentPercent = (double) currentFileCopiedSize / currentFileTotalSize;
             StringBuilder sb = new StringBuilder();
-            sb.append(FormattingUtils.humanReadableSize(currentFileCopiedSize));
-            sb.append("b of ").append(FormattingUtils.humanReadableSize(currentFileTotalSize));
+            sb.append(FormattingUtils.humanReadableSizeBi(currentFileCopiedSize));
+            sb.append("b of ").append(FormattingUtils.humanReadableSizeBi(currentFileTotalSize));
             sb.append("b (").append(percentFormat.format(currentPercent)).append(") | ");
 
             // All files
             double allFilesPercent = (double) allFilesCopiedSize / allFilesTotalSize;
-            sb.append(FormattingUtils.humanReadableSize(allFilesCopiedSize));
-            sb.append("b of ").append(FormattingUtils.humanReadableSize(allFilesTotalSize));
+            sb.append(FormattingUtils.humanReadableSizeBi(allFilesCopiedSize));
+            sb.append("b of ").append(FormattingUtils.humanReadableSizeBi(allFilesTotalSize));
             sb.append("b (").append(percentFormat.format(allFilesPercent)).append(") | ");
 
             // Speed
             long currentFileTimeDelta = now - currentFileStartTime;
             long speed = currentFileTimeDelta > 0 ? currentFileCopiedSize * 1000 / currentFileTimeDelta : 0;
-            sb.append("avg: ").append(FormattingUtils.humanReadableSize(speed)).append("b/s | ");
+            sb.append("avg: ").append(FormattingUtils.humanReadableSizeBi(speed)).append("b/s | ");
 
             // Remaining estimation
             sb.append("Eta: ");
@@ -119,9 +119,9 @@ public class FileCopyStatus {
             long speed = allFilesCopiedSize * 1000 / timeDelta;
 
             StringBuilder sb = new StringBuilder();
-            sb.append("Copied: ").append(FormattingUtils.humanReadableSize(allFilesCopiedSize))
+            sb.append("Copied: ").append(FormattingUtils.humanReadableSizeBi(allFilesCopiedSize))
                     .append("b, took: ").append(FormattingUtils.humanReadableTimeS(timeDelta / 1000))
-                    .append(", avg: ").append(FormattingUtils.humanReadableSize(speed)).append("b/s");
+                    .append(", avg: ").append(FormattingUtils.humanReadableSizeBi(speed)).append("b/s");
 
             PrintHelper.println(sb.toString());
         }

@@ -93,7 +93,7 @@ public class MoveFolderOperation implements FileOperation {
 
     @Override
     public String toString() {
-        String fileSizeString = "(" + fileSize + " = " + FormattingUtils.humanReadableSize(fileSize) + "b)";
+        String fileSizeString = "(" + fileSize + " = " + FormattingUtils.humanReadableSizeBi(fileSize) + "b)";
         return FormattingUtils.alignLongStringsByRightSide(3,
                 "MOVE_FOLDER", source.toString(), fileSizeString,
                 "->", destination.toString(), "");
