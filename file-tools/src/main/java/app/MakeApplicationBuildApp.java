@@ -54,21 +54,19 @@ public class MakeApplicationBuildApp {
             copyFile(fileSourcePath, fileDestinationPath);
         }
 
-        // Creating bat-files
-        File batFile = newVersionFolderPath.resolve(artifactId + "-v" + newVersionNumberString + ".bat").toFile();
-        try (PrintWriter pw = new PrintWriter(batFile)) {
-            pw.println("set apphome=\"C:\\portable\\" + artifactId + "-v" + newVersionNumberString + "\"");
-            pw.println("java -Dapp.home=%apphome% -jar %apphome%\\" + artifactId + "-0.0.1-SNAPSHOT-jar-with-dependencies.jar %1 %2");
-            pw.println("pause");
-        }
+        // Generating bash-files
+        generateBashFile(artifactId, null, 9, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBashFile("snapshot-maker", "app.SnapshotMakerApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
 
-        createBatFile("snapshot-maker", "app.SnapshotMakerApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
-        createBatFile("snapshot-dump", "app.SnapshotDumpApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
-        createBatFile("snapshot-checker", "app.SnapshotCheckerApp", 2, artifactId, newVersionNumberString, newVersionFolderPath);
-        createBatFile("snapshot-assembler", "app.SnapshotAssemblerApp", 2, artifactId, newVersionNumberString, newVersionFolderPath);
-        createBatFile("file-database-maker", "app.MakeFileDatabaseApp", 9, artifactId, newVersionNumberString, newVersionFolderPath);
-        createBatFile("folder-sorter", "app.FolderSortingApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
-        createBatFile("folder-sorter-validator", "app.FolderSortingValidationApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
+        // Generating bat-files
+        generateBatFile(artifactId, null, 9, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("snapshot-maker", "app.SnapshotMakerApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("snapshot-dump", "app.SnapshotDumpApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("snapshot-checker", "app.SnapshotCheckerApp", 2, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("snapshot-assembler", "app.SnapshotAssemblerApp", 2, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("file-database-maker", "app.MakeFileDatabaseApp", 9, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("folder-sorter", "app.FolderSortingApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
+        generateBatFile("folder-sorter-validator", "app.FolderSortingValidationApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
 
         // Packing ZIP-file
         System.out.println("Creating Zip-file...");
@@ -117,13 +115,46 @@ public class MakeApplicationBuildApp {
         return sb.toString();
     }
 
-    private static void createBatFile(String batFilePrefix, String mainClass, int amountOfArguments,
+    private static void generateBashFile(String bashFilePrefix, String mainClass, int amountOfArguments,
+            String artifactId, String version, Path folderPath) throws FileNotFoundException {
+        File bashFile = folderPath.resolve(bashFilePrefix + "-v" + version + ".sh").toFile();
+        try (PrintWriter pw = new PrintWriter(bashFile)) {
+            pw.println("#!/bin/bash -x");
+            pw.println("");
+            pw.println("apphome=$(dirname $(realpath \"$0\"))");
+            pw.println("echo \"apphome is: $apphome\"");
+            if (mainClass == null) {
+                pw.println("java -Dapp.home=\"$apphome\" -jar \"$apphome/" + artifactId + "-0.0.1-SNAPSHOT-jar-with-dependencies.jar\" "
+                        + generateBashFileArgs(amountOfArguments));
+            } else {
+                pw.println("java -Dapp.home=\"$apphome\" -cp \"$apphome/" + artifactId + "-0.0.1-SNAPSHOT-jar-with-dependencies.jar\" " + mainClass
+                        + " " + generateBashFileArgs(amountOfArguments));
+            }
+
+        }
+    }
+
+    private static String generateBashFileArgs(int amountOfArguments) {
+        List<String> strings = new ArrayList<>();
+        for (int i = 1; i <= amountOfArguments; i++) {
+            strings.add("$" + i);
+        }
+        String result = String.join(" ", strings);
+        return result;
+    }
+
+    private static void generateBatFile(String batFilePrefix, String mainClass, int amountOfArguments,
             String artifactId, String version, Path folderPath) throws FileNotFoundException {
         File batFile = folderPath.resolve(batFilePrefix + "-v" + version + ".bat").toFile();
         try (PrintWriter pw = new PrintWriter(batFile)) {
             pw.println("set apphome=\"C:\\portable\\" + artifactId + "-v" + version + "\"");
-            pw.println("java -Dapp.home=%apphome% -cp %apphome%\\" + artifactId + "-0.0.1-SNAPSHOT-jar-with-dependencies.jar " + mainClass
-                + " " + generateBatFileArgs(amountOfArguments));
+            if (mainClass == null) {
+                pw.println("java -Dapp.home=%apphome% -jar %apphome%\\" + artifactId + "-0.0.1-SNAPSHOT-jar-with-dependencies.jar "
+                        + generateBatFileArgs(amountOfArguments));
+            } else {
+                pw.println("java -Dapp.home=%apphome% -cp %apphome%\\" + artifactId + "-0.0.1-SNAPSHOT-jar-with-dependencies.jar " + mainClass
+                        + " " + generateBatFileArgs(amountOfArguments));
+            }
             pw.println("pause");
         }
     }
