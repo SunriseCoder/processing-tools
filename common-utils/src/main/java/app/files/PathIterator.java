@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 // TODO Remove (or not) this class, replace all usages with Files.walk() or Files.walkFileTree()
+//  Or make iterator which will make walkFileTree inside and collect everything - Folders, Files, Links, etc...
 public class PathIterator implements Iterator<Path>, Iterable<Path> {
     private static final Logger LOGGER = LogManager.getLogger(PathIterator.class);
 

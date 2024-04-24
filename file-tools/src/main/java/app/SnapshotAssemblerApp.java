@@ -35,7 +35,7 @@ public class SnapshotAssemblerApp {
     private static SnapshotApplier snapshotApplier;
 
     public static void main(String[] args) {
-        LOGGER.info("Snapshot Applier started");
+        LOGGER.info("Snapshot Assembler started");
 
         Security.addProvider(new XorProvider());
 
