@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,6 +16,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import app.core.dto.fs.FileSystemFile;
+import app.digest.XorProvider;
 import app.utils.FormattingUtils;
 
 public class FileChecker {
@@ -24,6 +26,10 @@ public class FileChecker {
 
     private long allFilesTotalSize;
     private long allFilesCheckedSize;
+
+    public FileChecker() {
+        Security.addProvider(new XorProvider());
+    }
 
     public void setAllFilesTotalSize(long allFilesTotalSize) {
         this.allFilesTotalSize = allFilesTotalSize;

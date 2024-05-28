@@ -20,15 +20,38 @@ public class Configuration {
     private List<String> checksumAlgorithms;
     private long fileCopyChunkSize;
 
-    private List<FileFolder> fileSources;
-
+    private List<AssemblerFileSource> assemblerFileSources;
     private List<FolderSortRule> folderSortRules;
+    private List<FileDuplicationsGroup> fileDuplicationsGroups;
 
     private long fileDatabaseMinimalSaveIntervalInMS;
     private long snapshotMinimalSaveIntervalInMS;
 
     private long progressPrinterDotDataSize;
     private int progressPrinterDotsPerLine;
+
+    public static Configuration load() throws IOException {
+        LOGGER.info("Loading Configuration...");
+
+        String applicationHomePath = System.getProperty("app.home");
+        File configFile = new File(applicationHomePath, CONFIGURATION_FILENAME);
+        if (configFile.exists()) {
+            TypeReference<Configuration> typeReference = new TypeReference<Configuration>() {};
+            Configuration configuration = JSONUtils.loadFromDisk(configFile, typeReference);
+            configuration.postConstruct();
+            return configuration;
+        } else {
+            throw new FileNotFoundException("Configuration file not found: " + configFile.getAbsolutePath());
+        }
+    }
+
+    private void postConstruct() {
+        // Fixing Drive-Letters for Windows because Path.toAbsolutePath() adds capital Drive-Letter.
+        for (AssemblerFileSource assemblerFileSource : assemblerFileSources) {
+            String fixedPath = FileUtils.driveLetterToUpperCaseIfNeeded(assemblerFileSource.getPath());
+            assemblerFileSource.setPath(fixedPath);
+        }
+    }
 
     public List<String> getChecksumAlgorithms() {
         return checksumAlgorithms;
@@ -38,12 +61,16 @@ public class Configuration {
         return fileCopyChunkSize;
     }
 
-    public List<FileFolder> getFileSources() {
-        return fileSources;
+    public List<AssemblerFileSource> getAssemblerFileSources() {
+        return assemblerFileSources;
     }
 
     public List<FolderSortRule> getFolderSortRules() {
         return folderSortRules;
+    }
+
+    public List<FileDuplicationsGroup> getFileDuplicationsGroups() {
+        return fileDuplicationsGroups;
     }
 
     public long getFileDatabaseMinimalSaveIntervalInMS() {
@@ -60,27 +87,5 @@ public class Configuration {
 
     public int getProgressPrinterDotsPerLine() {
         return progressPrinterDotsPerLine;
-    }
-
-    private void postConstruct() {
-        // Fixing Drive-Letters for Windows because Path.toAbsolutePath() adds capital Drive-Letter.
-        for (FileFolder fileSource : fileSources) {
-            String fixedPath = FileUtils.driveLetterToUpperCaseIfNeeded(fileSource.getPath());
-            fileSource.setPath(fixedPath);
-        }
-    }
-
-    public static Configuration load() throws IOException {
-        LOGGER.info("Loading Configuration...");
-        String applicationHomePath = System.getProperty("app.home");
-        File configFile = new File(applicationHomePath, CONFIGURATION_FILENAME);
-        if (configFile.exists()) {
-            TypeReference<Configuration> typeReference = new TypeReference<Configuration>() {};
-            Configuration configuration = JSONUtils.loadFromDisk(configFile, typeReference);
-            configuration.postConstruct();
-            return configuration;
-        } else {
-            throw new FileNotFoundException("Configuration file not found: " + configFile.getAbsolutePath());
-        }
     }
 }

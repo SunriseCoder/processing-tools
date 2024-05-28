@@ -2,7 +2,6 @@ package app;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.Security;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
@@ -18,7 +17,6 @@ import app.core.database.Database;
 import app.core.dto.fs.FileSystemFile;
 import app.core.file.FileChecker;
 import app.core.file.FileCreator;
-import app.digest.XorProvider;
 import app.utils.ConsoleUtils;
 import app.utils.ConsoleUtils.Option;
 import app.utils.FileUtils;
@@ -30,8 +28,6 @@ public class HddTesterApp {
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
-
-        Security.addProvider(new XorProvider());
 
         // Checking Root Folder
         LOGGER.info("Checking Test Folder...");

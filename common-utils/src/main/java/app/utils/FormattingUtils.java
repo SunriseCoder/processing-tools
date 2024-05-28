@@ -43,7 +43,7 @@ public class FormattingUtils {
         int h = (int) (seconds / 60 / 60 % 24);
         int d = (int) (seconds / 60 / 60 / 24);
 
-        String result = (d > 0 ? d + ":" : "") + String.format("%02d:%02d:%02d", h, m, s);
+        String result = (d > 0 ? d + "-" : "") + String.format("%02d:%02d:%02d", h, m, s);
         return result;
     }
 
@@ -54,7 +54,7 @@ public class FormattingUtils {
         int h = (int) (milliseconds / 1000 / 60 / 60 % 24);
         int d = (int) (milliseconds / 1000 / 60 / 60 / 24);
 
-        String result = (d > 0 ? d + ":" : "") + String.format("%02d:%02d:%02d.%03d", h, m, s, ms);
+        String result = (d > 0 ? d + "-" : "") + String.format("%02d:%02d:%02d.%03d", h, m, s, ms);
         return result;
     }
 

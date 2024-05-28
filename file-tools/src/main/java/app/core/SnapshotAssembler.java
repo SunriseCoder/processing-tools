@@ -41,8 +41,8 @@ import app.utils.JSONUtils;
 import app.utils.PathUtils;
 
 // TODO Refactor - This class is too heavy, extract some functionality into other (maybe new) classes
-public class SnapshotApplier {
-    private static final Logger LOGGER = LogManager.getLogger(SnapshotApplier.class);
+public class SnapshotAssembler {
+    private static final Logger LOGGER = LogManager.getLogger(SnapshotAssembler.class);
 
     private Configuration configuration;
 
@@ -67,7 +67,7 @@ public class SnapshotApplier {
     private List<Pair<SnapshotFile, FileMetadata>> filesNotMatchedByChecksum;
     private List<Pair<SnapshotFile, FileMetadata>> redundantFilesInDestinationFolder;
 
-    public SnapshotApplier() {
+    public SnapshotAssembler() {
         filesToComputeChecksums = new ArrayList<>();
         snapshotFilesWithoutCandidates = new ArrayList<>();
         fileOperations = new ArrayList<>();
@@ -117,7 +117,7 @@ public class SnapshotApplier {
 
         // Creating Map FileDatabase Files by Size
         filesInFileDatabaseMapBySize = new HashMap<>();
-        for (FileMetadata fileMetadata : fileDatabase.getFiles().values()) {
+        for (FileMetadata fileMetadata : fileDatabase.getActiveFiles().values()) {
             long fileSize = fileMetadata.getSize();
             List<FileMetadata> fileList = filesInFileDatabaseMapBySize.get(fileSize);
             if (fileList == null) {

@@ -3,7 +3,6 @@ package app;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -13,7 +12,6 @@ import app.core.SnapshotMaker;
 import app.core.dto.Configuration;
 import app.core.dto.Snapshot;
 import app.core.dto.SnapshotFile;
-import app.digest.XorProvider;
 import app.utils.FormattingUtils;
 import app.utils.PathUtils;
 
@@ -24,8 +22,6 @@ public class SnapshotMakerApp {
 
     public static void main(String[] args) {
         LOGGER.info("Snapshot Maker started");
-
-        Security.addProvider(new XorProvider());
 
         try {
             configuration = Configuration.load();

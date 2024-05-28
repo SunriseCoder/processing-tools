@@ -49,7 +49,7 @@ public class FormattingUtilsTest {
         assertEquals("00:00:05", FormattingUtils.humanReadableTimeS(5));
         assertEquals("00:01:05", FormattingUtils.humanReadableTimeS(65));
         assertEquals("01:01:05", FormattingUtils.humanReadableTimeS(3665));
-        assertEquals("1:05:08:03", FormattingUtils.humanReadableTimeS(104883));
+        assertEquals("1-05:08:03", FormattingUtils.humanReadableTimeS(104883));
     }
 
     @Test
@@ -61,7 +61,7 @@ public class FormattingUtilsTest {
         assertEquals("00:00:05.017", FormattingUtils.humanReadableTimeMS(5017));
         assertEquals("00:01:05.283", FormattingUtils.humanReadableTimeMS(65283));
         assertEquals("01:01:05.128", FormattingUtils.humanReadableTimeMS(3665128));
-        assertEquals("1:05:08:03.091", FormattingUtils.humanReadableTimeMS(104883091));
+        assertEquals("1-05:08:03.091", FormattingUtils.humanReadableTimeMS(104883091));
     }
 
     @Test

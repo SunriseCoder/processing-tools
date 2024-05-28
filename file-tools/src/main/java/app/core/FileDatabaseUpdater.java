@@ -10,7 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import app.core.dto.FileMetadata;
 import app.core.dto.FileDatabase;
-import app.core.dto.FileFolder;
+import app.core.dto.AssemblerFileSource;
 import app.files.PathIterator;
 
 // TODO Merge this class into FileDatabase class or where it is used...
@@ -20,13 +20,13 @@ public class FileDatabaseUpdater {
 
     private FileDatabase fileDatabase;
 
-    private List<FileFolder> fileSources;
+    private List<AssemblerFileSource> fileSources;
 
     public void setFileDatabase(FileDatabase fileDatabase) {
         this.fileDatabase = fileDatabase;
     }
 
-    public void setFileSources(List<FileFolder> fileSources) {
+    public void setFileSources(List<AssemblerFileSource> fileSources) {
         this.fileSources = fileSources;
     }
 
@@ -41,11 +41,11 @@ public class FileDatabaseUpdater {
 
         // Marking existing files in the FileDatabase as they potentially does not exist on disk anymore
         // Later all existing files will be whitelisted during Scan phase
-        for (FileMetadata fileMetadata : fileDatabase.getFiles().values()) {
+        for (FileMetadata fileMetadata : fileDatabase.getActiveFiles().values()) {
             fileMetadata.setExistsOnDiskNow(false);
         }
 
-        for (FileFolder fileSource : fileSources) {
+        for (AssemblerFileSource fileSource : fileSources) {
             String message = "Scanning FileFolder " + fileSource.getPath() + (fileSource.isReadOnly() ? " (ReadOnly)" : "") + "...";
             LOGGER.info(message);
 

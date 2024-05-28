@@ -31,7 +31,7 @@ public abstract class JsonSaveable implements ChangedListener {
     private long minimalSaveIntervalInMS;
 
     @JsonIgnore
-    private boolean isChanged;
+    private volatile boolean isChanged;
 
     @JsonIgnore
     private DateFormat lastUpdatedDateFormatter;
@@ -69,12 +69,12 @@ public abstract class JsonSaveable implements ChangedListener {
         setChanged();
     }
 
-    public void setChanged() {
+    public synchronized void setChanged() {
         this.lastUpdated = lastUpdatedDateFormatter.format(new Date());
         this.isChanged = true;
     }
 
-    public void suggestSave() throws IOException {
+    public synchronized void suggestSave() throws IOException {
         LOGGER.debug("SuggestSave: Checking if we need to save " + getClass().getName() + "...");
         if (!isChanged) {
             LOGGER.debug("There are no changes to save " + getClass().getName());
@@ -94,7 +94,7 @@ public abstract class JsonSaveable implements ChangedListener {
         }
     }
 
-    public void saveIfNeededIncomplete() throws IOException {
+    public synchronized void saveIfNeededIncomplete() throws IOException {
         LOGGER.debug("SaveIfNeededIncomplete: Checking if we need to save " + getClass().getName() + "...");
         if (isChanged) {
             saveIncomplete();
@@ -111,7 +111,7 @@ public abstract class JsonSaveable implements ChangedListener {
         lastSaveType = SaveType.Incomplete;
     }
 
-    public void saveIfNeededComplete() throws IOException {
+    public synchronized void saveIfNeededComplete() throws IOException {
         LOGGER.debug("SaveIfNeededComplete: Checking if we need to save " + getClass().getName() + "...");
         if (isChanged || !SaveType.Complete.equals(lastSaveType)) {
             saveComplete();

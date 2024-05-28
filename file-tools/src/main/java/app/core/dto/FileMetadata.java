@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -28,14 +29,19 @@ import app.json.serial.FileTimeJsonSerializer;
 public class FileMetadata {
     private static final Logger LOGGER = LogManager.getLogger(FileMetadata.class);
 
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String absolutePath;
+    @JsonProperty
     private long size;
 
+    @JsonProperty
     @JsonSerialize(using = FileTimeJsonSerializer.class)
     @JsonDeserialize(using = FileTimeJsonDeserializer.class)
     private FileTime lastModifiedTime;
 
+    @JsonProperty
     private Map<String, String> checksums;
 
     // TODO Try to remove this field
@@ -53,6 +59,7 @@ public class FileMetadata {
         checksums = new HashMap<>();
     }
 
+    // TODO Refactor - remove this constructor, move these creation steps to a factory method, probably to FileDatabase class
     public FileMetadata(Path path) throws IOException {
         this();
         name = path.getFileName().toString();
@@ -65,22 +72,27 @@ public class FileMetadata {
         lastModifiedTime = attributes.lastModifiedTime();
     }
 
+    @JsonIgnore
     public String getName() {
         return name;
     }
 
+    @JsonIgnore
     public String getAbsolutePath() {
         return absolutePath;
     }
 
+    @JsonIgnore
     public long getSize() {
         return size;
     }
 
+    @JsonIgnore
     public FileTime getLastModifiedTime() {
         return lastModifiedTime;
     }
 
+    @JsonIgnore
     public RMap<String, String> getChecksums() {
         return new RMapWrap<>(checksums);
     }
@@ -90,6 +102,7 @@ public class FileMetadata {
         return lastModifiedTime;
     }
 
+    @JsonIgnore
     public boolean isExistsOnDiskNow() {
         return existsOnDiskNow;
     }
@@ -98,6 +111,7 @@ public class FileMetadata {
         this.existsOnDiskNow = existsOnDiskNow;
     }
 
+    @JsonIgnore
     public boolean isReadOnly() {
         return readOnly;
     }
@@ -211,5 +225,9 @@ public class FileMetadata {
 
     private void setChanged() {
         fileDatabase.setChanged();
+    }
+
+    public void suggestSave() throws IOException {
+        fileDatabase.suggestSave();
     }
 }

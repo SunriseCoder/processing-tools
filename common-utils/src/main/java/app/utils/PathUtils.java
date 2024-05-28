@@ -1,5 +1,6 @@
 package app.utils;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -13,8 +14,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -278,5 +281,21 @@ public class PathUtils {
                 moveFileWithReplacement(sourcePath, destinationPath);
             }
         }
+    }
+
+    public static List<Path> splitPathsFromString(String string) {
+        List<Path> paths = new ArrayList<>();
+
+        if (string == null || string.isEmpty()) {
+            return paths;
+        }
+
+        String[] pathStrings = string.split(File.pathSeparator);
+        for (String pathString : pathStrings) {
+            Path path = Paths.get(pathString);
+            paths.add(path);
+        }
+
+        return paths;
     }
 }

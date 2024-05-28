@@ -1,14 +1,14 @@
 package app.core.dto;
 
-public class FileFolder {
+public class AssemblerFileSource {
     private String path;
     private boolean readOnly;
 
-    public FileFolder() {
+    public AssemblerFileSource() {
         // Default constructor
     }
 
-    public FileFolder(String path, boolean readOnly) {
+    public AssemblerFileSource(String path, boolean readOnly) {
         super();
         this.path = path;
         this.readOnly = readOnly;

@@ -1,7 +1,6 @@
 package app;
 
 import java.io.File;
-import java.security.Security;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -15,7 +14,6 @@ import app.config.Configuration.Keys;
 import app.core.database.Database;
 import app.core.dto.fs.FileSystemFile;
 import app.core.file.FileChecker;
-import app.digest.XorProvider;
 import app.utils.FileUtils;
 import app.utils.JSONUtils;
 
@@ -24,8 +22,6 @@ public class CheckFilesApp {
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
-
-        Security.addProvider(new XorProvider());
 
         // Checking Root Folder
         LOGGER.info("Checking Test Folder...");

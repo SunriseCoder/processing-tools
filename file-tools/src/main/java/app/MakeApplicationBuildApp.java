@@ -67,8 +67,7 @@ public class MakeApplicationBuildApp {
         generateBatFile("file-database-maker", "app.MakeFileDatabaseApp", 9, artifactId, newVersionNumberString, newVersionFolderPath);
         generateBatFile("folder-sorter", "app.FolderSortingApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
         generateBatFile("folder-sorter-validator", "app.FolderSortingValidationApp", 1, artifactId, newVersionNumberString, newVersionFolderPath);
-        generateBatFile("search-file-duplications", "app.SearchFileDuplicationsApp", 9, artifactId, newVersionNumberString, newVersionFolderPath);
-
+        generateBatFile("search-file-duplications", "app.SearchFileDuplicationsApp", 2, artifactId, newVersionNumberString, newVersionFolderPath);
 
         // Packing ZIP-file
         System.out.println("Creating Zip-file...");

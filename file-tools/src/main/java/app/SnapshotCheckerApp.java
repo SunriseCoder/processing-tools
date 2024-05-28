@@ -3,21 +3,13 @@ package app;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
-import java.security.Security;
 import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-
-import app.checksum.ChecksumComputer;
 import app.core.SnapshotChecker;
-import app.core.dto.Configuration;
 import app.core.dto.FileDatabase;
-import app.digest.XorProvider;
-import app.utils.JSONUtils;
 import app.utils.PathUtils;
 
 // TODO Refactoring:
@@ -27,11 +19,8 @@ import app.utils.PathUtils;
 // 4. Rewrite ChecksumComputer using ProgressPrinter which will be set from outside
 // 5. SnapshotMaker - exclude log- and other files from scan - adjust ignore list
 public class SnapshotCheckerApp {
-    private static final String FILE_DATABASE_FILENAME = "file-database.json";
-
     private static final Logger LOGGER = LogManager.getLogger(SnapshotCheckerApp.class);
 
-    private static Configuration configuration;
     private static Path destinationFolder;
 
     private static FileDatabase fileDatabase;
@@ -40,12 +29,9 @@ public class SnapshotCheckerApp {
     public static void main(String[] args) {
         LOGGER.info("Snapshot Checker started");
 
-        Security.addProvider(new XorProvider());
-
         try {
             processInputArguments(args);
-            configuration = Configuration.load();
-            loadFileDatabase();
+            fileDatabase = FileDatabase.load();
             checkSnapshot();
             fileDatabase.saveIfNeededComplete();
 
@@ -96,24 +82,6 @@ public class SnapshotCheckerApp {
         Path destinationFolderPath = PathUtils.getAbsolutePathWithDriveLetterUpperCase(destinationFolderPathString);
         destinationFolder = PathUtils.getOrCreateFolder(destinationFolderPath);
         snapshotChecker.setDestinationFolder(destinationFolder);
-    }
-
-    // TODO Move this method to FileDatabase class as a static method
-    private static void loadFileDatabase() throws IOException, NoSuchAlgorithmException {
-        LOGGER.info("Loading File Database...");
-        String applicationHomePath = System.getProperty("app.home");
-        File fileDatabaseFile = new File(applicationHomePath, FILE_DATABASE_FILENAME);
-        if (fileDatabaseFile.exists()) {
-            TypeReference<FileDatabase> typeReference = new TypeReference<FileDatabase>() {};
-            fileDatabase = JSONUtils.loadFromDisk(fileDatabaseFile, typeReference);
-        } else {
-            fileDatabase = new FileDatabase();
-        }
-        fileDatabase.setSaveFileComplete(fileDatabaseFile);
-        fileDatabase.setMinimalSaveIntervalInMS(configuration.getFileDatabaseMinimalSaveIntervalInMS());
-        fileDatabase.setChecksumComputer(new ChecksumComputer(configuration.getChecksumAlgorithms()));
-        fileDatabase.setChecksumAlgorithms(configuration.getChecksumAlgorithms());
-        fileDatabase.linkSubEntities();
     }
 
     private static void checkSnapshot() throws IOException {

@@ -30,4 +30,11 @@ public class StringUtils {
 
         return sb.toString();
     }
+
+    public static StringBuilder appendStringBuilderAtTheEnd(StringBuilder sb, String text, int targetLength) {
+        while (sb.length() < targetLength) {
+            sb.append(text);
+        }
+        return sb;
+    }
 }
