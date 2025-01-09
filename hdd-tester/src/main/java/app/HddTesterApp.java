@@ -17,6 +17,7 @@ import app.core.database.Database;
 import app.core.dto.fs.FileSystemFile;
 import app.core.file.FileChecker;
 import app.core.file.FileCreator;
+import app.digest.XorProvider;
 import app.utils.ConsoleUtils;
 import app.utils.ConsoleUtils.Option;
 import app.utils.FileUtils;
@@ -28,6 +29,7 @@ public class HddTesterApp {
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
+        XorProvider.register();
 
         // Checking Root Folder
         LOGGER.info("Checking Test Folder...");

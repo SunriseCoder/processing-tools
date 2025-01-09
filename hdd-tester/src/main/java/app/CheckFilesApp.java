@@ -14,6 +14,7 @@ import app.config.Configuration.Keys;
 import app.core.database.Database;
 import app.core.dto.fs.FileSystemFile;
 import app.core.file.FileChecker;
+import app.digest.XorProvider;
 import app.utils.FileUtils;
 import app.utils.JSONUtils;
 
@@ -22,6 +23,7 @@ public class CheckFilesApp {
 
     public static void main(String[] args) throws Exception {
         LOGGER.info("Application started");
+        XorProvider.register();
 
         // Checking Root Folder
         LOGGER.info("Checking Test Folder...");

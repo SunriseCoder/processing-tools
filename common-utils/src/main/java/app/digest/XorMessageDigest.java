@@ -3,8 +3,8 @@ package app.digest;
 import java.security.MessageDigest;
 
 /**
- * Register the algorithm using the following code:
- * Security.addProvider(new XorProvider());
+ * Register the algorithm by invoking the following method:
+ * XorProvider.register();
  */
 public class XorMessageDigest extends MessageDigest {
     private byte[] digest;

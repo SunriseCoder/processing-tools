@@ -95,6 +95,7 @@ public class FileCreator {
 
         long now = System.currentTimeMillis();
         long fileCreatingDuration = now - fileStartTime;
+        fileCreatingDuration = fileCreatingDuration == 0 ? 1 : fileCreatingDuration;
         long speed = 1000 * file.getSize() / fileCreatingDuration;
         String message = "Created file: " + absoluteFile.getAbsolutePath()
                 + "(" + FormattingUtils.humanReadableSizeBi(file.getSize()) + "b),"
